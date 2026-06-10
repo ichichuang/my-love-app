@@ -105,3 +105,4 @@ pnpm dev:mp-weixin
 
 No generated illustrations were present in `static/generated` during implementation. Optional future asset filenames are recorded in `static/generated/README.md`; the current UI uses SCSS placeholders and uploaded CloudBase images.
 # my-love-app
+# my-love-app
