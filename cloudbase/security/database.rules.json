@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "collections": {
+    "love_entries": {
+      "read": "auth.openid != null",
+      "create": "auth.openid != null && request.data._openid == null",
+      "update": "auth.openid != null",
+      "delete": "auth.openid != null"
+    }
+  }
+}

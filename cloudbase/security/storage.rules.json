@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "path": "private/love-entries/**",
+      "read": "auth.openid != null",
+      "write": "auth.openid != null",
+      "delete": "auth.openid != null"
+    },
+    {
+      "path": "**",
+      "read": false,
+      "write": false,
+      "delete": false
+    }
+  ]
+}

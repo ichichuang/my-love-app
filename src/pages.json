@@ -1,0 +1,44 @@
+{
+  "darkmode": true,
+  "themeLocation": "theme.json",
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "珊瑚行动",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/detail/detail",
+      "style": {
+        "navigationBarTitleText": "记忆详情"
+      }
+    },
+    {
+      "path": "pages/create/create",
+      "style": {
+        "navigationBarTitleText": "写下此刻"
+      }
+    },
+    {
+      "path": "pages/settings/settings",
+      "style": {
+        "navigationBarTitleText": "私密偏好"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "@navTxtStyle",
+    "navigationBarTitleText": "珊瑚行动",
+    "navigationBarBackgroundColor": "@navBgColor",
+    "backgroundColor": "@pageBgColor",
+    "backgroundTextStyle": "@pageBgTextStyle"
+  }
+}
