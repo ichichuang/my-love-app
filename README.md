@@ -1,6 +1,6 @@
 # 珊瑚行动
 
-Private romantic WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, Pinia, Wot UI, SCSS, and native CloudBase `wx.cloud`.
+Private two-person WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, Pinia, Wot UI, SCSS, and native CloudBase `wx.cloud`.
 
 ## What It Does
 
@@ -10,17 +10,21 @@ Private romantic WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, 
 - CloudBase document database storage for entries.
 - CloudBase file upload, private file IDs, temporary-link display, and file deletion.
 - Wot UI configured through `src/pages.json` easycom mapping.
+- User-facing UI copy is Simplified Chinese only.
+- Product scope is private two-person memory keeping, not public social networking.
+
+See `docs/PRODUCT_REQUIREMENTS.zh-CN.md` for the product rules future changes must preserve.
 
 ## Required Local Values
 
 Copy `.env.example` to `.env` and fill:
 
 ```bash
-VITE_CLOUDBASE_ENV_ID=your-cloudbase-env-id
-VITE_WECHAT_APPID=your-wechat-mini-program-appid
+VITE_WECHAT_APPID=wx04b0ef4f0de5c5c5
+VITE_CLOUDBASE_ENV_ID=love-d4g006mox4b78e5c6
 ```
 
-Also set the WeChat Mini Program appid in:
+The WeChat Mini Program appid is also set in:
 
 - `src/manifest.json` at `mp-weixin.appid`
 - `manifest.config.ts` at `mp-weixin.appid` if you use the typed manifest file as your source of truth
@@ -40,10 +44,12 @@ Apply these rule files in the CloudBase console:
 - `cloudbase/security/database.rules.json`
 - `cloudbase/security/storage.rules.json`
 
+Before applying them, replace `__OWNER_OPENID__` and `__PARTNER_OPENID__` with the two real Mini Program OpenIDs allowed to access the shared archive.
+
 Storage paths are written under:
 
 ```text
-private/love-entries
+love-entries/main/
 ```
 
 The app stores CloudBase `fileID` values and requests temporary URLs through `wx.cloud.getTempFileURL`. It does not store public file URLs.
@@ -79,6 +85,14 @@ Import this folder for the built output:
 ```text
 /Users/cc/MyPorject/珊瑚行动/my-love-app/dist/build/mp-weixin
 ```
+
+Scan for likely English user-facing text:
+
+```bash
+pnpm scan:ui-copy
+```
+
+The scan is intentionally narrow and checks likely Vue template text, labels, placeholders, modal text, and toast text. Technical identifiers and package names are allowed.
 
 ## Validation
 

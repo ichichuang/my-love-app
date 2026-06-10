@@ -1,8 +1,8 @@
 <template>
-  <app-shell title="私密偏好" eyebrow="Theme settings">
+  <app-shell title="私密偏好" eyebrow="设置">
     <view class="settings">
       <view class="settings-panel">
-        <text class="settings-panel__title">Appearance mode</text>
+        <text class="settings-panel__title">外观模式</text>
         <view class="mode-grid">
           <button
             v-for="option in modeOptions"
@@ -18,7 +18,7 @@
       </view>
 
       <view class="settings-panel">
-        <text class="settings-panel__title">Romantic palette</text>
+        <text class="settings-panel__title">主题颜色</text>
         <theme-swatch-picker
           :palette-id="theme.paletteId"
           :custom-primary="theme.customPrimary"
@@ -29,18 +29,18 @@
       </view>
 
       <view class="settings-panel">
-        <text class="settings-panel__title">CloudBase</text>
+        <text class="settings-panel__title">云开发</text>
         <view class="cloud-row">
-          <text class="cloud-row__label">Environment</text>
+          <text class="cloud-row__label">环境</text>
           <text class="cloud-row__value">{{ cloudEnvLabel }}</text>
         </view>
         <view class="cloud-row">
-          <text class="cloud-row__label">Collection</text>
+          <text class="cloud-row__label">数据集合</text>
           <text class="cloud-row__value">{{ appConfig.entriesCollection }}</text>
         </view>
         <view class="cloud-row">
-          <text class="cloud-row__label">Storage</text>
-          <text class="cloud-row__value">{{ appConfig.storageBasePath }}</text>
+          <text class="cloud-row__label">云存储</text>
+          <text class="cloud-row__value">{{ appConfig.storageEntriesPath }}</text>
         </view>
       </view>
     </view>
@@ -55,12 +55,12 @@ import { useThemeStore, type ThemeMode } from "@/stores/theme"
 const theme = useThemeStore()
 
 const modeOptions: Array<{ label: string; value: ThemeMode }> = [
-  { label: "Follow system", value: "system" },
-  { label: "Light", value: "light" },
-  { label: "Dark", value: "dark" }
+  { label: "跟随系统", value: "system" },
+  { label: "浅色", value: "light" },
+  { label: "深色", value: "dark" }
 ]
 
-const cloudEnvLabel = computed(() => appConfig.cloudbaseEnvId || "Not configured")
+const cloudEnvLabel = computed(() => appConfig.cloudbaseEnvId || "云开发环境未配置，请检查 .env 中的 VITE_CLOUDBASE_ENV_ID。")
 </script>
 
 <style lang="scss" scoped>

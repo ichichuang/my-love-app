@@ -1,34 +1,34 @@
 <template>
-  <app-shell title="珊瑚行动" eyebrow="Private memory journal">
+  <app-shell title="珊瑚行动" eyebrow="私密回忆簿">
     <template #actions>
-      <wd-button size="small" plain @click="goSettings">Settings</wd-button>
+      <wd-button size="small" plain @click="goSettings">设置</wd-button>
     </template>
 
     <view class="home-hero">
       <view class="home-hero__copy">
-        <text class="home-hero__kicker">For two</text>
-        <text class="home-hero__title">Save the small proof that today mattered.</text>
-        <text class="home-hero__body">Photos, quiet notes, and dates stay inside your CloudBase environment.</text>
+        <text class="home-hero__kicker">只属于我们两个人</text>
+        <text class="home-hero__title">把今天值得记住的小事收好</text>
+        <text class="home-hero__body">照片、悄悄话和纪念日都会安静地保存在我们的云端空间里。</text>
       </view>
-      <wd-button block size="large" @click="goCreate">Write a memory</wd-button>
+      <wd-button block size="large" @click="goCreate">写下此刻</wd-button>
     </view>
 
     <view class="home-section">
       <view class="home-section__head">
-        <text class="home-section__title">Timeline</text>
-        <text class="home-section__count">{{ items.length }} entries</text>
+        <text class="home-section__title">回忆时间线</text>
+        <text class="home-section__count">{{ items.length }} 条记录</text>
       </view>
 
       <view v-if="loading" class="home-loading">
-        <text>Loading private memories...</text>
+        <text>正在读取私密回忆...</text>
       </view>
 
       <empty-state
         v-else-if="items.length === 0"
-        title="No memories yet"
-        body="Start with one sentence, one photo, or one date you do not want to lose."
+        title="还没有回忆"
+        body="可以先写一句话、放一张照片，或者记下一个不想忘记的日子。"
       >
-        <wd-button custom-class="home-empty__button" @click="goCreate">Create first entry</wd-button>
+        <wd-button custom-class="home-empty__button" @click="goCreate">记录第一个瞬间</wd-button>
       </empty-state>
 
       <view v-else class="home-list">

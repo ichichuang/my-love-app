@@ -2,10 +2,10 @@
   "version": "1.0",
   "collections": {
     "love_entries": {
-      "read": "auth.openid != null",
-      "create": "auth.openid != null && request.data._openid == null",
-      "update": "auth.openid != null",
-      "delete": "auth.openid != null"
+      "read": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__'] && doc.coupleId == 'main'",
+      "create": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__'] && request.data._openid == null && request.data.coupleId == 'main'",
+      "update": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__'] && doc.coupleId == 'main' && request.data.coupleId == 'main'",
+      "delete": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__'] && doc.coupleId == 'main'"
     }
   }
 }

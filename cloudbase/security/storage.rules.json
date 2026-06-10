@@ -2,10 +2,10 @@
   "version": "1.0",
   "rules": [
     {
-      "path": "private/love-entries/**",
-      "read": "auth.openid != null",
-      "write": "auth.openid != null",
-      "delete": "auth.openid != null"
+      "path": "love-entries/main/**",
+      "read": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__']",
+      "write": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__']",
+      "delete": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__']"
     },
     {
       "path": "**",

@@ -99,22 +99,28 @@ export const initCloudBase = (): CloudInitState => {
     }
 
     if (!isCloudConfigured()) {
-      initState.message = "请先在 .env 中填写 VITE_CLOUDBASE_ENV_ID。"
+      initState.message = "云开发环境未配置，请检查 .env 中的 VITE_CLOUDBASE_ENV_ID。"
+      if (import.meta.env.DEV) {
+        console.info("[珊瑚行动] 云开发环境配置状态：未配置")
+      }
       return initState
     }
 
     const cloud = getNativeCloud()
+    if (import.meta.env.DEV) {
+      console.info("[珊瑚行动] 云开发环境配置状态：已配置")
+    }
     cloud.init({
       env: appConfig.cloudbaseEnvId,
       traceUser: true
     })
 
     initState.initialized = true
-    initState.message = "CloudBase 已初始化。"
+    initState.message = "云开发已初始化。"
     return initState
   } catch (error) {
     initState.initialized = false
-    initState.message = friendlyError("CloudBase 初始化失败，请检查微信开发者工具云开发配置。", error).message
+    initState.message = friendlyError("云开发初始化失败，请检查微信开发者工具云开发配置。", error).message
     return initState
   }
 }
@@ -122,7 +128,7 @@ export const initCloudBase = (): CloudInitState => {
 const ensureCloudBaseReady = (): WxCloudNative.Api => {
   const state = initCloudBase()
   if (!state.initialized) {
-    throw new CloudBaseUserError(state.message || "CloudBase 尚未初始化。")
+    throw new CloudBaseUserError(state.message || "云开发尚未初始化。")
   }
 
   return getNativeCloud()
@@ -210,14 +216,26 @@ const fileExtension = (name: string): string => {
   return extension.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "jpg"
 }
 
-const makeCloudPath = (input: UploadCloudFileInput): string => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const nonce = Math.random().toString(36).slice(2, 10)
-  const extension = fileExtension(input.name)
+const safeFileName = (name: string): string => {
+  const rawName = name.split(/[\\/]/).filter(Boolean).pop() ?? "memory"
+  const normalized = rawName
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^\.+/, "")
+    .replace(/\.+$/, "")
+    .slice(0, 96)
 
-  return `${appConfig.storageBasePath}/${year}/${month}/${Date.now()}-${nonce}.${extension}`
+  const baseName = normalized || "memory"
+  if (/\.[a-zA-Z0-9]{1,12}$/.test(baseName)) {
+    return baseName
+  }
+
+  return `${baseName}.${fileExtension(name)}`
+}
+
+const makeCloudPath = (input: UploadCloudFileInput): string => {
+  return `${appConfig.storageEntriesPath}/${Date.now()}-${safeFileName(input.name)}`
 }
 
 export const getTemporaryFileURLs = async (fileIDs: string[]): Promise<Map<string, string>> => {

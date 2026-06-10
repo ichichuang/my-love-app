@@ -19,7 +19,7 @@
         mode="aspectFill"
       />
       <view v-else class="entry-card__placeholder">
-        <text class="entry-card__placeholder-mark">M</text>
+        <text class="entry-card__placeholder-mark">忆</text>
       </view>
     </view>
   </view>
@@ -48,13 +48,13 @@ const dateParts = computed(() => {
   const date = new Date(props.entry.occurredAt)
   if (Number.isNaN(date.getTime())) {
     return {
-      month: "MEM",
+      month: "忆",
       day: "--"
     }
   }
 
   return {
-    month: date.toLocaleString("en-US", { month: "short" }).toUpperCase(),
+    month: `${date.getMonth() + 1}月`,
     day: String(date.getDate()).padStart(2, "0")
   }
 })

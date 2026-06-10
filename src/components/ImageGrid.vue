@@ -9,7 +9,7 @@
         @click="preview(index)"
       />
       <view v-else class="image-grid__fallback">
-        <text>Private</text>
+        <text>私密</text>
       </view>
       <button
         v-if="editable"
@@ -17,7 +17,7 @@
         hover-class="image-grid__remove--active"
         @click.stop="emit('remove', index)"
       >
-        Remove
+        移除
       </button>
     </view>
   </view>

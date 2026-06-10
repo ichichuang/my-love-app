@@ -13,7 +13,7 @@
     </button>
 
     <view class="theme-picker__custom">
-      <text class="theme-picker__label">Custom seed color</text>
+      <text class="theme-picker__label">自定义主色</text>
       <input
         class="theme-picker__input"
         :value="customPrimary"
@@ -23,7 +23,7 @@
         @input="onCustomInput"
       />
       <button class="theme-picker__clear" hover-class="theme-picker__clear--pressed" @click="emit('clearCustom')">
-        Clear
+        清除
       </button>
     </view>
   </view>

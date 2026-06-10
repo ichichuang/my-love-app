@@ -28,6 +28,7 @@ type StoredCloudFile = Omit<CloudFile, "tempFileURL">
 
 interface StoredEntryDocument {
   _id?: string
+  coupleId: string
   title: string
   content: string
   occurredAt: string
@@ -114,6 +115,7 @@ const attachTemporaryUrls = async (entries: EntryRecord[]): Promise<EntryRecord[
 }
 
 const toStoredDraft = (draft: EntryDraft, timestamp: number): Omit<StoredEntryDocument, "_id"> => ({
+  coupleId: appConfig.coupleId,
   title: draft.title.trim(),
   content: draft.content.trim(),
   occurredAt: draft.occurredAt,
@@ -125,8 +127,11 @@ const toStoredDraft = (draft: EntryDraft, timestamp: number): Omit<StoredEntryDo
 
 export const listEntries = async (): Promise<EntryRecord[]> => {
   const documents = await listDocuments<StoredEntryDocument>(appConfig.entriesCollection, {
+    where: {
+      coupleId: appConfig.coupleId
+    },
     orderBy: {
-      field: "occurredAt",
+      field: "createdAt",
       direction: "desc"
     },
     limit: 50
@@ -144,7 +149,7 @@ export const getEntry = async (id: string): Promise<EntryRecord> => {
   })
 
   if (!normalized) {
-    throw new Error("Entry not found")
+    throw new Error("回忆不存在")
   }
 
   const [entry] = await attachTemporaryUrls([normalized])
@@ -160,6 +165,7 @@ export const createEntry = async (draft: EntryDraft): Promise<EntryRecord> => {
 export const updateEntry = async (id: string, draft: EntryDraft): Promise<EntryRecord> => {
   const now = Date.now()
   await updateDocument<Omit<StoredEntryDocument, "_id">>(appConfig.entriesCollection, id, {
+    coupleId: appConfig.coupleId,
     title: draft.title.trim(),
     content: draft.content.trim(),
     occurredAt: draft.occurredAt,

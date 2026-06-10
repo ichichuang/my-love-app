@@ -1,17 +1,17 @@
 <template>
-  <app-shell :title="editing ? 'Edit memory' : 'Memory detail'" eyebrow="Private archive">
+  <app-shell :title="editing ? '编辑回忆' : '记忆详情'" eyebrow="私密档案">
     <template #actions>
-      <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">Edit</wd-button>
+      <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
     </template>
 
     <view v-if="loading" class="status-panel">
-      <text>Loading memory...</text>
+      <text>正在读取回忆...</text>
     </view>
 
     <empty-state
       v-else-if="!entry"
-      title="Memory unavailable"
-      body="The entry could not be loaded. Check CloudBase environment and permissions."
+      title="回忆暂时打不开"
+      body="请检查云开发环境和访问权限。"
     />
 
     <view v-else-if="!editing" class="detail">
@@ -24,18 +24,18 @@
       <image-grid :files="entry.files" />
 
       <view class="detail__content">
-        <text>{{ entry.content || "No written note for this memory." }}</text>
+        <text>{{ entry.content || "这段回忆还没有写下文字。" }}</text>
       </view>
 
       <view class="detail__actions">
-        <wd-button plain block @click="startEditing">Edit memory</wd-button>
-        <wd-button block type="error" :loading="deleting" @click="confirmDelete">Delete memory</wd-button>
+        <wd-button plain block @click="startEditing">编辑回忆</wd-button>
+        <wd-button block type="error" :loading="deleting" @click="confirmDelete">删除回忆</wd-button>
       </view>
     </view>
 
     <view v-else class="entry-form">
       <view class="field">
-        <text class="field__label">Title</text>
+        <text class="field__label">标题</text>
         <input
           class="field__input"
           :value="title"
@@ -47,14 +47,14 @@
 
       <view class="field-grid">
         <view class="field">
-          <text class="field__label">Date</text>
+          <text class="field__label">日期</text>
           <picker mode="date" :value="occurredAt" @change="onDateChange">
             <view class="field__picker">{{ occurredAt }}</view>
           </picker>
         </view>
 
         <view class="field">
-          <text class="field__label">Mood</text>
+          <text class="field__label">心情</text>
           <input
             class="field__input"
             :value="mood"
@@ -66,7 +66,7 @@
       </view>
 
       <view class="field">
-        <text class="field__label">Memory</text>
+        <text class="field__label">内容</text>
         <textarea
           class="field__textarea"
           :value="content"
@@ -78,7 +78,7 @@
 
       <view class="upload-panel">
         <view class="upload-panel__head">
-          <text class="upload-panel__title">Private photos</text>
+          <text class="upload-panel__title">私密照片</text>
           <text class="upload-panel__meta">{{ files.length }}/9</text>
         </view>
         <image-grid :files="files" editable @remove="removeEditFile" />
@@ -89,13 +89,13 @@
           custom-class="upload-panel__button"
           @click="chooseAndUploadImages"
         >
-          Add photos
+          添加照片
         </wd-button>
       </view>
 
       <view class="detail__actions">
-        <wd-button plain block @click="cancelEditing">Cancel</wd-button>
-        <wd-button block size="large" :loading="saving" @click="saveChanges">Save changes</wd-button>
+        <wd-button plain block @click="cancelEditing">取消</wd-button>
+        <wd-button block size="large" :loading="saving" @click="saveChanges">保存修改</wd-button>
       </view>
     </view>
   </app-shell>
@@ -205,7 +205,7 @@ const saveChanges = async () => {
 
   if (!title.value.trim()) {
     uni.showToast({
-      title: "Title is required.",
+      title: "请先写一个标题。",
       icon: "none"
     })
     return
@@ -216,7 +216,7 @@ const saveChanges = async () => {
     const nextEntry = await updateEntry(entry.value.id, {
       title: title.value,
       content: content.value,
-      mood: mood.value || "Tender",
+      mood: mood.value || "温柔",
       occurredAt: occurredAt.value,
       files: files.value
     })
@@ -244,9 +244,9 @@ const confirmDelete = () => {
   }
 
   uni.showModal({
-    title: "Delete memory",
-    content: "This removes the entry and its CloudBase files.",
-    confirmText: "Delete",
+    title: "删除回忆",
+    content: "这会同时删除这条记录和它的云端文件。",
+    confirmText: "删除",
     confirmColor: "#9f2f3e",
     success: (result) => {
       if (result.confirm) {

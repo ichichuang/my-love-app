@@ -1,12 +1,12 @@
 <template>
-  <app-shell title="写下此刻" eyebrow="New memory">
+  <app-shell title="写下此刻" eyebrow="新的回忆">
     <view class="entry-form">
       <view class="field">
-        <text class="field__label">Title</text>
+        <text class="field__label">标题</text>
         <input
           class="field__input"
           :value="title"
-          placeholder="A quiet dinner, a train ride..."
+          placeholder="比如：一起散步的夜晚"
           placeholder-class="field__placeholder"
           maxlength="48"
           @input="onTitleInput"
@@ -15,18 +15,18 @@
 
       <view class="field-grid">
         <view class="field">
-          <text class="field__label">Date</text>
+          <text class="field__label">日期</text>
           <picker mode="date" :value="occurredAt" @change="onDateChange">
             <view class="field__picker">{{ occurredAt }}</view>
           </picker>
         </view>
 
         <view class="field">
-          <text class="field__label">Mood</text>
+          <text class="field__label">心情</text>
           <input
             class="field__input"
             :value="mood"
-            placeholder="Warm"
+            placeholder="温柔"
             placeholder-class="field__placeholder"
             maxlength="16"
             @input="onMoodInput"
@@ -35,11 +35,11 @@
       </view>
 
       <view class="field">
-        <text class="field__label">Memory</text>
+        <text class="field__label">内容</text>
         <textarea
           class="field__textarea"
           :value="content"
-          placeholder="Write what you want both of you to remember."
+          placeholder="写下想一起记住的话"
           placeholder-class="field__placeholder"
           maxlength="1200"
           @input="onContentInput"
@@ -48,7 +48,7 @@
 
       <view class="upload-panel">
         <view class="upload-panel__head">
-          <text class="upload-panel__title">Private photos</text>
+          <text class="upload-panel__title">私密照片</text>
           <text class="upload-panel__meta">{{ files.length }}/9</text>
         </view>
         <image-grid :files="files" editable @remove="removeFileAt" />
@@ -59,11 +59,11 @@
           custom-class="upload-panel__button"
           @click="chooseAndUploadImages"
         >
-          Add photos
+          添加照片
         </wd-button>
       </view>
 
-      <wd-button block size="large" :loading="saving" @click="saveEntry">Save memory</wd-button>
+      <wd-button block size="large" :loading="saving" @click="saveEntry">保存回忆</wd-button>
     </view>
   </app-shell>
 </template>
@@ -79,7 +79,7 @@ const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padSt
 
 const title = shallowRef("")
 const content = shallowRef("")
-const mood = shallowRef("Tender")
+const mood = shallowRef("温柔")
 const occurredAt = shallowRef(todayString)
 const saving = shallowRef(false)
 
@@ -121,7 +121,7 @@ const onDateChange = (event: Event) => {
 const saveEntry = async () => {
   if (!title.value.trim()) {
     uni.showToast({
-      title: "Title is required.",
+      title: "请先写一个标题。",
       icon: "none"
     })
     return
@@ -129,7 +129,7 @@ const saveEntry = async () => {
 
   if (!content.value.trim() && files.value.length === 0) {
     uni.showToast({
-      title: "Add a note or at least one photo.",
+      title: "请写一点内容，或至少添加一张照片。",
       icon: "none"
     })
     return
@@ -140,7 +140,7 @@ const saveEntry = async () => {
     const entry = await createEntry({
       title: title.value,
       content: content.value,
-      mood: mood.value || "Tender",
+      mood: mood.value || "温柔",
       occurredAt: occurredAt.value,
       files: files.value
     })

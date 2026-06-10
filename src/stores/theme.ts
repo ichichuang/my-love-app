@@ -25,28 +25,28 @@ const STORAGE_KEY = "coral-action-theme-v1"
 export const romanticPalettes: RomanticPalette[] = [
   {
     id: "rose-gold",
-    name: "Rose Gold",
+    name: "玫瑰金",
     primary: "#b84f62",
     accent: "#c49a5a",
     glow: "rgba(184, 79, 98, 0.18)"
   },
   {
     id: "camellia",
-    name: "Camellia",
+    name: "山茶",
     primary: "#c0574f",
     accent: "#5f8d78",
     glow: "rgba(192, 87, 79, 0.18)"
   },
   {
     id: "velvet",
-    name: "Velvet",
+    name: "绒红",
     primary: "#a53f54",
     accent: "#d0b06a",
     glow: "rgba(165, 63, 84, 0.22)"
   },
   {
     id: "pearl",
-    name: "Pearl",
+    name: "暖紫",
     primary: "#8f4d5f",
     accent: "#3f7f83",
     glow: "rgba(143, 77, 95, 0.16)"
@@ -126,7 +126,7 @@ export const useThemeStore = defineStore("theme", () => {
     return {
       ...selectedPalette.value,
       id: "custom",
-      name: "Custom",
+      name: "自定义",
       primary: normalized,
       glow: `${normalized}2e`
     }
