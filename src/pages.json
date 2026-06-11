@@ -52,6 +52,8 @@
     "navigationBarTitleText": "珊瑚行动",
     "navigationBarBackgroundColor": "@navBgColor",
     "backgroundColor": "@pageBgColor",
+    "backgroundColorTop": "@pageBgTopColor",
+    "backgroundColorBottom": "@pageBgBottomColor",
     "backgroundTextStyle": "@pageBgTextStyle"
   }
 }

@@ -19,6 +19,8 @@ export type CssShadowValue = "none" | `${string} ${CssColorValue}` | CssVarRefer
 export type CssTransitionValue = `${MsValue} ${string}` | `${string} ${MsValue} ${string}` | CssVarReference
 export type CssVarRecord<TName extends CssVarName = CssVarName> = Partial<Record<TName, string>>
 export type AppCssVars = Partial<Record<AppCssVarName, string>>
+export type NativeFrontColor = "#ffffff" | "#000000"
+export type BackgroundTextStyle = "dark" | "light"
 
 export interface ColorRole {
   base: CssColorValue
@@ -117,7 +119,17 @@ export interface RomanticPalette<TId extends string = string> {
   schemes: Record<AppTheme, SemanticColorScheme>
 }
 
+export interface NativeChromeTheme {
+  frontColor: NativeFrontColor
+  navigationBarBackgroundColor: CssHexColor
+  backgroundColor: CssHexColor
+  backgroundColorTop: CssHexColor
+  backgroundColorBottom: CssHexColor
+  backgroundTextStyle: BackgroundTextStyle
+  pageStyle: string
+}
+
 export interface NavigationTheme {
-  frontColor: "#ffffff" | "#000000"
-  backgroundColor: CssColorValue
+  frontColor: NativeFrontColor
+  backgroundColor: CssHexColor
 }

@@ -1,7 +1,7 @@
 import { resolvePaletteColorVars } from "@/design-system/color-scale"
 import { resolveAppCssAliases } from "@/design-system/css-vars"
 import type { ResolvedSizeTokens } from "@/design-system/size-resolver"
-import type { AppCssVars, AppTheme, NavigationTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
+import type { AppCssVars, AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
 
 export interface AppCssVarInput {
   theme: AppTheme
@@ -39,8 +39,3 @@ export const resolveAppCssVars = ({ theme, palette, size }: AppCssVarInput): App
     ...resolveAppCssAliases(canonicalVars)
   }
 }
-
-export const resolveNavigationTheme = (theme: AppTheme, vars: AppCssVars): NavigationTheme => ({
-  frontColor: theme === "dark" ? "#ffffff" : "#000000",
-  backgroundColor: (vars["--app-bg"] ?? vars["--app-color-bg-page"] ?? "#FFFFFF") as NavigationTheme["backgroundColor"]
-})

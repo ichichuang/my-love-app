@@ -2,15 +2,17 @@
 
 ## 1. 架构边界
 
-运行时主题系统分成三层：
+运行时主题系统分成两条同步链路、三层来源：
 
 - `src/styles/tokens/**`：编译期默认令牌，只给 UniApp 和首次渲染提供兜底值。
-- `src/design-system/**`：纯解析层，负责配色、尺寸、排版、Wot UI 变量和 CSS 变量字符串。除 `nav-theme.ts` 外不能调用 `uni`、`wx`、定时器或存储。
+- `src/design-system/**`：纯解析层，负责配色、尺寸、排版、Wot UI 变量、CSS 变量字符串和 `nativeChromeTheme`。除 `nav-theme.ts` 外不能调用 `uni`、`wx`、定时器或存储。
 - `src/stores/theme.ts`：唯一主题状态源，只负责模式、配色、密度、字号、持久化、系统主题监听和调用解析器。
 
 `AppShell.vue` 是唯一运行时 CSS 变量注入根。所有页面必须包在 `app-shell` 内，根 `view` 绑定 `theme.themeClasses` 与 `theme.appStyle`。`theme.appStyle` 必须包含展开后的终端变量，例如 `--app-bg: #fffaf3`，不能只输出 `--app-bg: var(--app-color-bg-page)`。
 
-原生导航栏不参与同步主题切换链路。`App.vue` 只监听 `theme.navigationTheme` 并调用 `scheduleNavigationTheme`；真正的 `uni.setNavigationBarColor` 只允许出现在 `src/design-system/nav-theme.ts`，并由 debounce、delay 和 `fail` callback 兜底。
+微信原生层单独由 `theme.nativeChromeTheme` 控制，包括导航栏、状态栏前景、窗口背景、iOS 顶部/底部背景、下拉背景文字和页面根样式。`src/design-system/native-chrome-resolver.ts` 只输出最终十六进制颜色，不输出 CSS 变量或 `rgba()`；深色导航栏使用深色卡片色，避免 Android 上过黑的状态栏观感。每个页面必须把 `page-meta` 放在模板第一个节点，并绑定 `theme.nativeChromeTheme` 的背景字段和 `pageStyle`。
+
+`theme.json` 和 `src/theme.json` 只是系统主题下的首帧 fallback，用于微信在 Pinia 恢复前渲染原生窗口。手动“浅色/深色”以 Pinia runtime 为准；页面通过 `useNativeChromeSync()` 在 `onReady`、`onShow` 和主题字段变化时调用 `scheduleNativeChromeTheme`。真正的 `uni.setNavigationBarColor`、`uni.setBackgroundColor`、`uni.setBackgroundTextStyle` 只允许出现在 `src/design-system/nav-theme.ts`，并由 debounce、delay 和 `fail` callback 兜底。
 
 ## 1.1 类型治理
 
@@ -159,7 +161,8 @@ CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
 
 - 不要新增 UnoCSS 或其他 utility CSS 框架。
 - 不要新增任意颜色输入器。
-- 不要在页面、组件或 store 内调用 `uni.setNavigationBarColor`。
+- 不要在页面、组件或 store 内调用 `uni.setNavigationBarColor`、`uni.setBackgroundColor` 或 `uni.setBackgroundTextStyle`。
+- 不要绕过页面首节点 `page-meta` 或 `useNativeChromeSync()` 同步微信原生层。
 - 不要绕过 `AppShell` 注入 `theme.appStyle`。
 - 不要绕过 `wd-config-provider` 设置 Wot UI 主题。
 - 不要在页面或组件里直接写 hex、`rgba()`、固定 rpx/px、直接 `box-shadow`、直接 transition duration。
@@ -182,7 +185,10 @@ git diff --check
 `scan:design-tokens` 会检查：
 
 - 页面是否绕过 `AppShell`
+- 页面是否缺少首节点 `page-meta`、`useNativeChromeSync()` 或 `theme.nativeChromeTheme` 绑定
 - `AppShell` 是否仍注入 `theme.appStyle`、`themeVars` 和 `providerKey`
+- 原生 chrome API 是否只出现在 `src/design-system/nav-theme.ts`
+- `native-chrome-resolver.ts` 是否仍存在十六进制颜色解析与原生层主题解析
 - 是否仍保留 6 套固定策展配色、关键源色和对比度规则
 - `src/design-system/**` 是否存在禁用的运行时副作用
 - 设置页和色板是否绕过 `AppOptionButton`

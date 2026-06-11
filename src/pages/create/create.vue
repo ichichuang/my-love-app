@@ -1,4 +1,11 @@
 <template>
+  <page-meta
+    :background-text-style="theme.nativeChromeTheme.backgroundTextStyle"
+    :background-color="theme.nativeChromeTheme.backgroundColor"
+    :background-color-top="theme.nativeChromeTheme.backgroundColorTop"
+    :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
+    :page-style="theme.nativeChromeTheme.pageStyle"
+  />
   <app-shell title="写下此刻" eyebrow="新的回忆">
     <view class="create-intro">
       <text class="create-intro__title">把这一刻放进私密盒子</text>
@@ -94,10 +101,12 @@
 
 <script setup lang="ts">
 import { shallowRef } from "vue"
+import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { createEntry } from "@/services/repositories/entries"
 
+const theme = useNativeChromeSync()
 const today = new Date()
 const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
 

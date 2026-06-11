@@ -1,4 +1,11 @@
 <template>
+  <page-meta
+    :background-text-style="theme.nativeChromeTheme.backgroundTextStyle"
+    :background-color="theme.nativeChromeTheme.backgroundColor"
+    :background-color-top="theme.nativeChromeTheme.backgroundColorTop"
+    :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
+    :page-style="theme.nativeChromeTheme.pageStyle"
+  />
   <app-shell :title="editing ? '编辑回忆' : '记忆详情'" eyebrow="私密档案">
     <template #actions>
       <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
@@ -125,8 +132,8 @@
 import { shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useFileUpload } from "@/composables/useFileUpload"
+import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
-import { useThemeStore } from "@/stores/theme"
 import {
   deleteEntry,
   deleteEntryFiles,
@@ -136,7 +143,7 @@ import {
 } from "@/services/repositories/entries"
 
 const entryId = shallowRef("")
-const theme = useThemeStore()
+const theme = useNativeChromeSync()
 const entry = shallowRef<EntryRecord | null>(null)
 const loading = shallowRef(false)
 const editing = shallowRef(false)

@@ -1,4 +1,11 @@
 <template>
+  <page-meta
+    :background-text-style="theme.nativeChromeTheme.backgroundTextStyle"
+    :background-color="theme.nativeChromeTheme.backgroundColor"
+    :background-color-top="theme.nativeChromeTheme.backgroundColorTop"
+    :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
+    :page-style="theme.nativeChromeTheme.pageStyle"
+  />
   <app-shell title="私密偏好" eyebrow="设置">
     <view class="settings">
       <view class="settings-intro">
@@ -104,10 +111,11 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { appConfig } from "@/config/app"
-import { useThemeStore, type ThemeDensity, type ThemeFontScale, type ThemeMode } from "@/stores/theme"
+import type { ThemeDensity, ThemeFontScale, ThemeMode } from "@/stores/theme"
 
-const theme = useThemeStore()
+const theme = useNativeChromeSync()
 
 const modeOptions: Array<{ label: string; value: ThemeMode }> = [
   { label: "跟随系统", value: "system" },

@@ -1,4 +1,11 @@
 <template>
+  <page-meta
+    :background-text-style="theme.nativeChromeTheme.backgroundTextStyle"
+    :background-color="theme.nativeChromeTheme.backgroundColor"
+    :background-color-top="theme.nativeChromeTheme.backgroundColorTop"
+    :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
+    :page-style="theme.nativeChromeTheme.pageStyle"
+  />
   <app-shell title="珊瑚行动" eyebrow="私密时间线">
     <template #actions>
       <wd-button size="small" plain @click="goSettings">设置</wd-button>
@@ -62,9 +69,11 @@
 <script setup lang="ts">
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import { useCrud } from "@/composables/useCrud"
+import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { listEntries } from "@/services/repositories/entries"
 
+const theme = useNativeChromeSync()
 const { items, loading, reload } = useCrud(listEntries)
 const hour = new Date().getHours()
 const todayGreeting = hour < 12 ? "早安，今天也慢慢收藏" : hour < 18 ? "午后，把小事轻轻放好" : "晚上好，给今天留一盏小灯"

@@ -3,10 +3,10 @@ import { defineStore } from "pinia"
 import { makeCssVars } from "@/design-system/css-vars"
 import { defaultPalette, getPaletteById, hasPalette, romanticPalettes } from "@/design-system/palettes"
 import type { PaletteId } from "@/design-system/palettes"
+import { resolveNativeChromeTheme, resolveNavigationThemeFromNativeChrome } from "@/design-system/native-chrome-resolver"
 import { resolveSizeTokens } from "@/design-system/size-resolver"
 import {
   resolveAppCssVars,
-  resolveNavigationTheme,
   resolveThemeClasses,
   resolveThemeMode,
   resolveThemeProviderKey
@@ -102,7 +102,8 @@ export const useThemeStore = defineStore("theme", () => {
   const providerKey = computed(() => resolveThemeProviderKey(resolvedMode.value, paletteId.value, density.value, fontScale.value))
   const wotTheme = computed<AppTheme>(() => resolvedMode.value)
   const wotThemeVars = computed(() => resolveWotThemeVars(appCssVars.value, sizeTokens.value))
-  const navigationTheme = computed(() => resolveNavigationTheme(resolvedMode.value, appCssVars.value))
+  const nativeChromeTheme = computed(() => resolveNativeChromeTheme(resolvedMode.value, appCssVars.value))
+  const navigationTheme = computed(() => resolveNavigationThemeFromNativeChrome(nativeChromeTheme.value))
 
   const persist = () => {
     const payload: SavedThemeState = {
@@ -185,6 +186,7 @@ export const useThemeStore = defineStore("theme", () => {
     providerKey,
     wotTheme,
     wotThemeVars,
+    nativeChromeTheme,
     navigationTheme,
     initTheme,
     bindSystemThemeListener,

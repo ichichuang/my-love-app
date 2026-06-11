@@ -1,4 +1,11 @@
 <template>
+  <page-meta
+    :background-text-style="theme.nativeChromeTheme.backgroundTextStyle"
+    :background-color="theme.nativeChromeTheme.backgroundColor"
+    :background-color-top="theme.nativeChromeTheme.backgroundColorTop"
+    :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
+    :page-style="theme.nativeChromeTheme.pageStyle"
+  />
   <app-shell title="设计系统预览" eyebrow="开发校验">
     <view class="preview">
       <view class="preview-panel preview-panel--diagnostics">
@@ -203,10 +210,11 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h } from "vue"
+import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { makeCssVars } from "@/design-system/css-vars"
 import { resolveThemeColorVars } from "@/design-system/theme-resolver"
 import type { AppTheme, RomanticPalette } from "@/design-system/types"
-import { romanticPalettes, useThemeStore, type ThemeDensity, type ThemeFontScale, type ThemeMode } from "@/stores/theme"
+import { romanticPalettes, type ThemeDensity, type ThemeFontScale, type ThemeMode } from "@/stores/theme"
 
 const PreviewSection = defineComponent({
   props: {
@@ -231,7 +239,7 @@ const PreviewSection = defineComponent({
   }
 })
 
-const theme = useThemeStore()
+const theme = useNativeChromeSync()
 
 const modeOptions: Array<{ caption: string; value: ThemeMode }> = [
   { caption: "跟随系统", value: "system" },

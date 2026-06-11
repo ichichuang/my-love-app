@@ -155,19 +155,54 @@ const requiredThemeContractSnippets = [
     snippet: "size.wot.buttonLargeRadius"
   },
   {
+    file: "src/design-system/native-chrome-resolver.ts",
+    label: "native chrome theme resolver",
+    snippet: "resolveNativeChromeTheme"
+  },
+  {
+    file: "src/design-system/native-chrome-resolver.ts",
+    label: "native chrome hex sanitizer",
+    snippet: "normalizeNativeHexColor"
+  },
+  {
     file: "src/design-system/nav-theme.ts",
-    label: "navigation theme fail callback",
+    label: "native chrome scheduler",
+    snippet: "scheduleNativeChromeTheme"
+  },
+  {
+    file: "src/design-system/nav-theme.ts",
+    label: "native navigation color API",
+    snippet: "setNavigationBarColor"
+  },
+  {
+    file: "src/design-system/nav-theme.ts",
+    label: "native background color API",
+    snippet: "setBackgroundColor"
+  },
+  {
+    file: "src/design-system/nav-theme.ts",
+    label: "native background text style API",
+    snippet: "setBackgroundTextStyle"
+  },
+  {
+    file: "src/design-system/nav-theme.ts",
+    label: "native chrome fail callback",
     snippet: "fail:"
   },
   {
     file: "src/design-system/nav-theme.ts",
-    label: "navigation theme debounce",
+    label: "native chrome debounce",
     snippet: "setTimeout"
   },
   {
     file: "src/App.vue",
-    label: "App navigation scheduler",
-    snippet: "scheduleNavigationTheme(theme.navigationTheme)"
+    label: "App native chrome scheduler",
+    snippet: "scheduleNativeChromeTheme(theme.nativeChromeTheme)"
+  },
+  {
+    file: "src/composables/useNativeChromeSync.ts",
+    label: "page native chrome sync composable",
+    snippet: "useNativeChromeSync"
   },
   {
     file: "src/App.vue",
@@ -529,11 +564,35 @@ for (const aliasName of requiredAliasVars) {
   }
 }
 
+const pageMetaBindingSnippets = [
+  ':background-text-style="theme.nativeChromeTheme.backgroundTextStyle"',
+  ':background-color="theme.nativeChromeTheme.backgroundColor"',
+  ':background-color-top="theme.nativeChromeTheme.backgroundColorTop"',
+  ':background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"',
+  ':page-style="theme.nativeChromeTheme.pageStyle"'
+]
+
 for (const pagePath of collectFiles("src/pages", true).filter((file) => file.endsWith(".vue"))) {
   const relativePath = normalizePath(pagePath)
   const content = readFileSync(pagePath, "utf8")
   if (!content.includes("<app-shell")) {
     addContractFinding(relativePath, "page bypasses AppShell", "<app-shell")
+  }
+
+  if (!content.includes("useNativeChromeSync(")) {
+    addContractFinding(relativePath, "page bypasses native chrome sync", "useNativeChromeSync()")
+  }
+
+  const pageMetaIndex = content.indexOf("<page-meta")
+  const appShellIndex = content.indexOf("<app-shell")
+  if (pageMetaIndex === -1 || appShellIndex === -1 || pageMetaIndex > appShellIndex) {
+    addContractFinding(relativePath, "page-meta is not before AppShell", "<page-meta")
+  }
+
+  for (const snippet of pageMetaBindingSnippets) {
+    if (!content.includes(snippet)) {
+      addContractFinding(relativePath, "page-meta missing native chrome binding", snippet)
+    }
   }
 }
 
@@ -562,6 +621,14 @@ for (const relativePath of [
   const content = readProjectFile(relativePath)
   if (content.includes("setNavigationBarColor")) {
     addContractFinding(relativePath, "forbidden navigation side effect", "setNavigationBarColor")
+  }
+
+  if (content.includes("setBackgroundColor")) {
+    addContractFinding(relativePath, "forbidden native background side effect", "setBackgroundColor")
+  }
+
+  if (content.includes("setBackgroundTextStyle")) {
+    addContractFinding(relativePath, "forbidden native background text side effect", "setBackgroundTextStyle")
   }
 
   if (relativePath.startsWith("src/design-system/") && /(?:uni|wx)\./.test(content)) {

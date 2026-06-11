@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import { watch } from "vue"
 import { onLaunch, onShow } from "@dcloudio/uni-app"
-import { scheduleNavigationTheme } from "@/design-system/nav-theme"
+import { scheduleNativeChromeTheme } from "@/design-system/nav-theme"
 import { initCloudBase } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
 
 const theme = useThemeStore()
 
-const scheduleCurrentNavigationTheme = () => {
-  scheduleNavigationTheme(theme.navigationTheme)
+const scheduleCurrentNativeChromeTheme = () => {
+  scheduleNativeChromeTheme(theme.nativeChromeTheme)
 }
 
 watch(
-  () => [theme.navigationTheme.frontColor, theme.navigationTheme.backgroundColor] as const,
-  scheduleCurrentNavigationTheme
+  () =>
+    [
+      theme.nativeChromeTheme.frontColor,
+      theme.nativeChromeTheme.navigationBarBackgroundColor,
+      theme.nativeChromeTheme.backgroundColor,
+      theme.nativeChromeTheme.backgroundColorTop,
+      theme.nativeChromeTheme.backgroundColorBottom,
+      theme.nativeChromeTheme.backgroundTextStyle,
+      theme.nativeChromeTheme.pageStyle
+    ] as const,
+  scheduleCurrentNativeChromeTheme
 )
 
 onLaunch(() => {
   theme.initTheme()
-  scheduleCurrentNavigationTheme()
+  scheduleCurrentNativeChromeTheme()
   initCloudBase()
 })
 
 onShow(() => {
   theme.bindSystemThemeListener()
-  scheduleCurrentNavigationTheme()
+  scheduleCurrentNativeChromeTheme()
 })
 </script>
 

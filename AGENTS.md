@@ -16,13 +16,14 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 - Wrap app pages in `wd-config-provider` and drive Wot theme through `theme` and `themeVars`.
 - Use SCSS and app CSS variables such as `--app-primary`, `--app-bg`, `--app-surface`, and `--app-text`.
 - Keep runtime theme resolution in `src/design-system/**`; `src/stores/theme.ts` should only own state, persistence, system theme listening, and calls into resolver modules.
-- Keep `palettes.ts`, `color-scale.ts`, `theme-resolver.ts`, `size-scale.ts`, `size-resolver.ts`, `typography-resolver.ts`, `wot-theme.ts`, and `css-vars.ts` pure. `nav-theme.ts` is the only design-system module allowed to schedule or call native navigation APIs.
+- Keep `palettes.ts`, `color-scale.ts`, `theme-resolver.ts`, `native-chrome-resolver.ts`, `size-scale.ts`, `size-resolver.ts`, `typography-resolver.ts`, `wot-theme.ts`, and `css-vars.ts` pure. `nav-theme.ts` is the only design-system module allowed to schedule or call WeChat native chrome APIs.
 - Curated palette presets must define complete light and dark semantic schemes. Keep the fixed six-palette inventory and pass the palette contrast checks in `pnpm scan:design-tokens`. Do not add arbitrary user hex color input.
 - `appCssVars` must output terminal alias variables such as `--app-bg`, `--app-surface`, `--app-primary`, and `--app-text`, not only `--app-color-*` canonical variables.
 - `AppShell.vue` is the only runtime app-level CSS variable injection root. Keep `theme.appStyle` on its root `view`.
 - Keep `providerKey` on `wd-config-provider` so Wot UI refreshes when resolved mode, palette, density, or font scale changes.
 - Wot UI themeVars for font sizes, button heights, and button radii must come from `src/design-system/size-resolver.ts`.
-- Native navigation-bar theme updates must go through the debounced scheduler in `src/design-system/nav-theme.ts`; do not call `uni.setNavigationBarColor` synchronously from palette or theme setters.
+- Native navigation/status/window/pull-down theme updates must go through `theme.nativeChromeTheme`, `src/composables/useNativeChromeSync.ts`, page-level `page-meta`, and the debounced scheduler in `src/design-system/nav-theme.ts`; do not call `uni.setNavigationBarColor`, `uni.setBackgroundColor`, or `uni.setBackgroundTextStyle` outside `nav-theme.ts`.
+- Keep `theme.json`/`src/theme.json` as first-frame system-theme fallbacks only. Pinia runtime theme remains the source of truth for manual app theme, with AppShell controlling content CSS variables and `nativeChromeTheme` controlling WeChat native chrome.
 - Use the design-token system in `src/styles/tokens/**`; page and component files must consume `var(--app-xxx)` or mixins from `src/styles/mixins.scss`.
 - Keep app token names in `src/design-system/token-registry.ts`; derive `AppCssVarName` and related unions from those registries instead of scattering manual `--app-*` string unions.
 - Add new `--app-*` token definitions only in `src/design-system/**` or `src/styles/tokens/**`. Pages and components may consume registered tokens but must not define new `--app-*` tokens, except for explicitly allowlisted component runtime variables such as `--app-option-group-columns` and `--app-option-swatch-*`.
