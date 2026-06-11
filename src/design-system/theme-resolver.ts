@@ -42,5 +42,5 @@ export const resolveAppCssVars = ({ theme, palette, size }: AppCssVarInput): App
 
 export const resolveNavigationTheme = (theme: AppTheme, vars: AppCssVars): NavigationTheme => ({
   frontColor: theme === "dark" ? "#ffffff" : "#000000",
-  backgroundColor: vars["--app-bg"] ?? vars["--app-color-bg-page"]
+  backgroundColor: (vars["--app-bg"] ?? vars["--app-color-bg-page"] ?? "#FFFFFF") as NavigationTheme["backgroundColor"]
 })

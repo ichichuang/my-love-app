@@ -1,47 +1,136 @@
 import type { ResolvedSizeTokens } from "@/design-system/size-resolver"
 import type { AppCssVars } from "@/design-system/types"
+import type { WotRequiredAppVarName } from "@/design-system/token-registry"
 import type { ConfigProviderThemeVars } from "wot-design-uni/components/wd-config-provider/types"
 
-export type WotThemeVars = Partial<ConfigProviderThemeVars>
+type RequiredWotThemeVarName =
+  | "colorTheme"
+  | "colorSuccess"
+  | "colorWarning"
+  | "colorDanger"
+  | "colorBlue"
+  | "colorWhite"
+  | "colorBlack"
+  | "colorGray1"
+  | "colorGray2"
+  | "colorGray3"
+  | "colorGray4"
+  | "colorGray5"
+  | "colorGray6"
+  | "colorGray7"
+  | "colorGray8"
+  | "fontGray1"
+  | "fontGray2"
+  | "fontGray3"
+  | "fontGray4"
+  | "fontWhite1"
+  | "fontWhite2"
+  | "fontWhite3"
+  | "fontWhite4"
+  | "colorTitle"
+  | "colorContent"
+  | "colorSecondary"
+  | "colorAid"
+  | "colorTip"
+  | "colorBorder"
+  | "colorBorderLight"
+  | "colorBg"
+  | "darkBackground"
+  | "darkBackground2"
+  | "darkBackground3"
+  | "darkColor"
+  | "darkColor2"
+  | "darkColor3"
+  | "darkBorderColor"
+  | "fsTitle"
+  | "fsContent"
+  | "fsSecondary"
+  | "fsAid"
+  | "fwMedium"
+  | "fwSemibold"
+  | "sizeSidePadding"
+  | "buttonDisabledOpacity"
+  | "buttonSmallHeight"
+  | "buttonSmallPadding"
+  | "buttonMediumHeight"
+  | "buttonMediumPadding"
+  | "buttonLargeHeight"
+  | "buttonLargePadding"
+  | "buttonSmallRadius"
+  | "buttonMediumRadius"
+  | "buttonLargeRadius"
+  | "buttonSmallFs"
+  | "buttonMediumFs"
+  | "buttonLargeFs"
+  | "buttonPrimaryBgColor"
+  | "buttonPrimaryColor"
+  | "buttonSuccessBgColor"
+  | "buttonSuccessColor"
+  | "buttonWarningBgColor"
+  | "buttonWarningColor"
+  | "buttonErrorBgColor"
+  | "buttonErrorColor"
+  | "buttonInfoBgColor"
+  | "buttonInfoColor"
+  | "buttonInfoPlainBorderColor"
+  | "buttonInfoPlainNormalColor"
+  | "buttonNormalColor"
+  | "buttonNormalDisabledColor"
+  | "buttonPlainBgColor"
+
+export type RequiredWotThemeVars = Required<Pick<ConfigProviderThemeVars, RequiredWotThemeVarName>>
+export type WotThemeVars = RequiredWotThemeVars & Partial<ConfigProviderThemeVars>
+
+const requiredAppVar = (vars: AppCssVars, name: WotRequiredAppVarName): string => {
+  const value = vars[name]
+  if (typeof value !== "string") {
+    throw new Error(`Missing required app CSS variable: ${name}`)
+  }
+  return value
+}
 
 export const resolveWotThemeVars = (vars: AppCssVars, size: ResolvedSizeTokens): WotThemeVars => {
-  const text = vars["--app-color-text-primary"]
-  const textSecondary = vars["--app-color-text-secondary"]
-  const textMuted = vars["--app-color-text-muted"]
-  const border = vars["--app-color-border"]
-  const bg = vars["--app-color-bg-page"]
-  const card = vars["--app-color-bg-card"]
-  const primary = vars["--app-color-primary"]
-  const danger = vars["--app-color-danger"]
-  const warning = vars["--app-color-warning"]
-  const success = vars["--app-color-success"]
-  const onPrimary = vars["--app-color-on-primary"]
-  const onAccent = vars["--app-color-on-accent"]
+  const text = requiredAppVar(vars, "--app-color-text-primary")
+  const textSecondary = requiredAppVar(vars, "--app-color-text-secondary")
+  const textMuted = requiredAppVar(vars, "--app-color-text-muted")
+  const textDisabled = requiredAppVar(vars, "--app-color-text-disabled")
+  const textInverse = requiredAppVar(vars, "--app-color-text-inverse")
+  const border = requiredAppVar(vars, "--app-color-border")
+  const borderStrong = requiredAppVar(vars, "--app-color-border-strong")
+  const bg = requiredAppVar(vars, "--app-color-bg-page")
+  const card = requiredAppVar(vars, "--app-color-bg-card")
+  const cardElevated = requiredAppVar(vars, "--app-color-bg-card-elevated")
+  const primary = requiredAppVar(vars, "--app-color-primary")
+  const danger = requiredAppVar(vars, "--app-color-danger")
+  const warning = requiredAppVar(vars, "--app-color-warning")
+  const success = requiredAppVar(vars, "--app-color-success")
+  const onPrimary = requiredAppVar(vars, "--app-color-on-primary")
+  const onAccent = requiredAppVar(vars, "--app-color-on-accent")
 
   return {
     colorTheme: primary,
     colorSuccess: success,
     colorWarning: warning,
     colorDanger: danger,
-    colorBlue: vars["--app-color-blue-person"],
+    colorBlue: requiredAppVar(vars, "--app-color-blue-person"),
     colorWhite: "#ffffff",
     colorBlack: "#000000",
-    colorGray1: vars["--app-color-text-primary"],
-    colorGray2: vars["--app-color-text-secondary"],
-    colorGray3: vars["--app-color-text-muted"],
-    colorGray4: vars["--app-color-text-disabled"],
-    colorGray5: vars["--app-color-border-strong"],
-    colorGray6: vars["--app-color-border"],
-    colorGray7: vars["--app-color-bg-card-elevated"],
-    colorGray8: vars["--app-color-bg-page"],
-    fontGray1: vars["--app-color-text-primary"],
-    fontGray2: vars["--app-color-text-secondary"],
-    fontGray3: vars["--app-color-text-muted"],
-    fontGray4: vars["--app-color-text-disabled"],
-    fontWhite1: vars["--app-color-on-primary"],
-    fontWhite2: vars["--app-color-on-accent"],
-    fontWhite3: vars["--app-color-on-overlay"],
-    fontWhite4: vars["--app-color-text-inverse"],
+    colorGray1: text,
+    colorGray2: textSecondary,
+    colorGray3: textMuted,
+    colorGray4: textDisabled,
+    colorGray5: borderStrong,
+    colorGray6: border,
+    colorGray7: cardElevated,
+    colorGray8: bg,
+    fontGray1: text,
+    fontGray2: textSecondary,
+    fontGray3: textMuted,
+    fontGray4: textDisabled,
+    fontWhite1: onPrimary,
+    fontWhite2: onAccent,
+    fontWhite3: requiredAppVar(vars, "--app-color-on-overlay"),
+    fontWhite4: textInverse,
     colorTitle: text,
     colorContent: text,
     colorSecondary: textSecondary,
@@ -50,9 +139,9 @@ export const resolveWotThemeVars = (vars: AppCssVars, size: ResolvedSizeTokens):
     colorBorder: border,
     colorBorderLight: border,
     colorBg: bg,
-    darkBackground: vars["--app-color-bg-page"],
+    darkBackground: bg,
     darkBackground2: card,
-    darkBackground3: vars["--app-color-bg-card-elevated"],
+    darkBackground3: cardElevated,
     darkColor: text,
     darkColor2: textSecondary,
     darkColor3: textMuted,
@@ -61,10 +150,10 @@ export const resolveWotThemeVars = (vars: AppCssVars, size: ResolvedSizeTokens):
     fsContent: size.wot.fsContent,
     fsSecondary: size.wot.fsSecondary,
     fsAid: size.wot.fsAid,
-    fwMedium: vars["--app-font-weight-medium"],
-    fwSemibold: vars["--app-font-weight-semibold"],
+    fwMedium: requiredAppVar(vars, "--app-font-weight-medium"),
+    fwSemibold: requiredAppVar(vars, "--app-font-weight-semibold"),
     sizeSidePadding: size.wot.sizeSidePadding,
-    buttonDisabledOpacity: vars["--app-disabled-opacity"],
+    buttonDisabledOpacity: requiredAppVar(vars, "--app-disabled-opacity"),
     buttonSmallHeight: size.wot.buttonSmallHeight,
     buttonSmallPadding: size.wot.buttonSmallPadding,
     buttonMediumHeight: size.wot.buttonMediumHeight,
@@ -80,17 +169,17 @@ export const resolveWotThemeVars = (vars: AppCssVars, size: ResolvedSizeTokens):
     buttonPrimaryBgColor: primary,
     buttonPrimaryColor: onPrimary,
     buttonSuccessBgColor: success,
-    buttonSuccessColor: vars["--app-color-success-foreground"],
+    buttonSuccessColor: requiredAppVar(vars, "--app-color-success-foreground"),
     buttonWarningBgColor: warning,
-    buttonWarningColor: vars["--app-color-warning-foreground"],
+    buttonWarningColor: requiredAppVar(vars, "--app-color-warning-foreground"),
     buttonErrorBgColor: danger,
-    buttonErrorColor: vars["--app-color-danger-foreground"],
-    buttonInfoBgColor: vars["--app-color-accent"],
+    buttonErrorColor: requiredAppVar(vars, "--app-color-danger-foreground"),
+    buttonInfoBgColor: requiredAppVar(vars, "--app-color-accent"),
     buttonInfoColor: onAccent,
-    buttonInfoPlainBorderColor: vars["--app-color-accent-border"],
-    buttonInfoPlainNormalColor: vars["--app-color-accent"],
-    buttonNormalColor: vars["--app-color-text-primary"],
-    buttonNormalDisabledColor: vars["--app-color-text-disabled"],
+    buttonInfoPlainBorderColor: requiredAppVar(vars, "--app-color-accent-border"),
+    buttonInfoPlainNormalColor: requiredAppVar(vars, "--app-color-accent"),
+    buttonNormalColor: text,
+    buttonNormalDisabledColor: textDisabled,
     buttonPlainBgColor: "transparent"
-  }
+  } satisfies RequiredWotThemeVars
 }

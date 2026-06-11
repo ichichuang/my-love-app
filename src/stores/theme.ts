@@ -2,6 +2,7 @@ import { computed, ref, watch } from "vue"
 import { defineStore } from "pinia"
 import { makeCssVars } from "@/design-system/css-vars"
 import { defaultPalette, getPaletteById, hasPalette, romanticPalettes } from "@/design-system/palettes"
+import type { PaletteId } from "@/design-system/palettes"
 import { resolveSizeTokens } from "@/design-system/size-resolver"
 import {
   resolveAppCssVars,
@@ -13,6 +14,7 @@ import {
 import type { AppCssVars, AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
 import { resolveWotThemeVars } from "@/design-system/wot-theme"
 
+export type { PaletteId }
 export type { AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
 export { romanticPalettes } from "@/design-system/palettes"
 
@@ -73,7 +75,7 @@ const readSavedThemeState = (): SavedThemeState | null => {
 
 export const useThemeStore = defineStore("theme", () => {
   const mode = ref<ThemeMode>("system")
-  const paletteId = ref(defaultPalette.id)
+  const paletteId = ref<PaletteId>(defaultPalette.id)
   const density = ref<ThemeDensity>("comfortable")
   const fontScale = ref<ThemeFontScale>("normal")
   const systemTheme = ref<AppTheme>("light")

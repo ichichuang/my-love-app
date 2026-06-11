@@ -1,10 +1,10 @@
-import type { AppCssVars, ScaleKey, ThemeDensity } from "@/design-system/types"
+import type { AppCssVars, RpxValue, ScaleKey, ThemeDensity } from "@/design-system/types"
+import { scaleKeys } from "@/design-system/types"
+import type { ScaleCssVarPrefix } from "@/design-system/token-registry"
 
-export type RpxScale = Record<ScaleKey, string>
+export type RpxScale = Record<ScaleKey, RpxValue>
 
-export const scaleKeys: ScaleKey[] = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl"]
-
-export const spacingScales: Record<ThemeDensity, RpxScale> = {
+export const spacingScales = {
   comfortable: {
     "2xs": "4rpx",
     xs: "8rpx",
@@ -25,9 +25,9 @@ export const spacingScales: Record<ThemeDensity, RpxScale> = {
     "2xl": "28rpx",
     "3xl": "34rpx"
   }
-}
+} satisfies Record<ThemeDensity, RpxScale>
 
-export const radiusScales: Record<ThemeDensity, RpxScale> = {
+export const radiusScales = {
   comfortable: {
     "2xs": "8rpx",
     xs: "12rpx",
@@ -48,9 +48,9 @@ export const radiusScales: Record<ThemeDensity, RpxScale> = {
     "2xl": "36rpx",
     "3xl": "44rpx"
   }
-}
+} satisfies Record<ThemeDensity, RpxScale>
 
-export const controlHeightScales: Record<ThemeDensity, RpxScale> = {
+export const controlHeightScales = {
   comfortable: {
     "2xs": "56rpx",
     xs: "64rpx",
@@ -71,9 +71,9 @@ export const controlHeightScales: Record<ThemeDensity, RpxScale> = {
     "2xl": "118rpx",
     "3xl": "144rpx"
   }
-}
+} satisfies Record<ThemeDensity, RpxScale>
 
-export const scaleToCssVars = (prefix: string, scale: RpxScale): AppCssVars =>
+export const scaleToCssVars = (prefix: ScaleCssVarPrefix, scale: RpxScale): AppCssVars =>
   scaleKeys.reduce<AppCssVars>((vars, key) => {
     vars[`--app-${prefix}-${key}`] = scale[key]
     return vars

@@ -12,6 +12,20 @@
 
 原生导航栏不参与同步主题切换链路。`App.vue` 只监听 `theme.navigationTheme` 并调用 `scheduleNavigationTheme`；真正的 `uni.setNavigationBarColor` 只允许出现在 `src/design-system/nav-theme.ts`，并由 debounce、delay 和 `fail` callback 兜底。
 
+## 1.1 类型治理
+
+`src/design-system/token-registry.ts` 是 `--app-*` 令牌名的登记入口。新增令牌必须先加入该注册表中的对应分组，再由 `src/design-system/**` 解析器或 `src/styles/tokens/**` 样式根输出。页面和组件只能消费已登记令牌，不能在 `src/pages/**` 或 `src/components/**` 内定义新的 `--app-*` 令牌；少量组件运行时变量必须加入 `intentionalDynamicComponentVarNames` 显式 allowlist。
+
+`AppCssVarName` 由注册表数组和 template literal 类型推导，`AppCssVars` 只允许登记过的应用令牌。局部工具变量，例如设计预览页的 `--preview-*`，应使用 `makeCssVars` 的通用 CSS 变量序列化能力，不要并入应用令牌体系。
+
+`scaleKeys` 是尺寸刻度唯一来源，`ScaleKey` 必须从 `scaleKeys` 推导。`scaleToCssVars` 只接受 `"space-scale"`、`"radius-scale"`、`"control-scale"` 三类前缀。
+
+策展配色的 `PaletteId` 必须从 `paletteSeeds` 推导。持久化读取仍接受历史未知字符串，但进入运行时状态前必须通过 `hasPalette` 校验并回退到默认配色。
+
+Wot UI 映射继续基于 `ConfigProviderThemeVars`，并通过项目级 `RequiredWotThemeVars` 锁定核心映射。新增或调整 Wot 映射时，优先复用 `resolveWotThemeVars`、`resolveSizeTokens`、`resolveTypographyTokens` 和注册表中的 `wotRequiredAppVarNames`。
+
+提交前除常规 `pnpm type-check` 外，应运行 `pnpm type-check:strict`。当前 strict 配置聚焦 `src/design-system/**` 与环境类型，用于约束设计系统基础类型，不承担全项目迁移。
+
 ## 2. 颜色令牌
 
 配色只允许使用 `src/design-system/palettes.ts` 中的策展预设，不提供任意十六进制输入。
@@ -160,6 +174,7 @@ CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
 pnpm scan:ui-copy
 pnpm scan:design-tokens
 pnpm type-check
+pnpm type-check:strict
 pnpm build:mp-weixin
 git diff --check
 ```
@@ -173,3 +188,4 @@ git diff --check
 - 设置页和色板是否绕过 `AppOptionButton`
 - 页面和组件是否出现 raw style 值
 - 使用的 `--app-*` 是否已登记在令牌系统中
+- 令牌定义是否只来自 `src/styles/**` 与 `src/design-system/**`，组件内动态变量是否在 allowlist 中

@@ -1,42 +1,56 @@
+import type { AppCssVarName, CssVarName } from "@/design-system/token-registry"
+import { scaleKeys } from "@/design-system/token-registry"
+
 export type AppTheme = "light" | "dark"
 export type ThemeMode = "system" | AppTheme
 export type ThemeDensity = "comfortable" | "compact"
 export type ThemeFontScale = "normal" | "large"
-export type ScaleKey = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
+export type ScaleKey = (typeof scaleKeys)[number]
 
-export type AppCssVars = Record<string, string>
+export { scaleKeys }
+
+export type RpxValue = `${number}rpx` | "0"
+export type MsValue = `${number}ms`
+export type CssHexColor = `#${string}`
+export type CssRgbaColor = `rgb(${string})` | `rgba(${string})`
+export type CssVarReference = `var(${CssVarName})`
+export type CssColorValue = CssHexColor | CssRgbaColor | CssVarReference | "transparent" | "currentColor" | "inherit"
+export type CssShadowValue = "none" | `${string} ${CssColorValue}` | CssVarReference
+export type CssTransitionValue = `${MsValue} ${string}` | `${string} ${MsValue} ${string}` | CssVarReference
+export type CssVarRecord<TName extends CssVarName = CssVarName> = Partial<Record<TName, string>>
+export type AppCssVars = Partial<Record<AppCssVarName, string>>
 
 export interface ColorRole {
-  base: string
-  soft: string
-  muted: string
-  pressed: string
-  active: string
-  foreground: string
-  border: string
-  disabled: string
-  divider: string
-  focusRing: string
+  base: CssColorValue
+  soft: CssColorValue
+  muted: CssColorValue
+  pressed: CssColorValue
+  active: CssColorValue
+  foreground: CssColorValue
+  border: CssColorValue
+  disabled: CssColorValue
+  divider: CssColorValue
+  focusRing: CssColorValue
 }
 
 export interface TextColorRole {
-  primary: string
-  secondary: string
-  muted: string
-  disabled: string
-  inverse: string
-  onPrimary: string
-  onAccent: string
-  onOverlay: string
+  primary: CssColorValue
+  secondary: CssColorValue
+  muted: CssColorValue
+  disabled: CssColorValue
+  inverse: CssColorValue
+  onPrimary: CssColorValue
+  onAccent: CssColorValue
+  onOverlay: CssColorValue
 }
 
 export interface BorderColorRole {
-  base: string
-  muted: string
-  strong: string
-  divider: string
-  disabled: string
-  focusRing: string
+  base: CssColorValue
+  muted: CssColorValue
+  strong: CssColorValue
+  divider: CssColorValue
+  disabled: CssColorValue
+  focusRing: CssColorValue
 }
 
 export interface StatusColorRoles {
@@ -47,11 +61,11 @@ export interface StatusColorRoles {
 }
 
 export interface ShadowColorRole {
-  card: string
-  floating: string
-  button: string
-  image: string
-  logo: string
+  card: CssShadowValue
+  floating: CssShadowValue
+  button: CssShadowValue
+  image: CssShadowValue
+  logo: CssShadowValue
 }
 
 export interface SemanticColorScheme {
@@ -69,25 +83,41 @@ export interface SemanticColorScheme {
   overlay: ColorRole
   swatch: ColorRole
   photoBadge: ColorRole
-  heartSoft: string
-  pageGlow: string
+  heartSoft: CssColorValue
+  pageGlow: CssColorValue
   shadows: ShadowColorRole
 }
 
-export interface RomanticPalette {
+export interface PaletteSchemeSeed {
+  page: CssHexColor
+  card: CssHexColor
+  text: CssHexColor
+  primary: CssHexColor
+  accent: CssHexColor
+}
+
+export interface CuratedPaletteSeed {
   id: string
   name: string
   description: string
+  light: PaletteSchemeSeed
+  dark: PaletteSchemeSeed
+}
+
+export interface RomanticPalette<TId extends string = string> {
+  id: TId
+  name: string
+  description: string
   preview: {
-    primary: string
-    accent: string
-    glow: string
-    foreground: string
+    primary: CssColorValue
+    accent: CssColorValue
+    glow: CssColorValue
+    foreground: CssColorValue
   }
   schemes: Record<AppTheme, SemanticColorScheme>
 }
 
 export interface NavigationTheme {
   frontColor: "#ffffff" | "#000000"
-  backgroundColor: string
+  backgroundColor: CssColorValue
 }

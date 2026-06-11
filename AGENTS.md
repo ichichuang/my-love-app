@@ -24,6 +24,9 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 - Wot UI themeVars for font sizes, button heights, and button radii must come from `src/design-system/size-resolver.ts`.
 - Native navigation-bar theme updates must go through the debounced scheduler in `src/design-system/nav-theme.ts`; do not call `uni.setNavigationBarColor` synchronously from palette or theme setters.
 - Use the design-token system in `src/styles/tokens/**`; page and component files must consume `var(--app-xxx)` or mixins from `src/styles/mixins.scss`.
+- Keep app token names in `src/design-system/token-registry.ts`; derive `AppCssVarName` and related unions from those registries instead of scattering manual `--app-*` string unions.
+- Add new `--app-*` token definitions only in `src/design-system/**` or `src/styles/tokens/**`. Pages and components may consume registered tokens but must not define new `--app-*` tokens, except for explicitly allowlisted component runtime variables such as `--app-option-group-columns` and `--app-option-swatch-*`.
+- Future AI edits should prefer typed helpers such as `makeCssVars`, `resolveAppCssAliases`, `scaleToCssVars`, `resolvePaletteColorVars`, `resolveSizeTokens`, `resolveTypographyTokens`, and `resolveWotThemeVars` over ad hoc CSS variable maps.
 - Do not add raw colors, fixed spacing, fixed radius, direct shadows, fixed font sizes, opacity values, or transition durations inside `src/pages/**` or `src/components/**`. Add or reuse tokens instead.
 - Use `AppOptionGroup.vue` and `AppOptionButton.vue` for setting selectors and palette swatches. Keep CTA and destructive actions on Wot `wd-button` when appropriate.
 - Preserve the global WeChat `button`, `button::after`, and `button:after` reset in `src/App.vue`.
@@ -57,5 +60,6 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 ## Validation
 
 - Run `pnpm type-check` after TypeScript changes.
+- Run `pnpm type-check:strict` after design-system type or token-registry changes when the script exists.
 - Run `pnpm build:mp-weixin` before reporting completion when practical.
 - Report any environment placeholders that must be filled by the user.

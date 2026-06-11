@@ -25,7 +25,7 @@ export interface ResolvedSizeTokens {
   }
 }
 
-const structuralVars = (density: ThemeDensity): AppCssVars => {
+const structuralVars = (density: ThemeDensity) => {
   const { spacing, radius, control } = resolveDensityScales(density)
   const isCompact = density === "compact"
 
@@ -158,7 +158,7 @@ const structuralVars = (density: ThemeDensity): AppCssVars => {
     "--app-decor-opacity": "0.7",
     "--app-disabled-opacity": "0.3",
     "--app-fade-offset-y": spacing.md
-  }
+  } satisfies AppCssVars
 }
 
 export const resolveSizeTokens = (density: ThemeDensity, fontScale: ThemeFontScale): ResolvedSizeTokens => {

@@ -1,19 +1,24 @@
 import type { AppCssVars, AppTheme, ColorRole, RomanticPalette, SemanticColorScheme, StatusColorRoles } from "@/design-system/types"
+import type { ColorRoleCssVarName, SemanticColorRoleName } from "@/design-system/token-registry"
 
 export const makeColorRole = (role: ColorRole): ColorRole => role
 
-const roleVars = (prefix: string, role: ColorRole): AppCssVars => ({
-  [`--app-color-${prefix}`]: role.base,
-  [`--app-color-${prefix}-soft`]: role.soft,
-  [`--app-color-${prefix}-muted`]: role.muted,
-  [`--app-color-${prefix}-pressed`]: role.pressed,
-  [`--app-color-${prefix}-active`]: role.active,
-  [`--app-color-${prefix}-foreground`]: role.foreground,
-  [`--app-color-${prefix}-border`]: role.border,
-  [`--app-color-${prefix}-disabled`]: role.disabled,
-  [`--app-color-${prefix}-divider`]: role.divider,
-  [`--app-color-${prefix}-focus-ring`]: role.focusRing
-})
+const roleVars = <TPrefix extends SemanticColorRoleName>(prefix: TPrefix, role: ColorRole): AppCssVars => {
+  type RoleVarName = Extract<ColorRoleCssVarName, `--app-color-${TPrefix}` | `--app-color-${TPrefix}-${string}`>
+
+  return {
+    [`--app-color-${prefix}`]: role.base,
+    [`--app-color-${prefix}-soft`]: role.soft,
+    [`--app-color-${prefix}-muted`]: role.muted,
+    [`--app-color-${prefix}-pressed`]: role.pressed,
+    [`--app-color-${prefix}-active`]: role.active,
+    [`--app-color-${prefix}-foreground`]: role.foreground,
+    [`--app-color-${prefix}-border`]: role.border,
+    [`--app-color-${prefix}-disabled`]: role.disabled,
+    [`--app-color-${prefix}-divider`]: role.divider,
+    [`--app-color-${prefix}-focus-ring`]: role.focusRing
+  } as Record<RoleVarName, string>
+}
 
 const statusVars = (status: StatusColorRoles): AppCssVars => ({
   ...roleVars("status-danger", status.danger),
@@ -36,7 +41,7 @@ const statusVars = (status: StatusColorRoles): AppCssVars => ({
   "--app-color-info-soft": status.info.soft,
   "--app-color-info-foreground": status.info.foreground,
   "--app-color-info-border": status.info.border
-})
+} satisfies AppCssVars)
 
 export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCssVars => ({
   ...roleVars("page", scheme.page),
@@ -71,6 +76,7 @@ export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCs
   "--app-color-on-primary": scheme.text.onPrimary,
   "--app-color-on-accent": scheme.text.onAccent,
   "--app-color-on-overlay": scheme.text.onOverlay,
+  "--app-color-overlay-strong": scheme.overlay.pressed,
 
   "--app-color-border": scheme.border.base,
   "--app-color-border-muted": scheme.border.muted,
@@ -95,7 +101,7 @@ export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCs
   "--app-shadow-button": scheme.shadows.button,
   "--app-shadow-image": scheme.shadows.image,
   "--app-shadow-logo": scheme.shadows.logo
-})
+} satisfies AppCssVars)
 
 export const resolvePaletteColorVars = (palette: RomanticPalette, theme: AppTheme): AppCssVars =>
   semanticColorSchemeToCssVars(palette.schemes[theme])
@@ -105,4 +111,4 @@ export const resolvePalettePreviewVars = (palette: RomanticPalette): AppCssVars 
   "--app-option-swatch-accent": palette.preview.accent,
   "--app-option-swatch-glow": palette.preview.glow,
   "--app-option-swatch-foreground": palette.preview.foreground
-})
+} satisfies AppCssVars)

@@ -205,7 +205,7 @@
 import { computed, defineComponent, h } from "vue"
 import { makeCssVars } from "@/design-system/css-vars"
 import { resolveThemeColorVars } from "@/design-system/theme-resolver"
-import type { AppCssVars, AppTheme, RomanticPalette } from "@/design-system/types"
+import type { AppTheme, RomanticPalette } from "@/design-system/types"
 import { romanticPalettes, useThemeStore, type ThemeDensity, type ThemeFontScale, type ThemeMode } from "@/stores/theme"
 
 const PreviewSection = defineComponent({
@@ -318,7 +318,7 @@ const diagnostics = computed(() => [
   { key: "wotThemeVars", caption: "组件变量", value: Object.keys(theme.wotThemeVars).length > 0 ? "已启用" : "未启用" }
 ])
 
-const cssVars = (vars: AppCssVars) => makeCssVars(vars)
+const cssVars = makeCssVars
 
 const schemeStyle = (palette: RomanticPalette, mode: AppTheme) => {
   const vars = resolveThemeColorVars(mode, palette)

@@ -1,4 +1,6 @@
-import type { AppCssVars } from "@/design-system/types"
+import { appAliasVarNames } from "@/design-system/token-registry"
+import type { AppAliasVarName, AppCssVarName, CssVarName } from "@/design-system/token-registry"
+import type { AppCssVars, CssVarRecord } from "@/design-system/types"
 
 export const appCssAliasMap = {
   "--app-primary": "--app-color-primary",
@@ -38,12 +40,14 @@ export const appCssAliasMap = {
   "--app-photo-badge": "--app-color-photo-badge-bg",
   "--app-glow": "--app-color-page-glow",
   "--app-shadow": "--app-shadow-card"
-} as const
+} as const satisfies Record<AppAliasVarName, AppCssVarName>
 
-export const appCssAliasNames = Object.keys(appCssAliasMap)
+export const appCssAliasNames = appAliasVarNames
 
 export const resolveAppCssAliases = (vars: AppCssVars): AppCssVars => {
-  return Object.entries(appCssAliasMap).reduce<AppCssVars>((aliases, [aliasName, sourceName]) => {
+  const entries = Object.entries(appCssAliasMap) as Array<[AppAliasVarName, AppCssVarName]>
+
+  return entries.reduce<AppCssVars>((aliases, [aliasName, sourceName]) => {
     const value = vars[sourceName]
     if (typeof value === "string") {
       aliases[aliasName] = value
@@ -52,7 +56,7 @@ export const resolveAppCssAliases = (vars: AppCssVars): AppCssVars => {
   }, {})
 }
 
-export const makeCssVars = (vars: AppCssVars): string =>
+export const makeCssVars = <TName extends CssVarName>(vars: CssVarRecord<TName>): string =>
   Object.entries(vars)
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([key, value]) => `${key}: ${value}`)

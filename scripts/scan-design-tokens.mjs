@@ -5,7 +5,7 @@ import ts from "typescript"
 
 const root = process.cwd()
 const scanRoots = ["src/components", "src/pages", "src/App.vue"]
-const definitionRoots = ["src/styles", "src/design-system", "src/components"]
+const definitionRoots = ["src/styles", "src/design-system"]
 const sourceExtensions = new Set([".vue", ".scss", ".ts"])
 
 const allowedPathPatterns = [
@@ -34,21 +34,6 @@ const allowedLengthValues = new Set([
   "48",
   "50%",
   "1200"
-])
-
-const scaleKeys = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl"]
-
-const dynamicAppTokens = new Set([
-  "--app-option-group-columns",
-  "--app-option-swatch-primary",
-  "--app-option-swatch-accent",
-  "--app-option-swatch-glow",
-  "--app-option-swatch-foreground",
-  ...scaleKeys.flatMap((key) => [
-    `--app-space-scale-${key}`,
-    `--app-radius-scale-${key}`,
-    `--app-control-scale-${key}`
-  ])
 ])
 
 const checks = [
@@ -268,6 +253,56 @@ const readProjectFile = (relativePath) => {
   }
 }
 
+const fallbackScaleKeys = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl"]
+
+const fallbackDynamicAppTokens = [
+  "--app-option-group-columns",
+  "--app-option-swatch-primary",
+  "--app-option-swatch-accent",
+  "--app-option-swatch-glow",
+  "--app-option-swatch-foreground",
+  ...fallbackScaleKeys.flatMap((key) => [
+    `--app-space-scale-${key}`,
+    `--app-radius-scale-${key}`,
+    `--app-control-scale-${key}`
+  ])
+]
+
+const loadTokenRegistry = () => {
+  const source = readProjectFile("src/design-system/token-registry.ts")
+  if (!source) {
+    return {
+      appCssVarNames: [],
+      intentionalDynamicComponentVarNames: fallbackDynamicAppTokens
+    }
+  }
+
+  const output = ts.transpileModule(source, {
+    compilerOptions: {
+      esModuleInterop: true,
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020
+    }
+  }).outputText
+
+  const module = { exports: {} }
+  const sandbox = {
+    exports: module.exports,
+    module
+  }
+
+  vm.runInNewContext(output, sandbox, { filename: "src/design-system/token-registry.ts" })
+  return module.exports
+}
+
+const tokenRegistry = loadTokenRegistry()
+const registryAppTokens = new Set(Array.isArray(tokenRegistry.appCssVarNames) ? tokenRegistry.appCssVarNames : [])
+const dynamicAppTokens = new Set(
+  Array.isArray(tokenRegistry.intentionalDynamicComponentVarNames)
+    ? tokenRegistry.intentionalDynamicComponentVarNames
+    : fallbackDynamicAppTokens
+)
+
 const expectedPaletteContracts = {
   "warm-paper-red-blue": {
     name: "暖纸红蓝",
@@ -430,7 +465,7 @@ const addPaletteFinding = (label, value) => {
   addFinding("src/design-system/palettes.ts", 1, label, value)
 }
 
-const knownAppTokens = new Set(dynamicAppTokens)
+const knownAppTokens = new Set([...registryAppTokens, ...dynamicAppTokens])
 for (const filePath of definitionRoots.flatMap((target) => collectFiles(target, true))) {
   const content = readFileSync(filePath, "utf8")
   appTokenDefinitionPattern.lastIndex = 0

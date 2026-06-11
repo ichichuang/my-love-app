@@ -1,5 +1,20 @@
 import { makeColorRole } from "@/design-system/color-scale"
-import type { AppTheme, ColorRole, RomanticPalette, SemanticColorScheme, ShadowColorRole, StatusColorRoles, TextColorRole } from "@/design-system/types"
+import type {
+  AppTheme,
+  BorderColorRole,
+  ColorRole,
+  CssColorValue,
+  CssHexColor,
+  CssRgbaColor,
+  CssShadowValue,
+  CuratedPaletteSeed,
+  PaletteSchemeSeed,
+  RomanticPalette,
+  SemanticColorScheme,
+  ShadowColorRole,
+  StatusColorRoles,
+  TextColorRole
+} from "@/design-system/types"
 
 interface RgbColor {
   r: number
@@ -7,41 +22,25 @@ interface RgbColor {
   b: number
 }
 
-interface PaletteSchemeSeed {
-  page: string
-  card: string
-  text: string
-  primary: string
-  accent: string
-}
-
-interface CuratedPaletteSeed {
-  id: string
-  name: string
-  description: string
-  light: PaletteSchemeSeed
-  dark: PaletteSchemeSeed
-}
-
-const WHITE = "#FFFFFF"
-const DARK_INK = "#111827"
-const BLACK = "#000000"
+const WHITE: CssHexColor = "#FFFFFF"
+const DARK_INK: CssHexColor = "#111827"
+const BLACK: CssHexColor = "#000000"
 
 const lightStatusBases = {
   danger: "#96505E",
   warning: "#87612E",
   success: "#4F715F",
   info: "#4B7087"
-} as const
+} as const satisfies Record<keyof StatusColorRoles, CssHexColor>
 
 const darkStatusBases = {
   danger: "#E79AA3",
   warning: "#D9B878",
   success: "#9AC2A8",
   info: "#9FC6DA"
-} as const
+} as const satisfies Record<keyof StatusColorRoles, CssHexColor>
 
-const paletteSeeds: CuratedPaletteSeed[] = [
+const paletteSeeds = [
   {
     id: "warm-paper-red-blue",
     name: "暖纸红蓝",
@@ -156,23 +155,25 @@ const paletteSeeds: CuratedPaletteSeed[] = [
       accent: "#E09A88"
     }
   }
-]
+] as const satisfies readonly CuratedPaletteSeed[]
+
+export type PaletteId = (typeof paletteSeeds)[number]["id"]
 
 const clampChannel = (value: number): number => Math.max(0, Math.min(255, Math.round(value)))
 
-const normalizeHex = (hex: string): string => {
+const normalizeHex = (hex: CssHexColor): CssHexColor => {
   const value = hex.replace("#", "")
   if (value.length === 3) {
     return `#${value
       .split("")
       .map((character) => `${character}${character}`)
       .join("")
-      .toUpperCase()}`
+      .toUpperCase()}` as CssHexColor
   }
-  return `#${value.toUpperCase()}`
+  return `#${value.toUpperCase()}` as CssHexColor
 }
 
-const hexToRgb = (hex: string): RgbColor => {
+const hexToRgb = (hex: CssHexColor): RgbColor => {
   const normalized = normalizeHex(hex).slice(1)
   return {
     r: Number.parseInt(normalized.slice(0, 2), 16),
@@ -181,13 +182,13 @@ const hexToRgb = (hex: string): RgbColor => {
   }
 }
 
-const rgbToHex = ({ r, g, b }: RgbColor): string =>
+const rgbToHex = ({ r, g, b }: RgbColor): CssHexColor =>
   `#${[r, g, b]
     .map((channel) => clampChannel(channel).toString(16).padStart(2, "0"))
     .join("")
-    .toUpperCase()}`
+    .toUpperCase()}` as CssHexColor
 
-const mix = (from: string, to: string, weight: number): string => {
+const mix = (from: CssHexColor, to: CssHexColor, weight: number): CssHexColor => {
   const left = hexToRgb(from)
   const right = hexToRgb(to)
   return rgbToHex({
@@ -197,7 +198,7 @@ const mix = (from: string, to: string, weight: number): string => {
   })
 }
 
-const alpha = (hex: string, opacity: number): string => {
+const alpha = (hex: CssHexColor, opacity: number): CssRgbaColor => {
   const color = hexToRgb(hex)
   return `rgba(${color.r}, ${color.g}, ${color.b}, ${opacity})`
 }
@@ -207,12 +208,12 @@ const luminanceChannel = (channel: number): number => {
   return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
 }
 
-const luminance = (hex: string): number => {
+const luminance = (hex: CssHexColor): number => {
   const color = hexToRgb(hex)
   return 0.2126 * luminanceChannel(color.r) + 0.7152 * luminanceChannel(color.g) + 0.0722 * luminanceChannel(color.b)
 }
 
-const contrastRatio = (left: string, right: string): number => {
+const contrastRatio = (left: CssHexColor, right: CssHexColor): number => {
   const leftLuminance = luminance(left)
   const rightLuminance = luminance(right)
   const lighter = Math.max(leftLuminance, rightLuminance)
@@ -220,20 +221,20 @@ const contrastRatio = (left: string, right: string): number => {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-const readableForeground = (background: string, darkInk = DARK_INK): string =>
+const readableForeground = (background: CssHexColor, darkInk = DARK_INK): CssHexColor =>
   contrastRatio(WHITE, background) >= 4.5 ? WHITE : darkInk
 
 const role = (
-  base: string,
-  soft: string,
-  muted: string,
-  pressed: string,
-  active: string,
-  foreground: string,
-  border: string,
-  disabled: string,
-  divider: string,
-  focusRing: string
+  base: CssColorValue,
+  soft: CssColorValue,
+  muted: CssColorValue,
+  pressed: CssColorValue,
+  active: CssColorValue,
+  foreground: CssColorValue,
+  border: CssColorValue,
+  disabled: CssColorValue,
+  divider: CssColorValue,
+  focusRing: CssColorValue
 ): ColorRole =>
   makeColorRole({
     base,
@@ -257,9 +258,9 @@ const makeTextRole = (seed: PaletteSchemeSeed, mode: AppTheme): TextColorRole =>
   onPrimary: readableForeground(seed.primary),
   onAccent: readableForeground(seed.accent),
   onOverlay: WHITE
-})
+} satisfies TextColorRole)
 
-const makeToneRole = (base: string, mode: AppTheme): ColorRole =>
+const makeToneRole = (base: CssHexColor, mode: AppTheme): ColorRole =>
   role(
     base,
     mode === "light" ? mix(base, WHITE, 0.78) : alpha(base, 0.22),
@@ -283,16 +284,16 @@ const makeStatusRoles = (mode: AppTheme): StatusColorRoles => {
   }
 }
 
-const makeBorderRole = (text: string, primary: string, mode: AppTheme) => ({
+const makeBorderRole = (text: CssHexColor, primary: CssHexColor, mode: AppTheme): BorderColorRole => ({
   base: alpha(text, mode === "light" ? 0.14 : 0.15),
   muted: alpha(text, mode === "light" ? 0.1 : 0.1),
   strong: alpha(text, mode === "light" ? 0.23 : 0.25),
   divider: alpha(text, mode === "light" ? 0.12 : 0.13),
   disabled: alpha(text, mode === "light" ? 0.08 : 0.08),
   focusRing: alpha(primary, mode === "light" ? 0.38 : 0.44)
-})
+} satisfies BorderColorRole)
 
-const makeOverlayRole = (text: string, mode: AppTheme): ColorRole => {
+const makeOverlayRole = (text: CssHexColor, mode: AppTheme): ColorRole => {
   const overlayBase = mode === "light" ? text : BLACK
   return role(
     alpha(overlayBase, mode === "light" ? 0.3 : 0.46),
@@ -308,7 +309,7 @@ const makeOverlayRole = (text: string, mode: AppTheme): ColorRole => {
   )
 }
 
-const makePhotoBadgeRole = (text: string, mode: AppTheme): ColorRole => {
+const makePhotoBadgeRole = (text: CssHexColor, mode: AppTheme): ColorRole => {
   const badgeBase = mode === "light" ? text : BLACK
   return role(
     alpha(badgeBase, mode === "light" ? 0.34 : 0.5),
@@ -324,34 +325,42 @@ const makePhotoBadgeRole = (text: string, mode: AppTheme): ColorRole => {
   )
 }
 
-const makeSwatchRole = (primary: ColorRole, accent: ColorRole, mode: AppTheme): ColorRole =>
+const makeSwatchRole = (
+  primary: ColorRole,
+  accent: ColorRole,
+  primaryBase: CssHexColor,
+  accentBase: CssHexColor,
+  mode: AppTheme
+): ColorRole =>
   role(
     primary.base,
     primary.soft,
     primary.muted,
     primary.pressed,
     mode === "light" ? alpha(WHITE, 0.28) : alpha(DARK_INK, 0.32),
-    readableForeground(mix(primary.base, accent.base, 0.5)),
+    readableForeground(mix(primaryBase, accentBase, 0.5)),
     mode === "light" ? alpha(WHITE, 0.86) : alpha(WHITE, 0.76),
     mode === "light" ? alpha(WHITE, 0.34) : alpha(WHITE, 0.22),
     mode === "light" ? alpha(WHITE, 0.28) : alpha(WHITE, 0.2),
     alpha(WHITE, 0.9)
   )
 
+const shadow = (value: CssShadowValue): CssShadowValue => value
+
 const makeShadows = (seed: PaletteSchemeSeed, mode: AppTheme): ShadowColorRole => {
   const shadowBase = mode === "light" ? seed.text : BLACK
   return {
-    card: `0 24rpx 80rpx ${alpha(shadowBase, mode === "light" ? 0.13 : 0.24)}`,
-    floating: `0 28rpx 96rpx ${alpha(shadowBase, mode === "light" ? 0.17 : 0.34)}`,
-    button: `0 12rpx 28rpx ${alpha(shadowBase, mode === "light" ? 0.12 : 0.2)}`,
-    image: `0 12rpx 30rpx ${alpha(shadowBase, mode === "light" ? 0.1 : 0.2)}`,
-    logo: `0 16rpx 42rpx ${alpha(shadowBase, mode === "light" ? 0.12 : 0.22)}`
-  }
+    card: shadow(`0 24rpx 80rpx ${alpha(shadowBase, mode === "light" ? 0.13 : 0.24)}`),
+    floating: shadow(`0 28rpx 96rpx ${alpha(shadowBase, mode === "light" ? 0.17 : 0.34)}`),
+    button: shadow(`0 12rpx 28rpx ${alpha(shadowBase, mode === "light" ? 0.12 : 0.2)}`),
+    image: shadow(`0 12rpx 30rpx ${alpha(shadowBase, mode === "light" ? 0.1 : 0.2)}`),
+    logo: shadow(`0 16rpx 42rpx ${alpha(shadowBase, mode === "light" ? 0.12 : 0.22)}`)
+  } satisfies ShadowColorRole
 }
 
 const makeScheme = (seed: PaletteSchemeSeed, mode: AppTheme): SemanticColorScheme => {
   const text = makeTextRole(seed, mode)
-  const border = makeBorderRole(text.primary, seed.primary, mode)
+  const border = makeBorderRole(seed.text, seed.primary, mode)
   const pageSoft = mode === "light" ? mix(seed.page, seed.primary, 0.045) : mix(seed.page, seed.card, 0.62)
   const pageMuted = mode === "light" ? mix(seed.page, seed.text, 0.075) : mix(seed.page, seed.card, 0.82)
   const cardSoft = mode === "light" ? mix(seed.card, seed.primary, 0.035) : mix(seed.card, seed.primary, 0.07)
@@ -373,16 +382,16 @@ const makeScheme = (seed: PaletteSchemeSeed, mode: AppTheme): SemanticColorSchem
     redPerson: primary,
     bluePerson: accent,
     status: makeStatusRoles(mode),
-    overlay: makeOverlayRole(text.primary, mode),
-    swatch: makeSwatchRole(primary, accent, mode),
-    photoBadge: makePhotoBadgeRole(text.primary, mode),
+    overlay: makeOverlayRole(seed.text, mode),
+    swatch: makeSwatchRole(primary, accent, seed.primary, seed.accent, mode),
+    photoBadge: makePhotoBadgeRole(seed.text, mode),
     heartSoft: mode === "light" ? mix(seed.primary, seed.card, 0.84) : alpha(seed.primary, 0.18),
     pageGlow: alpha(mode === "light" ? seed.primary : seed.accent, mode === "light" ? 0.15 : 0.14),
     shadows: makeShadows(seed, mode)
-  }
+  } satisfies SemanticColorScheme
 }
 
-const makePalette = (seed: CuratedPaletteSeed): RomanticPalette => ({
+const makePalette = <TSeed extends CuratedPaletteSeed>(seed: TSeed): RomanticPalette<TSeed["id"]> => ({
   id: seed.id,
   name: seed.name,
   description: seed.description,
@@ -396,14 +405,14 @@ const makePalette = (seed: CuratedPaletteSeed): RomanticPalette => ({
     light: makeScheme(seed.light, "light"),
     dark: makeScheme(seed.dark, "dark")
   }
-})
+} satisfies RomanticPalette<TSeed["id"]>)
 
-export const romanticPalettes: RomanticPalette[] = paletteSeeds.map(makePalette)
+export const romanticPalettes = paletteSeeds.map((seed) => makePalette(seed)) as readonly RomanticPalette<PaletteId>[]
 
 export const defaultPalette = romanticPalettes[0]
 
-export const getPaletteById = (paletteId: string): RomanticPalette =>
+export const getPaletteById = (paletteId: string): RomanticPalette<PaletteId> =>
   romanticPalettes.find((palette) => palette.id === paletteId) ?? defaultPalette
 
-export const hasPalette = (paletteId: string): boolean =>
+export const hasPalette = (paletteId: string): paletteId is PaletteId =>
   romanticPalettes.some((palette) => palette.id === paletteId)

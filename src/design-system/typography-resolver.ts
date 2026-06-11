@@ -1,8 +1,8 @@
-import type { AppCssVars, ScaleKey, ThemeFontScale } from "@/design-system/types"
+import type { AppCssVars, RpxValue, ScaleKey, ThemeFontScale } from "@/design-system/types"
 
-type FontRamp = Record<ScaleKey, string>
+type FontRamp = Record<ScaleKey, RpxValue>
 
-const fontRamps: Record<ThemeFontScale, FontRamp> = {
+const fontRamps = {
   normal: {
     "2xs": "18rpx",
     xs: "20rpx",
@@ -23,7 +23,7 @@ const fontRamps: Record<ThemeFontScale, FontRamp> = {
     "2xl": "34rpx",
     "3xl": "40rpx"
   }
-}
+} satisfies Record<ThemeFontScale, FontRamp>
 
 export interface ResolvedTypographyTokens {
   cssVars: AppCssVars
@@ -48,7 +48,7 @@ export const resolveTypographyTokens = (fontScale: ThemeFontScale): ResolvedTypo
   const medium = "500"
   const semibold = "600"
 
-  const cssVars: AppCssVars = {
+  const cssVars = {
     "--app-font-family-body": bodyFamily,
     "--app-font-family-display": displayFamily,
     "--app-font-weight-medium": medium,
@@ -75,7 +75,7 @@ export const resolveTypographyTokens = (fontScale: ThemeFontScale): ResolvedTypo
     "--app-font-size-6xl": fontScale === "large" ? "48rpx" : "46rpx",
     "--app-font-size-7xl": fontScale === "large" ? "52rpx" : "50rpx",
     "--app-font-size-page-title": fontScale === "large" ? "54rpx" : "52rpx"
-  }
+  } satisfies AppCssVars
 
   return {
     cssVars: {

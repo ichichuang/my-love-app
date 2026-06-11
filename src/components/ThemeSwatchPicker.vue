@@ -18,14 +18,14 @@
 <script setup lang="ts">
 import { resolvePalettePreviewVars } from "@/design-system/color-scale"
 import { makeCssVars } from "@/design-system/css-vars"
-import { romanticPalettes, type RomanticPalette } from "@/stores/theme"
+import { romanticPalettes, type PaletteId, type RomanticPalette } from "@/stores/theme"
 
 defineProps<{
-  paletteId: string
+  paletteId: PaletteId
 }>()
 
 const emit = defineEmits<{
-  selectPalette: [id: string]
+  selectPalette: [id: PaletteId]
 }>()
 
 const swatchStyle = (palette: RomanticPalette) =>
