@@ -1,5 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { extname, join, relative } from "node:path"
+import vm from "node:vm"
+import ts from "typescript"
 
 const root = process.cwd()
 const scanRoots = ["src/components", "src/pages", "src/App.vue"]
@@ -41,6 +43,7 @@ const dynamicAppTokens = new Set([
   "--app-option-swatch-primary",
   "--app-option-swatch-accent",
   "--app-option-swatch-glow",
+  "--app-option-swatch-foreground",
   ...scaleKeys.flatMap((key) => [
     `--app-space-scale-${key}`,
     `--app-radius-scale-${key}`,
@@ -108,18 +111,33 @@ const requiredThemeContractSnippets = [
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "warm red-blue preset",
-    snippet: "warm-red-blue"
+    label: "warm paper red-blue preset",
+    snippet: "warm-paper-red-blue"
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "soft pink-blue preset",
-    snippet: "soft-pink-blue"
+    label: "peach mist blue preset",
+    snippet: "peach-mist-blue"
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "night red-blue preset",
-    snippet: "night-red-blue"
+    label: "wisteria tea preset",
+    snippet: "wisteria-tea"
+  },
+  {
+    file: "src/design-system/palettes.ts",
+    label: "apricot sage preset",
+    snippet: "apricot-sage"
+  },
+  {
+    file: "src/design-system/palettes.ts",
+    label: "plum garden preset",
+    snippet: "plum-garden"
+  },
+  {
+    file: "src/design-system/palettes.ts",
+    label: "indigo letter preset",
+    snippet: "indigo-letter"
   },
   {
     file: "src/design-system/color-scale.ts",
@@ -250,6 +268,149 @@ const readProjectFile = (relativePath) => {
   }
 }
 
+const expectedPaletteContracts = {
+  "warm-paper-red-blue": {
+    name: "暖纸红蓝",
+    light: { page: "#FFF8F1", card: "#FFFFFF", text: "#2F2427", primary: "#A84E5A", accent: "#3F7897" },
+    dark: { page: "#101826", card: "#202B3B", primary: "#E28A93", accent: "#8DBBD4" }
+  },
+  "peach-mist-blue": {
+    name: "桃雾蓝灰",
+    light: { page: "#FFF6F2", card: "#FFFEFC", text: "#302327", primary: "#A94F5B", accent: "#446F8D" },
+    dark: { page: "#151A24", card: "#262B37", primary: "#E99AA4", accent: "#9FC6DA" }
+  },
+  "wisteria-tea": {
+    name: "紫藤杏茶",
+    light: { page: "#F7F2FF", card: "#FFFFFF", text: "#2B2635", primary: "#7256A5", accent: "#A35461" },
+    dark: { page: "#171624", card: "#282538", primary: "#B89AE6", accent: "#E59AA4" }
+  },
+  "apricot-sage": {
+    name: "杏茶鼠尾草",
+    light: { page: "#FBF4E7", card: "#FFFDF8", text: "#2D261E", primary: "#9A5A33", accent: "#3F6952" },
+    dark: { page: "#181713", card: "#29251D", primary: "#E3A46D", accent: "#9AC2A8" }
+  },
+  "plum-garden": {
+    name: "梅子庭院",
+    light: { page: "#FCF6F4", card: "#FFFFFF", text: "#2B2328", primary: "#7F4865", accent: "#5D7D6D" },
+    dark: { page: "#17171B", card: "#29272D", primary: "#D993B4", accent: "#A9C7B8" }
+  },
+  "indigo-letter": {
+    name: "靛蓝信笺",
+    light: { page: "#F8F4EC", card: "#FFFFFF", text: "#272626", primary: "#625C8E", accent: "#A15345" },
+    dark: { page: "#121724", card: "#232A3A", primary: "#AAA6DA", accent: "#E09A88" }
+  }
+}
+
+const expectedPaletteIds = Object.keys(expectedPaletteContracts)
+
+const normalizeHexColor = (value) => {
+  const hex = value.trim().replace("#", "")
+  if (hex.length === 3) {
+    return `#${hex
+      .split("")
+      .map((character) => `${character}${character}`)
+      .join("")
+      .toUpperCase()}`
+  }
+  return `#${hex.toUpperCase()}`
+}
+
+const colorToRgb = (value, backdrop) => {
+  if (typeof value !== "string") {
+    return null
+  }
+
+  const trimmed = value.trim()
+  if (/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(trimmed)) {
+    const hex = normalizeHexColor(trimmed).slice(1)
+    return {
+      r: Number.parseInt(hex.slice(0, 2), 16),
+      g: Number.parseInt(hex.slice(2, 4), 16),
+      b: Number.parseInt(hex.slice(4, 6), 16)
+    }
+  }
+
+  const rgbaMatch = trimmed.match(/^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)(?:\s*,\s*(\d+(?:\.\d+)?))?\s*\)$/)
+  if (!rgbaMatch) {
+    return null
+  }
+
+  const alpha = rgbaMatch[4] === undefined ? 1 : Number(rgbaMatch[4])
+  const color = {
+    r: Number(rgbaMatch[1]),
+    g: Number(rgbaMatch[2]),
+    b: Number(rgbaMatch[3])
+  }
+
+  if (alpha >= 1) {
+    return color
+  }
+
+  const backdropColor = colorToRgb(backdrop)
+  if (!backdropColor) {
+    return null
+  }
+
+  return {
+    r: color.r * alpha + backdropColor.r * (1 - alpha),
+    g: color.g * alpha + backdropColor.g * (1 - alpha),
+    b: color.b * alpha + backdropColor.b * (1 - alpha)
+  }
+}
+
+const luminanceFromRgb = (color) => {
+  const channel = (value) => {
+    const normalized = value / 255
+    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b)
+}
+
+const contrastRatio = (foreground, background, backdrop) => {
+  const foregroundColor = colorToRgb(foreground, backdrop)
+  const backgroundColor = colorToRgb(background, backdrop)
+  if (!foregroundColor || !backgroundColor) {
+    return null
+  }
+
+  const foregroundLuminance = luminanceFromRgb(foregroundColor)
+  const backgroundLuminance = luminanceFromRgb(backgroundColor)
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance)
+  const darker = Math.min(foregroundLuminance, backgroundLuminance)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+const loadRomanticPalettes = () => {
+  const source = readProjectFile("src/design-system/palettes.ts")
+  const output = ts.transpileModule(source, {
+    compilerOptions: {
+      esModuleInterop: true,
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020
+    }
+  }).outputText
+
+  const module = { exports: {} }
+  const sandbox = {
+    exports: module.exports,
+    module,
+    require: (id) => {
+      if (id === "@/design-system/color-scale") {
+        return {
+          makeColorRole: (role) => role
+        }
+      }
+      if (id.startsWith("@/design-system/types")) {
+        return {}
+      }
+      throw new Error(`Unexpected palette import: ${id}`)
+    }
+  }
+
+  vm.runInNewContext(output, sandbox, { filename: "src/design-system/palettes.ts" })
+  return Array.isArray(module.exports.romanticPalettes) ? module.exports.romanticPalettes : []
+}
+
 const findings = []
 
 const addFinding = (file, line, label, value) => {
@@ -263,6 +424,10 @@ const addFinding = (file, line, label, value) => {
 
 const addContractFinding = (file, label, value) => {
   addFinding(file, 1, label, value)
+}
+
+const addPaletteFinding = (label, value) => {
+  addFinding("src/design-system/palettes.ts", 1, label, value)
 }
 
 const knownAppTokens = new Set(dynamicAppTokens)
@@ -376,6 +541,162 @@ for (const relativePath of [
   if (relativePath.startsWith("src/design-system/") && /(?:uni|wx)\./.test(content)) {
     addContractFinding(relativePath, "runtime API in pure design-system module", "uni/wx")
   }
+}
+
+const validateContrast = ({ label, foreground, background, backdrop, minimum, findingLabel }) => {
+  const ratio = contrastRatio(foreground, background, backdrop)
+  if (ratio === null) {
+    addPaletteFinding("unvalidated palette contrast", `${label}: ${foreground} on ${background}`)
+    return
+  }
+
+  if (ratio < minimum) {
+    addPaletteFinding(findingLabel, `${label}: ${ratio.toFixed(2)} < ${minimum}`)
+  }
+}
+
+try {
+  const palettes = loadRomanticPalettes()
+  const paletteIds = palettes.map((palette) => palette.id)
+
+  if (paletteIds.length !== expectedPaletteIds.length) {
+    addPaletteFinding("palette count mismatch", `${paletteIds.length} !== ${expectedPaletteIds.length}`)
+  }
+
+  for (const paletteId of expectedPaletteIds) {
+    if (!paletteIds.includes(paletteId)) {
+      addPaletteFinding("missing palette preset", paletteId)
+    }
+  }
+
+  for (const paletteId of paletteIds) {
+    if (!expectedPaletteIds.includes(paletteId)) {
+      addPaletteFinding("unexpected palette preset", paletteId)
+    }
+  }
+
+  for (const palette of palettes) {
+    const contract = expectedPaletteContracts[palette.id]
+    if (!contract) {
+      continue
+    }
+
+    if (palette.name !== contract.name) {
+      addPaletteFinding("palette name mismatch", `${palette.id}: ${palette.name} !== ${contract.name}`)
+    }
+
+    const exactColorChecks = [
+      ["light.page", palette.schemes?.light?.page?.base, contract.light.page],
+      ["light.card", palette.schemes?.light?.card?.base, contract.light.card],
+      ["light.text", palette.schemes?.light?.text?.primary, contract.light.text],
+      ["light.primary", palette.schemes?.light?.primary?.base, contract.light.primary],
+      ["light.accent", palette.schemes?.light?.accent?.base, contract.light.accent],
+      ["dark.page", palette.schemes?.dark?.page?.base, contract.dark.page],
+      ["dark.card", palette.schemes?.dark?.card?.base, contract.dark.card],
+      ["dark.primary", palette.schemes?.dark?.primary?.base, contract.dark.primary],
+      ["dark.accent", palette.schemes?.dark?.accent?.base, contract.dark.accent]
+    ]
+
+    for (const [label, actual, expected] of exactColorChecks) {
+      if (typeof actual !== "string" || normalizeHexColor(actual) !== normalizeHexColor(expected)) {
+        addPaletteFinding("palette source color mismatch", `${palette.id}.${label}: ${actual} !== ${expected}`)
+      }
+    }
+
+    validateContrast({
+      label: `${palette.id}.preview.primary`,
+      foreground: palette.preview?.foreground,
+      background: palette.preview?.primary,
+      minimum: 4.5,
+      findingLabel: "low action contrast"
+    })
+    validateContrast({
+      label: `${palette.id}.preview.accent`,
+      foreground: palette.preview?.foreground,
+      background: palette.preview?.accent,
+      minimum: 4.5,
+      findingLabel: "low action contrast"
+    })
+
+    for (const mode of ["light", "dark"]) {
+      const scheme = palette.schemes?.[mode]
+      if (!scheme) {
+        addPaletteFinding("missing palette scheme", `${palette.id}.${mode}`)
+        continue
+      }
+
+      for (const [surfaceName, surfaceRole] of Object.entries({
+        page: scheme.page,
+        card: scheme.card,
+        input: scheme.input,
+        control: scheme.control
+      })) {
+        validateContrast({
+          label: `${palette.id}.${mode}.${surfaceName}.text`,
+          foreground: scheme.text.primary,
+          background: surfaceRole.base,
+          backdrop: scheme.page.base,
+          minimum: 4.5,
+          findingLabel: "low text contrast"
+        })
+      }
+
+      const actionRoles = {
+        primary: scheme.primary,
+        accent: scheme.accent,
+        redPerson: scheme.redPerson,
+        bluePerson: scheme.bluePerson,
+        danger: scheme.status.danger,
+        warning: scheme.status.warning,
+        success: scheme.status.success,
+        info: scheme.status.info,
+        swatch: scheme.swatch
+      }
+
+      for (const [roleName, colorRole] of Object.entries(actionRoles)) {
+        validateContrast({
+          label: `${palette.id}.${mode}.${roleName}`,
+          foreground: colorRole.foreground,
+          background: colorRole.base,
+          backdrop: scheme.card.base,
+          minimum: 4.5,
+          findingLabel: "low action contrast"
+        })
+      }
+
+      validateContrast({
+        label: `${palette.id}.${mode}.onPrimary`,
+        foreground: scheme.text.onPrimary,
+        background: scheme.primary.base,
+        backdrop: scheme.card.base,
+        minimum: 4.5,
+        findingLabel: "low action contrast"
+      })
+      validateContrast({
+        label: `${palette.id}.${mode}.onAccent`,
+        foreground: scheme.text.onAccent,
+        background: scheme.accent.base,
+        backdrop: scheme.card.base,
+        minimum: 4.5,
+        findingLabel: "low action contrast"
+      })
+
+      for (const [roleName, colorRole] of Object.entries(actionRoles)) {
+        for (const stateName of ["soft", "muted", "active"]) {
+          validateContrast({
+            label: `${palette.id}.${mode}.${roleName}.${stateName}`,
+            foreground: scheme.text.primary,
+            background: colorRole[stateName],
+            backdrop: scheme.card.base,
+            minimum: 3,
+            findingLabel: "low subtle contrast"
+          })
+        }
+      }
+    }
+  }
+} catch (error) {
+  addPaletteFinding("palette validator failed", error instanceof Error ? error.message : String(error))
 }
 
 if (findings.length === 0) {

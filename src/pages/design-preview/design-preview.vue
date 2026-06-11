@@ -97,7 +97,7 @@
           <view v-for="item in colorSamples" :key="item.token" class="preview-token" :style="tokenStyle(item.token, item.foreground)">
             <view class="preview-token__swatch" />
             <text class="preview-token__caption">{{ item.caption }}</text>
-            <text class="preview-tech">{{ item.token }}</text>
+            <text class="preview-tech preview-tech--on-token">{{ item.token }}</text>
           </view>
         </view>
       </preview-section>
@@ -106,7 +106,7 @@
         <view class="preview-status-list">
           <view v-for="item in statusSamples" :key="item.token" class="preview-status" :style="tokenStyle(item.token, item.foreground)">
             <text class="preview-status__caption">{{ item.caption }}</text>
-            <text class="preview-tech">{{ item.token }}</text>
+            <text class="preview-tech preview-tech--on-token">{{ item.token }}</text>
           </view>
         </view>
       </preview-section>
@@ -542,19 +542,25 @@ const shadowStyle = (token: string) =>
 .preview-token {
   min-height: var(--app-control-scale-xl);
   padding: var(--app-space-6);
+  background: var(--preview-token-bg);
+  color: var(--preview-token-text);
 }
 
 .preview-token__swatch {
   height: var(--app-control-scale-xs);
   margin-bottom: var(--app-space-5);
-  border: var(--app-panel-border-width) solid var(--app-border);
+  border: var(--app-panel-border-width) solid var(--preview-token-text);
   border-radius: var(--app-radius-button);
-  background: var(--preview-token-bg);
+  background: var(--preview-token-text);
 }
 
 .preview-token__caption {
   color: var(--preview-token-text);
   font: var(--app-font-button);
+}
+
+.preview-tech--on-token {
+  color: var(--preview-token-text);
 }
 
 .preview-status {

@@ -5,7 +5,7 @@ Private WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, Pinia, Wo
 ## What It Does
 
 - Light, dark, and follow-system theme modes.
-- Curated romantic palette picker with governed design tokens.
+- Six contrast-validated curated romantic palettes with governed design tokens.
 - Full journal CRUD: create, list, view, edit, and delete memory entries.
 - CloudBase document database storage for entries.
 - CloudBase file upload, private file IDs, temporary-link display, and file deletion.
@@ -120,7 +120,7 @@ Design tokens live under `src/styles/tokens/**` for static fallbacks and `src/de
 
 `AppShell.vue` is the only runtime CSS variable injection root. It binds `theme.appStyle` to the root view and passes `theme.wotThemeVars` plus `theme.providerKey` to `wd-config-provider`. Settings selectors and palette swatches use `AppOptionGroup.vue` and `AppOptionButton.vue`; CTA actions remain on Wot `wd-button`.
 
-The design-token scan checks raw style values, unknown `--app-*` tokens, pages bypassing `AppShell`, selector buttons bypassing `AppOptionButton`, Wot/AppShell contracts, and forbidden theme side effects outside `nav-theme.ts`.
+The design-token scan checks raw style values, unknown `--app-*` tokens, the fixed six-palette inventory, palette source colors, palette contrast, pages bypassing `AppShell`, selector buttons bypassing `AppOptionButton`, Wot/AppShell contracts, and forbidden theme side effects outside `nav-theme.ts`.
 
 The developer-facing design-system preview page is registered at:
 

@@ -1,72 +1,227 @@
 import { makeColorRole } from "@/design-system/color-scale"
-import type { ColorRole, RomanticPalette, SemanticColorScheme, ShadowColorRole, StatusColorRoles, TextColorRole } from "@/design-system/types"
+import type { AppTheme, ColorRole, RomanticPalette, SemanticColorScheme, ShadowColorRole, StatusColorRoles, TextColorRole } from "@/design-system/types"
 
-interface SchemeSeed {
-  page: string
-  pageSoft: string
-  pageMuted: string
-  card: string
-  cardSoft: string
-  cardMuted: string
-  input: string
-  control: string
-  text: TextColorRole
-  border: {
-    base: string
-    muted: string
-    strong: string
-    divider: string
-    disabled: string
-    focusRing: string
-  }
-  primary: {
-    base: string
-    soft: string
-    muted: string
-    pressed: string
-    active: string
-    disabled: string
-    border: string
-    focusRing: string
-  }
-  accent: {
-    base: string
-    soft: string
-    muted: string
-    pressed: string
-    active: string
-    disabled: string
-    border: string
-    focusRing: string
-  }
-  redPerson: {
-    base: string
-    soft: string
-    muted: string
-    pressed: string
-    active: string
-    disabled: string
-    border: string
-    focusRing: string
-  }
-  bluePerson: {
-    base: string
-    soft: string
-    muted: string
-    pressed: string
-    active: string
-    disabled: string
-    border: string
-    focusRing: string
-  }
-  status: StatusColorRoles
-  overlay: ColorRole
-  swatch: ColorRole
-  photoBadge: ColorRole
-  heartSoft: string
-  pageGlow: string
-  shadows: ShadowColorRole
+interface RgbColor {
+  r: number
+  g: number
+  b: number
 }
+
+interface PaletteSchemeSeed {
+  page: string
+  card: string
+  text: string
+  primary: string
+  accent: string
+}
+
+interface CuratedPaletteSeed {
+  id: string
+  name: string
+  description: string
+  light: PaletteSchemeSeed
+  dark: PaletteSchemeSeed
+}
+
+const WHITE = "#FFFFFF"
+const DARK_INK = "#111827"
+const BLACK = "#000000"
+
+const lightStatusBases = {
+  danger: "#96505E",
+  warning: "#87612E",
+  success: "#4F715F",
+  info: "#4B7087"
+} as const
+
+const darkStatusBases = {
+  danger: "#E79AA3",
+  warning: "#D9B878",
+  success: "#9AC2A8",
+  info: "#9FC6DA"
+} as const
+
+const paletteSeeds: CuratedPaletteSeed[] = [
+  {
+    id: "warm-paper-red-blue",
+    name: "暖纸红蓝",
+    description: "暖纸底色与安静红蓝",
+    light: {
+      page: "#FFF8F1",
+      card: "#FFFFFF",
+      text: "#2F2427",
+      primary: "#A84E5A",
+      accent: "#3F7897"
+    },
+    dark: {
+      page: "#101826",
+      card: "#202B3B",
+      text: "#F7F0EA",
+      primary: "#E28A93",
+      accent: "#8DBBD4"
+    }
+  },
+  {
+    id: "peach-mist-blue",
+    name: "桃雾蓝灰",
+    description: "桃雾柔光与蓝灰书写",
+    light: {
+      page: "#FFF6F2",
+      card: "#FFFEFC",
+      text: "#302327",
+      primary: "#A94F5B",
+      accent: "#446F8D"
+    },
+    dark: {
+      page: "#151A24",
+      card: "#262B37",
+      text: "#F6F0EC",
+      primary: "#E99AA4",
+      accent: "#9FC6DA"
+    }
+  },
+  {
+    id: "wisteria-tea",
+    name: "紫藤杏茶",
+    description: "紫藤纸面与杏茶暖意",
+    light: {
+      page: "#F7F2FF",
+      card: "#FFFFFF",
+      text: "#2B2635",
+      primary: "#7256A5",
+      accent: "#A35461"
+    },
+    dark: {
+      page: "#171624",
+      card: "#282538",
+      text: "#F3EEFF",
+      primary: "#B89AE6",
+      accent: "#E59AA4"
+    }
+  },
+  {
+    id: "apricot-sage",
+    name: "杏茶鼠尾草",
+    description: "杏茶纸感与鼠尾草绿",
+    light: {
+      page: "#FBF4E7",
+      card: "#FFFDF8",
+      text: "#2D261E",
+      primary: "#9A5A33",
+      accent: "#3F6952"
+    },
+    dark: {
+      page: "#181713",
+      card: "#29251D",
+      text: "#F4ECDD",
+      primary: "#E3A46D",
+      accent: "#9AC2A8"
+    }
+  },
+  {
+    id: "plum-garden",
+    name: "梅子庭院",
+    description: "梅子色与庭院绿影",
+    light: {
+      page: "#FCF6F4",
+      card: "#FFFFFF",
+      text: "#2B2328",
+      primary: "#7F4865",
+      accent: "#5D7D6D"
+    },
+    dark: {
+      page: "#17171B",
+      card: "#29272D",
+      text: "#F6EEF4",
+      primary: "#D993B4",
+      accent: "#A9C7B8"
+    }
+  },
+  {
+    id: "indigo-letter",
+    name: "靛蓝信笺",
+    description: "靛蓝信纸与安静朱砂",
+    light: {
+      page: "#F8F4EC",
+      card: "#FFFFFF",
+      text: "#272626",
+      primary: "#625C8E",
+      accent: "#A15345"
+    },
+    dark: {
+      page: "#121724",
+      card: "#232A3A",
+      text: "#F3F0EA",
+      primary: "#AAA6DA",
+      accent: "#E09A88"
+    }
+  }
+]
+
+const clampChannel = (value: number): number => Math.max(0, Math.min(255, Math.round(value)))
+
+const normalizeHex = (hex: string): string => {
+  const value = hex.replace("#", "")
+  if (value.length === 3) {
+    return `#${value
+      .split("")
+      .map((character) => `${character}${character}`)
+      .join("")
+      .toUpperCase()}`
+  }
+  return `#${value.toUpperCase()}`
+}
+
+const hexToRgb = (hex: string): RgbColor => {
+  const normalized = normalizeHex(hex).slice(1)
+  return {
+    r: Number.parseInt(normalized.slice(0, 2), 16),
+    g: Number.parseInt(normalized.slice(2, 4), 16),
+    b: Number.parseInt(normalized.slice(4, 6), 16)
+  }
+}
+
+const rgbToHex = ({ r, g, b }: RgbColor): string =>
+  `#${[r, g, b]
+    .map((channel) => clampChannel(channel).toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase()}`
+
+const mix = (from: string, to: string, weight: number): string => {
+  const left = hexToRgb(from)
+  const right = hexToRgb(to)
+  return rgbToHex({
+    r: left.r * (1 - weight) + right.r * weight,
+    g: left.g * (1 - weight) + right.g * weight,
+    b: left.b * (1 - weight) + right.b * weight
+  })
+}
+
+const alpha = (hex: string, opacity: number): string => {
+  const color = hexToRgb(hex)
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${opacity})`
+}
+
+const luminanceChannel = (channel: number): number => {
+  const value = channel / 255
+  return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+}
+
+const luminance = (hex: string): number => {
+  const color = hexToRgb(hex)
+  return 0.2126 * luminanceChannel(color.r) + 0.7152 * luminanceChannel(color.g) + 0.0722 * luminanceChannel(color.b)
+}
+
+const contrastRatio = (left: string, right: string): number => {
+  const leftLuminance = luminance(left)
+  const rightLuminance = luminance(right)
+  const lighter = Math.max(leftLuminance, rightLuminance)
+  const darker = Math.min(leftLuminance, rightLuminance)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+const readableForeground = (background: string, darkInk = DARK_INK): string =>
+  contrastRatio(WHITE, background) >= 4.5 ? WHITE : darkInk
 
 const role = (
   base: string,
@@ -93,628 +248,157 @@ const role = (
     focusRing
   })
 
-const accentRole = (seed: SchemeSeed["primary"], foreground: string): ColorRole =>
+const makeTextRole = (seed: PaletteSchemeSeed, mode: AppTheme): TextColorRole => ({
+  primary: seed.text,
+  secondary: mode === "light" ? mix(seed.text, seed.card, 0.24) : mix(seed.text, seed.card, 0.22),
+  muted: mode === "light" ? mix(seed.text, seed.card, 0.48) : mix(seed.text, seed.card, 0.38),
+  disabled: mode === "light" ? mix(seed.text, seed.card, 0.68) : mix(seed.text, seed.card, 0.56),
+  inverse: readableForeground(seed.text),
+  onPrimary: readableForeground(seed.primary),
+  onAccent: readableForeground(seed.accent),
+  onOverlay: WHITE
+})
+
+const makeToneRole = (base: string, mode: AppTheme): ColorRole =>
   role(
-    seed.base,
-    seed.soft,
-    seed.muted,
-    seed.pressed,
-    seed.active,
-    foreground,
-    seed.border,
-    seed.disabled,
-    seed.border,
-    seed.focusRing
+    base,
+    mode === "light" ? mix(base, WHITE, 0.78) : alpha(base, 0.22),
+    mode === "light" ? mix(base, WHITE, 0.9) : alpha(base, 0.13),
+    mode === "light" ? mix(base, DARK_INK, 0.22) : mix(base, WHITE, 0.12),
+    mode === "light" ? mix(base, WHITE, 0.68) : alpha(base, 0.3),
+    readableForeground(base),
+    alpha(base, mode === "light" ? 0.3 : 0.34),
+    mode === "light" ? mix(base, WHITE, 0.58) : alpha(base, 0.12),
+    alpha(base, mode === "light" ? 0.15 : 0.2),
+    alpha(base, mode === "light" ? 0.38 : 0.44)
   )
 
-const scheme = (seed: SchemeSeed): SemanticColorScheme => ({
-  page: role(
-    seed.page,
-    seed.pageSoft,
-    seed.pageMuted,
-    seed.pageMuted,
-    seed.pageSoft,
-    seed.text.primary,
-    seed.border.base,
-    seed.border.disabled,
-    seed.border.divider,
-    seed.border.focusRing
-  ),
-  card: role(
-    seed.card,
-    seed.cardSoft,
-    seed.cardMuted,
-    seed.control,
-    seed.cardSoft,
-    seed.text.primary,
-    seed.border.base,
-    seed.cardMuted,
-    seed.border.divider,
-    seed.border.focusRing
-  ),
-  input: role(
-    seed.input,
-    seed.cardSoft,
-    seed.cardMuted,
-    seed.control,
-    seed.cardSoft,
-    seed.text.primary,
-    seed.border.base,
-    seed.cardMuted,
-    seed.border.divider,
-    seed.border.focusRing
-  ),
-  control: role(
-    seed.control,
-    seed.cardSoft,
-    seed.cardMuted,
-    seed.primary.pressed,
-    seed.primary.active,
-    seed.text.primary,
-    seed.border.base,
-    seed.cardMuted,
-    seed.border.divider,
-    seed.primary.focusRing
-  ),
-  text: seed.text,
-  border: seed.border,
-  primary: accentRole(seed.primary, seed.text.onPrimary),
-  accent: accentRole(seed.accent, seed.text.onAccent),
-  redPerson: accentRole(seed.redPerson, seed.text.onPrimary),
-  bluePerson: accentRole(seed.bluePerson, seed.text.onAccent),
-  status: seed.status,
-  overlay: seed.overlay,
-  swatch: seed.swatch,
-  photoBadge: seed.photoBadge,
-  heartSoft: seed.heartSoft,
-  pageGlow: seed.pageGlow,
-  shadows: seed.shadows
+const makeStatusRoles = (mode: AppTheme): StatusColorRoles => {
+  const bases = mode === "light" ? lightStatusBases : darkStatusBases
+  return {
+    danger: makeToneRole(bases.danger, mode),
+    warning: makeToneRole(bases.warning, mode),
+    success: makeToneRole(bases.success, mode),
+    info: makeToneRole(bases.info, mode)
+  }
+}
+
+const makeBorderRole = (text: string, primary: string, mode: AppTheme) => ({
+  base: alpha(text, mode === "light" ? 0.14 : 0.15),
+  muted: alpha(text, mode === "light" ? 0.1 : 0.1),
+  strong: alpha(text, mode === "light" ? 0.23 : 0.25),
+  divider: alpha(text, mode === "light" ? 0.12 : 0.13),
+  disabled: alpha(text, mode === "light" ? 0.08 : 0.08),
+  focusRing: alpha(primary, mode === "light" ? 0.38 : 0.44)
 })
 
-const lightText = (inverse = "#ffffff"): TextColorRole => ({
-  primary: "#2b2024",
-  secondary: "#58484b",
-  muted: "#8a7672",
-  disabled: "#b7a9a5",
-  inverse: "#111827",
-  onPrimary: inverse,
-  onAccent: inverse,
-  onOverlay: "#ffffff"
-})
+const makeOverlayRole = (text: string, mode: AppTheme): ColorRole => {
+  const overlayBase = mode === "light" ? text : BLACK
+  return role(
+    alpha(overlayBase, mode === "light" ? 0.3 : 0.46),
+    alpha(overlayBase, mode === "light" ? 0.18 : 0.32),
+    alpha(overlayBase, mode === "light" ? 0.1 : 0.18),
+    alpha(overlayBase, mode === "light" ? 0.72 : 0.76),
+    alpha(overlayBase, mode === "light" ? 0.62 : 0.66),
+    WHITE,
+    alpha(WHITE, mode === "light" ? 0.48 : 0.42),
+    alpha(overlayBase, 0.1),
+    alpha(WHITE, mode === "light" ? 0.24 : 0.2),
+    alpha(WHITE, 0.86)
+  )
+}
 
-const darkText = (): TextColorRole => ({
-  primary: "#f7f0ea",
-  secondary: "#d9c8c1",
-  muted: "#ad9ba1",
-  disabled: "#786b72",
-  inverse: "#111827",
-  onPrimary: "#111827",
-  onAccent: "#111827",
-  onOverlay: "#ffffff"
-})
+const makePhotoBadgeRole = (text: string, mode: AppTheme): ColorRole => {
+  const badgeBase = mode === "light" ? text : BLACK
+  return role(
+    alpha(badgeBase, mode === "light" ? 0.34 : 0.5),
+    alpha(badgeBase, mode === "light" ? 0.22 : 0.34),
+    alpha(badgeBase, mode === "light" ? 0.12 : 0.2),
+    alpha(badgeBase, mode === "light" ? 0.76 : 0.8),
+    alpha(badgeBase, mode === "light" ? 0.66 : 0.7),
+    WHITE,
+    alpha(WHITE, mode === "light" ? 0.5 : 0.42),
+    alpha(badgeBase, 0.1),
+    alpha(WHITE, mode === "light" ? 0.24 : 0.2),
+    alpha(WHITE, 0.86)
+  )
+}
 
-const lightStatus = (focusRing: string): StatusColorRoles => ({
-  danger: role("#9f2f3e", "#f9d9dd", "#f7edef", "#7f2431", "#f4ccd2", "#ffffff", "rgba(159, 47, 62, 0.2)", "#e6b6bd", "rgba(159, 47, 62, 0.14)", focusRing),
-  warning: role("#b7791f", "#f7e4bd", "#fbf1dd", "#925f16", "#f1d49c", "#ffffff", "rgba(183, 121, 31, 0.22)", "#dfc89f", "rgba(183, 121, 31, 0.14)", focusRing),
-  success: role("#43866a", "#d5ecdf", "#edf7f2", "#2f684f", "#c3e2d0", "#ffffff", "rgba(67, 134, 106, 0.22)", "#b7d6c4", "rgba(67, 134, 106, 0.14)", focusRing),
-  info: role("#4f87aa", "#d8eaf5", "#eef6fb", "#2d5f7b", "#c8e0ee", "#ffffff", "rgba(79, 135, 170, 0.22)", "#bbd6e6", "rgba(79, 135, 170, 0.14)", focusRing)
-})
+const makeSwatchRole = (primary: ColorRole, accent: ColorRole, mode: AppTheme): ColorRole =>
+  role(
+    primary.base,
+    primary.soft,
+    primary.muted,
+    primary.pressed,
+    mode === "light" ? alpha(WHITE, 0.28) : alpha(DARK_INK, 0.32),
+    readableForeground(mix(primary.base, accent.base, 0.5)),
+    mode === "light" ? alpha(WHITE, 0.86) : alpha(WHITE, 0.76),
+    mode === "light" ? alpha(WHITE, 0.34) : alpha(WHITE, 0.22),
+    mode === "light" ? alpha(WHITE, 0.28) : alpha(WHITE, 0.2),
+    alpha(WHITE, 0.9)
+  )
 
-const darkStatus = (focusRing: string): StatusColorRoles => ({
-  danger: role("#ee8b93", "rgba(238, 139, 147, 0.2)", "rgba(238, 139, 147, 0.12)", "#f3a3aa", "rgba(238, 139, 147, 0.28)", "#111827", "rgba(238, 139, 147, 0.28)", "rgba(238, 139, 147, 0.1)", "rgba(238, 139, 147, 0.18)", focusRing),
-  warning: role("#deb66b", "rgba(222, 182, 107, 0.2)", "rgba(222, 182, 107, 0.12)", "#e8c985", "rgba(222, 182, 107, 0.28)", "#111827", "rgba(222, 182, 107, 0.28)", "rgba(222, 182, 107, 0.1)", "rgba(222, 182, 107, 0.18)", focusRing),
-  success: role("#88bea3", "rgba(136, 190, 163, 0.2)", "rgba(136, 190, 163, 0.12)", "#9ed0b7", "rgba(136, 190, 163, 0.28)", "#111827", "rgba(136, 190, 163, 0.28)", "rgba(136, 190, 163, 0.1)", "rgba(136, 190, 163, 0.18)", focusRing),
-  info: role("#86b8d6", "rgba(134, 184, 214, 0.2)", "rgba(134, 184, 214, 0.12)", "#9ac6dd", "rgba(134, 184, 214, 0.28)", "#111827", "rgba(134, 184, 214, 0.28)", "rgba(134, 184, 214, 0.1)", "rgba(134, 184, 214, 0.18)", focusRing)
-})
+const makeShadows = (seed: PaletteSchemeSeed, mode: AppTheme): ShadowColorRole => {
+  const shadowBase = mode === "light" ? seed.text : BLACK
+  return {
+    card: `0 24rpx 80rpx ${alpha(shadowBase, mode === "light" ? 0.13 : 0.24)}`,
+    floating: `0 28rpx 96rpx ${alpha(shadowBase, mode === "light" ? 0.17 : 0.34)}`,
+    button: `0 12rpx 28rpx ${alpha(shadowBase, mode === "light" ? 0.12 : 0.2)}`,
+    image: `0 12rpx 30rpx ${alpha(shadowBase, mode === "light" ? 0.1 : 0.2)}`,
+    logo: `0 16rpx 42rpx ${alpha(shadowBase, mode === "light" ? 0.12 : 0.22)}`
+  }
+}
 
-const lightOverlay = role(
-  "rgba(43, 32, 36, 0.28)",
-  "rgba(43, 32, 36, 0.18)",
-  "rgba(43, 32, 36, 0.1)",
-  "rgba(43, 32, 36, 0.72)",
-  "rgba(43, 32, 36, 0.62)",
-  "#ffffff",
-  "rgba(255, 255, 255, 0.48)",
-  "rgba(43, 32, 36, 0.08)",
-  "rgba(255, 255, 255, 0.24)",
-  "rgba(255, 255, 255, 0.86)"
-)
+const makeScheme = (seed: PaletteSchemeSeed, mode: AppTheme): SemanticColorScheme => {
+  const text = makeTextRole(seed, mode)
+  const border = makeBorderRole(text.primary, seed.primary, mode)
+  const pageSoft = mode === "light" ? mix(seed.page, seed.primary, 0.045) : mix(seed.page, seed.card, 0.62)
+  const pageMuted = mode === "light" ? mix(seed.page, seed.text, 0.075) : mix(seed.page, seed.card, 0.82)
+  const cardSoft = mode === "light" ? mix(seed.card, seed.primary, 0.035) : mix(seed.card, seed.primary, 0.07)
+  const cardMuted = mode === "light" ? mix(seed.page, seed.primary, 0.07) : mix(seed.page, seed.card, 0.46)
+  const inputBase = mode === "light" ? mix(seed.card, seed.page, 0.58) : mix(seed.page, seed.card, 0.36)
+  const controlBase = mode === "light" ? mix(seed.page, seed.primary, 0.04) : mix(seed.card, seed.primary, 0.06)
+  const primary = makeToneRole(seed.primary, mode)
+  const accent = makeToneRole(seed.accent, mode)
 
-const darkOverlay = role(
-  "rgba(16, 24, 39, 0.42)",
-  "rgba(16, 24, 39, 0.28)",
-  "rgba(16, 24, 39, 0.16)",
-  "rgba(16, 24, 39, 0.74)",
-  "rgba(16, 24, 39, 0.66)",
-  "#ffffff",
-  "rgba(255, 255, 255, 0.42)",
-  "rgba(16, 24, 39, 0.1)",
-  "rgba(255, 255, 255, 0.2)",
-  "rgba(255, 255, 255, 0.86)"
-)
+  return {
+    page: role(seed.page, pageSoft, pageMuted, pageMuted, pageSoft, text.primary, border.base, border.disabled, border.divider, border.focusRing),
+    card: role(seed.card, cardSoft, cardMuted, controlBase, cardSoft, text.primary, border.base, cardMuted, border.divider, border.focusRing),
+    input: role(inputBase, cardSoft, cardMuted, controlBase, cardSoft, text.primary, border.base, cardMuted, border.divider, border.focusRing),
+    control: role(controlBase, cardSoft, cardMuted, mix(controlBase, seed.primary, mode === "light" ? 0.12 : 0.1), cardSoft, text.primary, border.base, cardMuted, border.divider, border.focusRing),
+    text,
+    border,
+    primary,
+    accent,
+    redPerson: primary,
+    bluePerson: accent,
+    status: makeStatusRoles(mode),
+    overlay: makeOverlayRole(text.primary, mode),
+    swatch: makeSwatchRole(primary, accent, mode),
+    photoBadge: makePhotoBadgeRole(text.primary, mode),
+    heartSoft: mode === "light" ? mix(seed.primary, seed.card, 0.84) : alpha(seed.primary, 0.18),
+    pageGlow: alpha(mode === "light" ? seed.primary : seed.accent, mode === "light" ? 0.15 : 0.14),
+    shadows: makeShadows(seed, mode)
+  }
+}
 
-const makePalette = (
-  id: string,
-  name: string,
-  description: string,
-  preview: RomanticPalette["preview"],
-  light: SchemeSeed,
-  dark: SchemeSeed
-): RomanticPalette => ({
-  id,
-  name,
-  description,
-  preview,
+const makePalette = (seed: CuratedPaletteSeed): RomanticPalette => ({
+  id: seed.id,
+  name: seed.name,
+  description: seed.description,
+  preview: {
+    primary: seed.light.primary,
+    accent: seed.light.accent,
+    glow: alpha(seed.light.primary, 0.16),
+    foreground: readableForeground(mix(seed.light.primary, seed.light.accent, 0.5))
+  },
   schemes: {
-    light: scheme(light),
-    dark: scheme(dark)
+    light: makeScheme(seed.light, "light"),
+    dark: makeScheme(seed.dark, "dark")
   }
 })
 
-export const romanticPalettes: RomanticPalette[] = [
-  makePalette(
-    "warm-red-blue",
-    "暖白红蓝",
-    "默认手绘小人配色",
-    {
-      primary: "#bd5a62",
-      accent: "#4f87aa",
-      glow: "rgba(189, 90, 98, 0.16)"
-    },
-    {
-      page: "#fffaf3",
-      pageSoft: "#f7efe3",
-      pageMuted: "#efe0d2",
-      card: "#ffffff",
-      cardSoft: "#fffdfb",
-      cardMuted: "#f8eee7",
-      input: "#fffefa",
-      control: "#fff7f1",
-      text: lightText(),
-      border: {
-        base: "rgba(68, 42, 48, 0.14)",
-        muted: "rgba(68, 42, 48, 0.1)",
-        strong: "rgba(68, 42, 48, 0.22)",
-        divider: "rgba(68, 42, 48, 0.12)",
-        disabled: "rgba(68, 42, 48, 0.08)",
-        focusRing: "rgba(189, 90, 98, 0.38)"
-      },
-      primary: {
-        base: "#bd5a62",
-        soft: "#f9d7d6",
-        muted: "#fff1f1",
-        pressed: "#8f3846",
-        active: "#f3c8ca",
-        disabled: "#e6b6bd",
-        border: "rgba(189, 90, 98, 0.28)",
-        focusRing: "rgba(189, 90, 98, 0.38)"
-      },
-      accent: {
-        base: "#4f87aa",
-        soft: "#d8eaf5",
-        muted: "#eef6fb",
-        pressed: "#2d5f7b",
-        active: "#c8e0ee",
-        disabled: "#bbd6e6",
-        border: "rgba(79, 135, 170, 0.28)",
-        focusRing: "rgba(79, 135, 170, 0.36)"
-      },
-      redPerson: {
-        base: "#bd5a62",
-        soft: "#f9d7d6",
-        muted: "#fff1f1",
-        pressed: "#8f3846",
-        active: "#f3c8ca",
-        disabled: "#e6b6bd",
-        border: "rgba(189, 90, 98, 0.28)",
-        focusRing: "rgba(189, 90, 98, 0.38)"
-      },
-      bluePerson: {
-        base: "#4f87aa",
-        soft: "#d8eaf5",
-        muted: "#eef6fb",
-        pressed: "#2d5f7b",
-        active: "#c8e0ee",
-        disabled: "#bbd6e6",
-        border: "rgba(79, 135, 170, 0.28)",
-        focusRing: "rgba(79, 135, 170, 0.36)"
-      },
-      status: lightStatus("rgba(189, 90, 98, 0.34)"),
-      overlay: lightOverlay,
-      swatch: role("#bd5a62", "#f9d7d6", "#fff1f1", "#8f3846", "rgba(255, 255, 255, 0.26)", "#ffffff", "rgba(255, 255, 255, 0.86)", "rgba(255, 255, 255, 0.34)", "rgba(255, 255, 255, 0.28)", "rgba(255, 255, 255, 0.9)"),
-      photoBadge: role("rgba(43, 32, 36, 0.28)", "rgba(43, 32, 36, 0.18)", "rgba(43, 32, 36, 0.1)", "rgba(43, 32, 36, 0.72)", "rgba(43, 32, 36, 0.62)", "#ffffff", "rgba(255, 255, 255, 0.48)", "rgba(43, 32, 36, 0.08)", "rgba(255, 255, 255, 0.24)", "rgba(255, 255, 255, 0.86)"),
-      heartSoft: "#f7dce4",
-      pageGlow: "rgba(189, 90, 98, 0.16)",
-      shadows: {
-        card: "0 24rpx 80rpx rgba(85, 44, 50, 0.14)",
-        floating: "0 28rpx 96rpx rgba(85, 44, 50, 0.18)",
-        button: "0 12rpx 28rpx rgba(85, 44, 50, 0.12)",
-        image: "0 12rpx 30rpx rgba(85, 44, 50, 0.1)",
-        logo: "0 16rpx 42rpx rgba(85, 44, 50, 0.12)"
-      }
-    },
-    {
-      page: "#101827",
-      pageSoft: "#1b2536",
-      pageMuted: "#263246",
-      card: "#202a3a",
-      cardSoft: "#263246",
-      cardMuted: "#182234",
-      input: "#182234",
-      control: "#263246",
-      text: darkText(),
-      border: {
-        base: "rgba(247, 240, 234, 0.14)",
-        muted: "rgba(247, 240, 234, 0.1)",
-        strong: "rgba(247, 240, 234, 0.24)",
-        divider: "rgba(247, 240, 234, 0.12)",
-        disabled: "rgba(247, 240, 234, 0.08)",
-        focusRing: "rgba(223, 123, 132, 0.42)"
-      },
-      primary: {
-        base: "#df7b84",
-        soft: "rgba(223, 123, 132, 0.2)",
-        muted: "rgba(223, 123, 132, 0.12)",
-        pressed: "#f0a4aa",
-        active: "rgba(223, 123, 132, 0.28)",
-        disabled: "rgba(223, 123, 132, 0.1)",
-        border: "rgba(223, 123, 132, 0.3)",
-        focusRing: "rgba(223, 123, 132, 0.42)"
-      },
-      accent: {
-        base: "#86b8d6",
-        soft: "rgba(134, 184, 214, 0.2)",
-        muted: "rgba(134, 184, 214, 0.12)",
-        pressed: "#9ac6dd",
-        active: "rgba(134, 184, 214, 0.28)",
-        disabled: "rgba(134, 184, 214, 0.1)",
-        border: "rgba(134, 184, 214, 0.3)",
-        focusRing: "rgba(134, 184, 214, 0.4)"
-      },
-      redPerson: {
-        base: "#df7b84",
-        soft: "rgba(223, 123, 132, 0.2)",
-        muted: "rgba(223, 123, 132, 0.12)",
-        pressed: "#f0a4aa",
-        active: "rgba(223, 123, 132, 0.28)",
-        disabled: "rgba(223, 123, 132, 0.1)",
-        border: "rgba(223, 123, 132, 0.3)",
-        focusRing: "rgba(223, 123, 132, 0.42)"
-      },
-      bluePerson: {
-        base: "#86b8d6",
-        soft: "rgba(134, 184, 214, 0.2)",
-        muted: "rgba(134, 184, 214, 0.12)",
-        pressed: "#9ac6dd",
-        active: "rgba(134, 184, 214, 0.28)",
-        disabled: "rgba(134, 184, 214, 0.1)",
-        border: "rgba(134, 184, 214, 0.3)",
-        focusRing: "rgba(134, 184, 214, 0.4)"
-      },
-      status: darkStatus("rgba(223, 123, 132, 0.42)"),
-      overlay: darkOverlay,
-      swatch: role("#df7b84", "rgba(223, 123, 132, 0.2)", "rgba(223, 123, 132, 0.12)", "#f0a4aa", "rgba(255, 255, 255, 0.22)", "#ffffff", "rgba(255, 255, 255, 0.86)", "rgba(255, 255, 255, 0.22)", "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.86)"),
-      photoBadge: role("rgba(16, 24, 39, 0.42)", "rgba(16, 24, 39, 0.28)", "rgba(16, 24, 39, 0.16)", "rgba(16, 24, 39, 0.74)", "rgba(16, 24, 39, 0.66)", "#ffffff", "rgba(255, 255, 255, 0.42)", "rgba(16, 24, 39, 0.1)", "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.86)"),
-      heartSoft: "rgba(229, 168, 184, 0.18)",
-      pageGlow: "rgba(223, 123, 132, 0.16)",
-      shadows: {
-        card: "0 24rpx 72rpx rgba(0, 0, 0, 0.24)",
-        floating: "0 28rpx 96rpx rgba(0, 0, 0, 0.34)",
-        button: "0 12rpx 28rpx rgba(0, 0, 0, 0.2)",
-        image: "0 12rpx 30rpx rgba(0, 0, 0, 0.2)",
-        logo: "0 16rpx 42rpx rgba(0, 0, 0, 0.22)"
-      }
-    }
-  ),
-  makePalette(
-    "soft-pink-blue",
-    "软粉蓝",
-    "更轻的粉蓝记忆感",
-    {
-      primary: "#c96f86",
-      accent: "#6da1c2",
-      glow: "rgba(201, 111, 134, 0.15)"
-    },
-    {
-      page: "#fff8f6",
-      pageSoft: "#fff0ef",
-      pageMuted: "#f7e5e7",
-      card: "#fffefe",
-      cardSoft: "#fff7fa",
-      cardMuted: "#f8ecef",
-      input: "#fffafb",
-      control: "#fff3f6",
-      text: lightText(),
-      border: {
-        base: "rgba(77, 48, 59, 0.13)",
-        muted: "rgba(77, 48, 59, 0.09)",
-        strong: "rgba(77, 48, 59, 0.22)",
-        divider: "rgba(77, 48, 59, 0.12)",
-        disabled: "rgba(77, 48, 59, 0.08)",
-        focusRing: "rgba(201, 111, 134, 0.36)"
-      },
-      primary: {
-        base: "#c96f86",
-        soft: "#f7dce4",
-        muted: "#fff3f6",
-        pressed: "#9b435d",
-        active: "#f0ccd7",
-        disabled: "#e8bdc9",
-        border: "rgba(201, 111, 134, 0.28)",
-        focusRing: "rgba(201, 111, 134, 0.36)"
-      },
-      accent: {
-        base: "#6da1c2",
-        soft: "#dcedf6",
-        muted: "#f0f8fc",
-        pressed: "#477e9f",
-        active: "#cde4f0",
-        disabled: "#bfd9e8",
-        border: "rgba(109, 161, 194, 0.28)",
-        focusRing: "rgba(109, 161, 194, 0.36)"
-      },
-      redPerson: {
-        base: "#c96f86",
-        soft: "#f7dce4",
-        muted: "#fff3f6",
-        pressed: "#9b435d",
-        active: "#f0ccd7",
-        disabled: "#e8bdc9",
-        border: "rgba(201, 111, 134, 0.28)",
-        focusRing: "rgba(201, 111, 134, 0.36)"
-      },
-      bluePerson: {
-        base: "#6da1c2",
-        soft: "#dcedf6",
-        muted: "#f0f8fc",
-        pressed: "#477e9f",
-        active: "#cde4f0",
-        disabled: "#bfd9e8",
-        border: "rgba(109, 161, 194, 0.28)",
-        focusRing: "rgba(109, 161, 194, 0.36)"
-      },
-      status: lightStatus("rgba(201, 111, 134, 0.34)"),
-      overlay: lightOverlay,
-      swatch: role("#c96f86", "#f7dce4", "#fff3f6", "#9b435d", "rgba(255, 255, 255, 0.26)", "#ffffff", "rgba(255, 255, 255, 0.86)", "rgba(255, 255, 255, 0.34)", "rgba(255, 255, 255, 0.28)", "rgba(255, 255, 255, 0.9)"),
-      photoBadge: role("rgba(43, 32, 36, 0.28)", "rgba(43, 32, 36, 0.18)", "rgba(43, 32, 36, 0.1)", "rgba(43, 32, 36, 0.72)", "rgba(43, 32, 36, 0.62)", "#ffffff", "rgba(255, 255, 255, 0.48)", "rgba(43, 32, 36, 0.08)", "rgba(255, 255, 255, 0.24)", "rgba(255, 255, 255, 0.86)"),
-      heartSoft: "#fff3f6",
-      pageGlow: "rgba(201, 111, 134, 0.15)",
-      shadows: {
-        card: "0 24rpx 80rpx rgba(82, 47, 58, 0.13)",
-        floating: "0 28rpx 96rpx rgba(82, 47, 58, 0.17)",
-        button: "0 12rpx 28rpx rgba(82, 47, 58, 0.12)",
-        image: "0 12rpx 30rpx rgba(82, 47, 58, 0.1)",
-        logo: "0 16rpx 42rpx rgba(82, 47, 58, 0.12)"
-      }
-    },
-    {
-      page: "#131722",
-      pageSoft: "#222634",
-      pageMuted: "#2a2f3d",
-      card: "#242938",
-      cardSoft: "#2a2f3d",
-      cardMuted: "#1b2030",
-      input: "#1b2030",
-      control: "#2a2f3d",
-      text: darkText(),
-      border: {
-        base: "rgba(247, 240, 234, 0.13)",
-        muted: "rgba(247, 240, 234, 0.09)",
-        strong: "rgba(247, 240, 234, 0.24)",
-        divider: "rgba(247, 240, 234, 0.12)",
-        disabled: "rgba(247, 240, 234, 0.08)",
-        focusRing: "rgba(233, 160, 179, 0.42)"
-      },
-      primary: {
-        base: "#e9a0b3",
-        soft: "rgba(233, 160, 179, 0.2)",
-        muted: "rgba(233, 160, 179, 0.12)",
-        pressed: "#f2b8c7",
-        active: "rgba(233, 160, 179, 0.28)",
-        disabled: "rgba(233, 160, 179, 0.1)",
-        border: "rgba(233, 160, 179, 0.3)",
-        focusRing: "rgba(233, 160, 179, 0.42)"
-      },
-      accent: {
-        base: "#9ac6dd",
-        soft: "rgba(154, 198, 221, 0.2)",
-        muted: "rgba(154, 198, 221, 0.12)",
-        pressed: "#abd3e6",
-        active: "rgba(154, 198, 221, 0.28)",
-        disabled: "rgba(154, 198, 221, 0.1)",
-        border: "rgba(154, 198, 221, 0.3)",
-        focusRing: "rgba(154, 198, 221, 0.4)"
-      },
-      redPerson: {
-        base: "#e9a0b3",
-        soft: "rgba(233, 160, 179, 0.2)",
-        muted: "rgba(233, 160, 179, 0.12)",
-        pressed: "#f2b8c7",
-        active: "rgba(233, 160, 179, 0.28)",
-        disabled: "rgba(233, 160, 179, 0.1)",
-        border: "rgba(233, 160, 179, 0.3)",
-        focusRing: "rgba(233, 160, 179, 0.42)"
-      },
-      bluePerson: {
-        base: "#9ac6dd",
-        soft: "rgba(154, 198, 221, 0.2)",
-        muted: "rgba(154, 198, 221, 0.12)",
-        pressed: "#abd3e6",
-        active: "rgba(154, 198, 221, 0.28)",
-        disabled: "rgba(154, 198, 221, 0.1)",
-        border: "rgba(154, 198, 221, 0.3)",
-        focusRing: "rgba(154, 198, 221, 0.4)"
-      },
-      status: darkStatus("rgba(233, 160, 179, 0.42)"),
-      overlay: darkOverlay,
-      swatch: role("#e9a0b3", "rgba(233, 160, 179, 0.2)", "rgba(233, 160, 179, 0.12)", "#f2b8c7", "rgba(255, 255, 255, 0.22)", "#ffffff", "rgba(255, 255, 255, 0.86)", "rgba(255, 255, 255, 0.22)", "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.86)"),
-      photoBadge: role("rgba(16, 24, 39, 0.42)", "rgba(16, 24, 39, 0.28)", "rgba(16, 24, 39, 0.16)", "rgba(16, 24, 39, 0.74)", "rgba(16, 24, 39, 0.66)", "#ffffff", "rgba(255, 255, 255, 0.42)", "rgba(16, 24, 39, 0.1)", "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.86)"),
-      heartSoft: "rgba(233, 160, 179, 0.18)",
-      pageGlow: "rgba(233, 160, 179, 0.14)",
-      shadows: {
-        card: "0 24rpx 72rpx rgba(0, 0, 0, 0.24)",
-        floating: "0 28rpx 96rpx rgba(0, 0, 0, 0.34)",
-        button: "0 12rpx 28rpx rgba(0, 0, 0, 0.2)",
-        image: "0 12rpx 30rpx rgba(0, 0, 0, 0.2)",
-        logo: "0 16rpx 42rpx rgba(0, 0, 0, 0.22)"
-      }
-    }
-  ),
-  makePalette(
-    "night-red-blue",
-    "夜航红蓝",
-    "深色友好的红蓝系统",
-    {
-      primary: "#a9505f",
-      accent: "#3f7897",
-      glow: "rgba(63, 120, 151, 0.14)"
-    },
-    {
-      page: "#fbf5ee",
-      pageSoft: "#f0e7dc",
-      pageMuted: "#e7d8cb",
-      card: "#fffdfa",
-      cardSoft: "#fbf6f0",
-      cardMuted: "#f0e5dc",
-      input: "#fffaf5",
-      control: "#f8eee7",
-      text: lightText(),
-      border: {
-        base: "rgba(36, 50, 71, 0.16)",
-        muted: "rgba(36, 50, 71, 0.1)",
-        strong: "rgba(36, 50, 71, 0.24)",
-        divider: "rgba(36, 50, 71, 0.12)",
-        disabled: "rgba(36, 50, 71, 0.08)",
-        focusRing: "rgba(169, 80, 95, 0.36)"
-      },
-      primary: {
-        base: "#a9505f",
-        soft: "#f1ced3",
-        muted: "#fbebee",
-        pressed: "#7f3242",
-        active: "#e7bdc5",
-        disabled: "#d8adb6",
-        border: "rgba(169, 80, 95, 0.28)",
-        focusRing: "rgba(169, 80, 95, 0.36)"
-      },
-      accent: {
-        base: "#3f7897",
-        soft: "#d4e8f2",
-        muted: "#edf6fb",
-        pressed: "#295a74",
-        active: "#c3deec",
-        disabled: "#b4d1e1",
-        border: "rgba(63, 120, 151, 0.28)",
-        focusRing: "rgba(63, 120, 151, 0.36)"
-      },
-      redPerson: {
-        base: "#a9505f",
-        soft: "#f1ced3",
-        muted: "#fbebee",
-        pressed: "#7f3242",
-        active: "#e7bdc5",
-        disabled: "#d8adb6",
-        border: "rgba(169, 80, 95, 0.28)",
-        focusRing: "rgba(169, 80, 95, 0.36)"
-      },
-      bluePerson: {
-        base: "#3f7897",
-        soft: "#d4e8f2",
-        muted: "#edf6fb",
-        pressed: "#295a74",
-        active: "#c3deec",
-        disabled: "#b4d1e1",
-        border: "rgba(63, 120, 151, 0.28)",
-        focusRing: "rgba(63, 120, 151, 0.36)"
-      },
-      status: lightStatus("rgba(169, 80, 95, 0.34)"),
-      overlay: lightOverlay,
-      swatch: role("#a9505f", "#f1ced3", "#fbebee", "#7f3242", "rgba(255, 255, 255, 0.26)", "#ffffff", "rgba(255, 255, 255, 0.86)", "rgba(255, 255, 255, 0.34)", "rgba(255, 255, 255, 0.28)", "rgba(255, 255, 255, 0.9)"),
-      photoBadge: role("rgba(43, 32, 36, 0.28)", "rgba(43, 32, 36, 0.18)", "rgba(43, 32, 36, 0.1)", "rgba(43, 32, 36, 0.72)", "rgba(43, 32, 36, 0.62)", "#ffffff", "rgba(255, 255, 255, 0.48)", "rgba(43, 32, 36, 0.08)", "rgba(255, 255, 255, 0.24)", "rgba(255, 255, 255, 0.86)"),
-      heartSoft: "#ead5dd",
-      pageGlow: "rgba(63, 120, 151, 0.14)",
-      shadows: {
-        card: "0 24rpx 80rpx rgba(36, 50, 71, 0.13)",
-        floating: "0 28rpx 96rpx rgba(36, 50, 71, 0.17)",
-        button: "0 12rpx 28rpx rgba(36, 50, 71, 0.12)",
-        image: "0 12rpx 30rpx rgba(36, 50, 71, 0.1)",
-        logo: "0 16rpx 42rpx rgba(36, 50, 71, 0.12)"
-      }
-    },
-    {
-      page: "#0f1726",
-      pageSoft: "#18243a",
-      pageMuted: "#212d43",
-      card: "#212d43",
-      cardSoft: "#293750",
-      cardMuted: "#18243a",
-      input: "#18243a",
-      control: "#293750",
-      text: darkText(),
-      border: {
-        base: "rgba(247, 240, 234, 0.14)",
-        muted: "rgba(247, 240, 234, 0.09)",
-        strong: "rgba(247, 240, 234, 0.24)",
-        divider: "rgba(247, 240, 234, 0.12)",
-        disabled: "rgba(247, 240, 234, 0.08)",
-        focusRing: "rgba(226, 138, 149, 0.42)"
-      },
-      primary: {
-        base: "#e28a95",
-        soft: "rgba(226, 138, 149, 0.2)",
-        muted: "rgba(226, 138, 149, 0.12)",
-        pressed: "#f0a0aa",
-        active: "rgba(226, 138, 149, 0.28)",
-        disabled: "rgba(226, 138, 149, 0.1)",
-        border: "rgba(226, 138, 149, 0.3)",
-        focusRing: "rgba(226, 138, 149, 0.42)"
-      },
-      accent: {
-        base: "#7fb2cf",
-        soft: "rgba(127, 178, 207, 0.2)",
-        muted: "rgba(127, 178, 207, 0.12)",
-        pressed: "#91c0da",
-        active: "rgba(127, 178, 207, 0.28)",
-        disabled: "rgba(127, 178, 207, 0.1)",
-        border: "rgba(127, 178, 207, 0.3)",
-        focusRing: "rgba(127, 178, 207, 0.4)"
-      },
-      redPerson: {
-        base: "#e28a95",
-        soft: "rgba(226, 138, 149, 0.2)",
-        muted: "rgba(226, 138, 149, 0.12)",
-        pressed: "#f0a0aa",
-        active: "rgba(226, 138, 149, 0.28)",
-        disabled: "rgba(226, 138, 149, 0.1)",
-        border: "rgba(226, 138, 149, 0.3)",
-        focusRing: "rgba(226, 138, 149, 0.42)"
-      },
-      bluePerson: {
-        base: "#7fb2cf",
-        soft: "rgba(127, 178, 207, 0.2)",
-        muted: "rgba(127, 178, 207, 0.12)",
-        pressed: "#91c0da",
-        active: "rgba(127, 178, 207, 0.28)",
-        disabled: "rgba(127, 178, 207, 0.1)",
-        border: "rgba(127, 178, 207, 0.3)",
-        focusRing: "rgba(127, 178, 207, 0.4)"
-      },
-      status: darkStatus("rgba(226, 138, 149, 0.42)"),
-      overlay: darkOverlay,
-      swatch: role("#e28a95", "rgba(226, 138, 149, 0.2)", "rgba(226, 138, 149, 0.12)", "#f0a0aa", "rgba(255, 255, 255, 0.22)", "#ffffff", "rgba(255, 255, 255, 0.86)", "rgba(255, 255, 255, 0.22)", "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.86)"),
-      photoBadge: role("rgba(16, 24, 39, 0.42)", "rgba(16, 24, 39, 0.28)", "rgba(16, 24, 39, 0.16)", "rgba(16, 24, 39, 0.74)", "rgba(16, 24, 39, 0.66)", "#ffffff", "rgba(255, 255, 255, 0.42)", "rgba(16, 24, 39, 0.1)", "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.86)"),
-      heartSoft: "rgba(226, 138, 149, 0.18)",
-      pageGlow: "rgba(127, 178, 207, 0.14)",
-      shadows: {
-        card: "0 24rpx 72rpx rgba(0, 0, 0, 0.24)",
-        floating: "0 28rpx 96rpx rgba(0, 0, 0, 0.34)",
-        button: "0 12rpx 28rpx rgba(0, 0, 0, 0.2)",
-        image: "0 12rpx 30rpx rgba(0, 0, 0, 0.2)",
-        logo: "0 16rpx 42rpx rgba(0, 0, 0, 0.22)"
-      }
-    }
-  )
-]
+export const romanticPalettes: RomanticPalette[] = paletteSeeds.map(makePalette)
 
 export const defaultPalette = romanticPalettes[0]
 

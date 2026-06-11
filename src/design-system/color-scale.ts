@@ -103,5 +103,6 @@ export const resolvePaletteColorVars = (palette: RomanticPalette, theme: AppThem
 export const resolvePalettePreviewVars = (palette: RomanticPalette): AppCssVars => ({
   "--app-option-swatch-primary": palette.preview.primary,
   "--app-option-swatch-accent": palette.preview.accent,
-  "--app-option-swatch-glow": palette.preview.glow
+  "--app-option-swatch-glow": palette.preview.glow,
+  "--app-option-swatch-foreground": palette.preview.foreground
 })

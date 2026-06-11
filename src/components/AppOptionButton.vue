@@ -91,7 +91,7 @@ const handleClick = () => {
   background:
     radial-gradient(circle at 18% 20%, var(--app-option-swatch-glow), transparent var(--app-swatch-gradient-size)),
     linear-gradient(135deg, var(--app-option-swatch-primary), var(--app-option-swatch-accent));
-  color: var(--app-color-swatch-foreground);
+  color: var(--app-option-swatch-foreground);
   line-height: var(--app-line-height-none);
   text-align: left;
 }
@@ -101,6 +101,6 @@ const handleClick = () => {
   background:
     radial-gradient(circle at 18% 20%, var(--app-option-swatch-glow), transparent var(--app-swatch-gradient-size)),
     linear-gradient(135deg, var(--app-option-swatch-primary), var(--app-option-swatch-accent));
-  color: var(--app-color-swatch-foreground);
+  color: var(--app-option-swatch-foreground);
 }
 </style>

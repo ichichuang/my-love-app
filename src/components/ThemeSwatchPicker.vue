@@ -1,5 +1,5 @@
 <template>
-  <app-option-group class="theme-picker" :columns="3">
+  <app-option-group class="theme-picker" :columns="2">
     <app-option-button
       v-for="palette in romanticPalettes"
       :key="palette.id"
@@ -37,12 +37,14 @@ const swatchStyle = (palette: RomanticPalette) =>
   font-size: var(--app-font-size-base);
   font-weight: var(--app-font-weight-semibold);
   line-height: var(--app-line-height-tight);
+  overflow-wrap: anywhere;
 }
 
 .theme-picker__description {
   margin-top: var(--app-space-2);
   font-size: var(--app-font-size-xs);
   line-height: var(--app-line-height-snug);
+  overflow-wrap: anywhere;
 }
 
 .theme-picker__active {

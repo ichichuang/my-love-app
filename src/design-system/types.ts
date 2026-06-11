@@ -82,6 +82,7 @@ export interface RomanticPalette {
     primary: string
     accent: string
     glow: string
+    foreground: string
   }
   schemes: Record<AppTheme, SemanticColorScheme>
 }

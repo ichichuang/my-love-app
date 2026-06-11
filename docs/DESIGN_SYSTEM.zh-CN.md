@@ -16,11 +16,14 @@
 
 配色只允许使用 `src/design-system/palettes.ts` 中的策展预设，不提供任意十六进制输入。
 
-当前预设：
+当前预设固定为 6 套策展主题：
 
-- `warm-red-blue`：暖白红蓝，默认手绘小人方向。
-- `soft-pink-blue`：软粉蓝，更轻的粉蓝记忆感。
-- `night-red-blue`：夜航红蓝，深色模式更稳。
+- `warm-paper-red-blue`：暖纸红蓝，暖纸底色、安静红蓝，适合作为默认日记感。
+- `peach-mist-blue`：桃雾蓝灰，桃雾柔光、蓝灰书写，整体更轻。
+- `wisteria-tea`：紫藤杏茶，紫藤纸面、杏茶暖意，偏安静文艺。
+- `apricot-sage`：杏茶鼠尾草，杏茶纸感、鼠尾草绿，偏自然手绘。
+- `plum-garden`：梅子庭院，梅子色、庭院绿影，偏克制亲密。
+- `indigo-letter`：靛蓝信笺，靛蓝信纸、安静朱砂，偏书信感。
 
 每个预设都必须定义完整 `light` 和 `dark` 语义方案，并覆盖这些家族：
 
@@ -51,6 +54,21 @@
 - 照片角标：`--app-color-photo-badge-*`
 
 `css-vars.ts` 输出常用终端 alias：`--app-bg`、`--app-surface`、`--app-field`、`--app-control`、`--app-primary`、`--app-accent`、`--app-text`、`--app-border`、`--app-divider`、`--app-focus-ring`、`--app-shadow`。
+
+对比度规则：
+
+- 主色、强调色、人物色、状态色、色板预览等实色块的文字对比度必须不低于 4.5:1。
+- `soft`、`muted`、`active` 等柔和色块与主文字的对比度必须不低于 3.0:1。
+- 只有当白字对当前实色块达到 4.5:1 时才使用白字；否则使用深色墨水前景，例如 `#111827`。
+- 深色模式的明亮主色、强调色和状态色通常使用深色前景，不强行使用白字。
+
+新增或调整配色时：
+
+1. 只修改 `src/design-system/palettes.ts` 中的策展种子或纯解析函数，不在页面、组件或 store 内写 raw 颜色。
+2. 每套配色必须提供完整浅色和深色语义方案输入，并保持 `page`、`card`、`text`、`primary`、`accent` 的策展来源清晰。
+3. 不新增任意十六进制输入器，不把配色变成用户自定义颜色系统。
+4. 更新本文件中的配色清单和意图说明。
+5. 运行 `pnpm scan:design-tokens`，该脚本会检查 6 套固定配色、关键源色、实色对比度和柔和色块对比度。
 
 ## 3. 尺寸与排版
 
@@ -150,6 +168,7 @@ git diff --check
 
 - 页面是否绕过 `AppShell`
 - `AppShell` 是否仍注入 `theme.appStyle`、`themeVars` 和 `providerKey`
+- 是否仍保留 6 套固定策展配色、关键源色和对比度规则
 - `src/design-system/**` 是否存在禁用的运行时副作用
 - 设置页和色板是否绕过 `AppOptionButton`
 - 页面和组件是否出现 raw style 值

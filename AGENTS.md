@@ -17,7 +17,7 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 - Use SCSS and app CSS variables such as `--app-primary`, `--app-bg`, `--app-surface`, and `--app-text`.
 - Keep runtime theme resolution in `src/design-system/**`; `src/stores/theme.ts` should only own state, persistence, system theme listening, and calls into resolver modules.
 - Keep `palettes.ts`, `color-scale.ts`, `theme-resolver.ts`, `size-scale.ts`, `size-resolver.ts`, `typography-resolver.ts`, `wot-theme.ts`, and `css-vars.ts` pure. `nav-theme.ts` is the only design-system module allowed to schedule or call native navigation APIs.
-- Curated palette presets must define complete light and dark semantic schemes. Do not add arbitrary user hex color input.
+- Curated palette presets must define complete light and dark semantic schemes. Keep the fixed six-palette inventory and pass the palette contrast checks in `pnpm scan:design-tokens`. Do not add arbitrary user hex color input.
 - `appCssVars` must output terminal alias variables such as `--app-bg`, `--app-surface`, `--app-primary`, and `--app-text`, not only `--app-color-*` canonical variables.
 - `AppShell.vue` is the only runtime app-level CSS variable injection root. Keep `theme.appStyle` on its root `view`.
 - Keep `providerKey` on `wd-config-provider` so Wot UI refreshes when resolved mode, palette, density, or font scale changes.
