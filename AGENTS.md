@@ -2,6 +2,14 @@
 
 This project is a private UniApp WeChat Mini Program for romantic journal and memory keeping.
 
+## AI Coding Guidelines
+
+- Future AI/Codex edits must read and follow `docs/AI_CODING_GUIDELINES.md` before changing project files.
+- Follow the architecture frozen after `miniapp-architecture-freeze-v1`; do not redesign the base architecture, design-system foundation, CloudBase architecture, routing model, or product boundary unless explicitly requested.
+- Use Wot UI first for polished business UI. Do not introduce native `button`, `input`, `textarea`, `checkbox`, `radio`, `switch`, `picker`, `slider`, `form`, or other raw interactive controls in new pages or business components.
+- Use `wd-button` for explicit actions and Wot UI form/dialog/popup/cell/tab/tag/badge/loading/empty/error components whenever available. If Wot UI does not fit, create or reuse a small app-level component that follows the design-token system.
+- The only platform-native structural exception is mandatory UniApp/page host infrastructure such as `page-meta`, plus existing framework/layout primitives inside already-approved base components.
+
 ## Stack
 
 - Use the official `dcloudio/uni-preset-vue#vite-ts` scaffold.
