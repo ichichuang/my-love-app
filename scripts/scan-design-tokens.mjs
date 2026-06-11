@@ -5,7 +5,7 @@ import ts from "typescript"
 
 const root = process.cwd()
 const scanRoots = ["src/components", "src/pages", "src/App.vue"]
-const definitionRoots = ["src/styles", "src/design-system"]
+const definitionRoots = ["src/styles"]
 const sourceExtensions = new Set([".vue", ".scss", ".ts"])
 
 const allowedPathPatterns = [
@@ -473,15 +473,6 @@ for (const filePath of definitionRoots.flatMap((target) => collectFiles(target, 
   while (match) {
     knownAppTokens.add(match[1])
     match = appTokenDefinitionPattern.exec(content)
-  }
-
-  appTokenPattern.lastIndex = 0
-  match = appTokenPattern.exec(content)
-  while (match) {
-    if (normalizePath(filePath).startsWith("src/design-system/")) {
-      knownAppTokens.add(match[0])
-    }
-    match = appTokenPattern.exec(content)
   }
 }
 

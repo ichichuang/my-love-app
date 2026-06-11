@@ -188,4 +188,4 @@ git diff --check
 - 设置页和色板是否绕过 `AppOptionButton`
 - 页面和组件是否出现 raw style 值
 - 使用的 `--app-*` 是否已登记在令牌系统中
-- 令牌定义是否只来自 `src/styles/**` 与 `src/design-system/**`，组件内动态变量是否在 allowlist 中
+- 令牌名是否来自 `src/design-system/token-registry.ts` 或 `src/styles/**` 中的真实定义，组件内动态变量是否在 allowlist 中
