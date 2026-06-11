@@ -112,7 +112,7 @@ export const resolveWotThemeVars = (vars: AppCssVars, size: ResolvedSizeTokens):
     colorSuccess: success,
     colorWarning: warning,
     colorDanger: danger,
-    colorBlue: requiredAppVar(vars, "--app-color-blue-person"),
+    colorBlue: requiredAppVar(vars, "--app-color-cool-accent"),
     colorWhite: "#ffffff",
     colorBlack: "#000000",
     colorGray1: text,

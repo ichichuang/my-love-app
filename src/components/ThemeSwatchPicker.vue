@@ -1,7 +1,7 @@
 <template>
   <app-option-group class="theme-picker" :columns="2">
     <app-option-button
-      v-for="palette in romanticPalettes"
+      v-for="palette in themePalettes"
       :key="palette.id"
       variant="swatch"
       :active="palette.id === paletteId"
@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { resolvePalettePreviewVars } from "@/design-system/color-scale"
 import { makeCssVars } from "@/design-system/css-vars"
-import { romanticPalettes, type PaletteId, type RomanticPalette } from "@/stores/theme"
+import { themePalettes, type PaletteId, type ThemePalette } from "@/stores/theme"
 
 defineProps<{
   paletteId: PaletteId
@@ -28,7 +28,7 @@ const emit = defineEmits<{
   selectPalette: [id: PaletteId]
 }>()
 
-const swatchStyle = (palette: RomanticPalette) =>
+const swatchStyle = (palette: ThemePalette) =>
   makeCssVars(resolvePalettePreviewVars(palette))
 </script>
 

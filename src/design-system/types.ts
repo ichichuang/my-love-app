@@ -79,13 +79,13 @@ export interface SemanticColorScheme {
   border: BorderColorRole
   primary: ColorRole
   accent: ColorRole
-  redPerson: ColorRole
-  bluePerson: ColorRole
+  warmAccent: ColorRole
+  coolAccent: ColorRole
   status: StatusColorRoles
   overlay: ColorRole
   swatch: ColorRole
-  photoBadge: ColorRole
-  heartSoft: CssColorValue
+  mediaBadge: ColorRole
+  decorSoft: CssColorValue
   pageGlow: CssColorValue
   shadows: ShadowColorRole
 }
@@ -106,7 +106,7 @@ export interface CuratedPaletteSeed {
   dark: PaletteSchemeSeed
 }
 
-export interface RomanticPalette<TId extends string = string> {
+export interface ThemePalette<TId extends string = string> {
   id: TId
   name: string
   description: string

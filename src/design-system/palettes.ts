@@ -9,7 +9,7 @@ import type {
   CssShadowValue,
   CuratedPaletteSeed,
   PaletteSchemeSeed,
-  RomanticPalette,
+  ThemePalette,
   SemanticColorScheme,
   ShadowColorRole,
   StatusColorRoles,
@@ -42,9 +42,9 @@ const darkStatusBases = {
 
 const paletteSeeds = [
   {
-    id: "warm-paper-red-blue",
-    name: "暖纸红蓝",
-    description: "暖纸底色与安静红蓝",
+    id: "warm-paper",
+    name: "暖纸基础",
+    description: "暖纸底色与柔和主色",
     light: {
       page: "#FFF8F1",
       card: "#FFFFFF",
@@ -61,9 +61,9 @@ const paletteSeeds = [
     }
   },
   {
-    id: "peach-mist-blue",
+    id: "peach-mist",
     name: "桃雾蓝灰",
-    description: "桃雾柔光与蓝灰书写",
+    description: "桃雾柔光与蓝灰辅助",
     light: {
       page: "#FFF6F2",
       card: "#FFFEFC",
@@ -80,9 +80,9 @@ const paletteSeeds = [
     }
   },
   {
-    id: "wisteria-tea",
-    name: "紫藤杏茶",
-    description: "紫藤纸面与杏茶暖意",
+    id: "soft-lavender",
+    name: "柔紫杏茶",
+    description: "柔紫纸面与暖色强调",
     light: {
       page: "#F7F2FF",
       card: "#FFFFFF",
@@ -101,7 +101,7 @@ const paletteSeeds = [
   {
     id: "apricot-sage",
     name: "杏茶鼠尾草",
-    description: "杏茶纸感与鼠尾草绿",
+    description: "暖杏底色与鼠尾草辅助",
     light: {
       page: "#FBF4E7",
       card: "#FFFDF8",
@@ -118,9 +118,9 @@ const paletteSeeds = [
     }
   },
   {
-    id: "plum-garden",
-    name: "梅子庭院",
-    description: "梅子色与庭院绿影",
+    id: "muted-plum",
+    name: "梅子灰阶",
+    description: "梅子主色与柔和绿色辅助",
     light: {
       page: "#FCF6F4",
       card: "#FFFFFF",
@@ -137,9 +137,9 @@ const paletteSeeds = [
     }
   },
   {
-    id: "indigo-letter",
-    name: "靛蓝信笺",
-    description: "靛蓝信纸与安静朱砂",
+    id: "indigo-slate",
+    name: "靛蓝灰阶",
+    description: "靛蓝主色与暖色辅助",
     light: {
       page: "#F8F4EC",
       card: "#FFFFFF",
@@ -379,19 +379,19 @@ const makeScheme = (seed: PaletteSchemeSeed, mode: AppTheme): SemanticColorSchem
     border,
     primary,
     accent,
-    redPerson: primary,
-    bluePerson: accent,
+    warmAccent: primary,
+    coolAccent: accent,
     status: makeStatusRoles(mode),
     overlay: makeOverlayRole(seed.text, mode),
     swatch: makeSwatchRole(primary, accent, seed.primary, seed.accent, mode),
-    photoBadge: makePhotoBadgeRole(seed.text, mode),
-    heartSoft: mode === "light" ? mix(seed.primary, seed.card, 0.84) : alpha(seed.primary, 0.18),
+    mediaBadge: makePhotoBadgeRole(seed.text, mode),
+    decorSoft: mode === "light" ? mix(seed.primary, seed.card, 0.84) : alpha(seed.primary, 0.18),
     pageGlow: alpha(mode === "light" ? seed.primary : seed.accent, mode === "light" ? 0.15 : 0.14),
     shadows: makeShadows(seed, mode)
   } satisfies SemanticColorScheme
 }
 
-const makePalette = <TSeed extends CuratedPaletteSeed>(seed: TSeed): RomanticPalette<TSeed["id"]> => ({
+const makePalette = <TSeed extends CuratedPaletteSeed>(seed: TSeed): ThemePalette<TSeed["id"]> => ({
   id: seed.id,
   name: seed.name,
   description: seed.description,
@@ -405,14 +405,14 @@ const makePalette = <TSeed extends CuratedPaletteSeed>(seed: TSeed): RomanticPal
     light: makeScheme(seed.light, "light"),
     dark: makeScheme(seed.dark, "dark")
   }
-} satisfies RomanticPalette<TSeed["id"]>)
+} satisfies ThemePalette<TSeed["id"]>)
 
-export const romanticPalettes = paletteSeeds.map((seed) => makePalette(seed)) as readonly RomanticPalette<PaletteId>[]
+export const themePalettes = paletteSeeds.map((seed) => makePalette(seed)) as readonly ThemePalette<PaletteId>[]
 
-export const defaultPalette = romanticPalettes[0]
+export const defaultPalette = themePalettes[0]
 
-export const getPaletteById = (paletteId: string): RomanticPalette<PaletteId> =>
-  romanticPalettes.find((palette) => palette.id === paletteId) ?? defaultPalette
+export const getPaletteById = (paletteId: string): ThemePalette<PaletteId> =>
+  themePalettes.find((palette) => palette.id === paletteId) ?? defaultPalette
 
 export const hasPalette = (paletteId: string): paletteId is PaletteId =>
-  romanticPalettes.some((palette) => palette.id === paletteId)
+  themePalettes.some((palette) => palette.id === paletteId)

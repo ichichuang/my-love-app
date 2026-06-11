@@ -1,4 +1,4 @@
-import type { AppCssVars, AppTheme, ColorRole, RomanticPalette, SemanticColorScheme, StatusColorRoles } from "@/design-system/types"
+import type { AppCssVars, AppTheme, ColorRole, ThemePalette, SemanticColorScheme, StatusColorRoles } from "@/design-system/types"
 import type { ColorRoleCssVarName, SemanticColorRoleName } from "@/design-system/token-registry"
 
 export const makeColorRole = (role: ColorRole): ColorRole => role
@@ -50,11 +50,11 @@ export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCs
   ...roleVars("control", scheme.control),
   ...roleVars("primary", scheme.primary),
   ...roleVars("accent", scheme.accent),
-  ...roleVars("red-person", scheme.redPerson),
-  ...roleVars("blue-person", scheme.bluePerson),
+  ...roleVars("warm-accent", scheme.warmAccent),
+  ...roleVars("cool-accent", scheme.coolAccent),
   ...roleVars("overlay", scheme.overlay),
   ...roleVars("swatch", scheme.swatch),
-  ...roleVars("photo-badge", scheme.photoBadge),
+  ...roleVars("media-badge", scheme.mediaBadge),
   ...statusVars(scheme.status),
 
   "--app-color-bg-page": scheme.page.base,
@@ -85,7 +85,7 @@ export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCs
   "--app-color-border-disabled": scheme.border.disabled,
   "--app-color-border-focus-ring": scheme.border.focusRing,
 
-  "--app-color-heart-soft": scheme.heartSoft,
+  "--app-color-decor-soft": scheme.decorSoft,
   "--app-color-page-glow": scheme.pageGlow,
   "--app-color-accent": scheme.accent.base,
   "--app-color-on-swatch": scheme.swatch.foreground,
@@ -93,8 +93,8 @@ export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCs
   "--app-color-swatch-border": scheme.swatch.border,
   "--app-color-swatch-active-border": scheme.swatch.border,
   "--app-color-swatch-active-bg": scheme.swatch.active,
-  "--app-color-photo-badge-bg": scheme.photoBadge.base,
-  "--app-color-photo-badge-border": scheme.photoBadge.border,
+  "--app-color-media-badge-bg": scheme.mediaBadge.base,
+  "--app-color-media-badge-border": scheme.mediaBadge.border,
 
   "--app-shadow-card": scheme.shadows.card,
   "--app-shadow-floating": scheme.shadows.floating,
@@ -103,10 +103,10 @@ export const semanticColorSchemeToCssVars = (scheme: SemanticColorScheme): AppCs
   "--app-shadow-logo": scheme.shadows.logo
 } satisfies AppCssVars)
 
-export const resolvePaletteColorVars = (palette: RomanticPalette, theme: AppTheme): AppCssVars =>
+export const resolvePaletteColorVars = (palette: ThemePalette, theme: AppTheme): AppCssVars =>
   semanticColorSchemeToCssVars(palette.schemes[theme])
 
-export const resolvePalettePreviewVars = (palette: RomanticPalette): AppCssVars => ({
+export const resolvePalettePreviewVars = (palette: ThemePalette): AppCssVars => ({
   "--app-option-swatch-primary": palette.preview.primary,
   "--app-option-swatch-accent": palette.preview.accent,
   "--app-option-swatch-glow": palette.preview.glow,

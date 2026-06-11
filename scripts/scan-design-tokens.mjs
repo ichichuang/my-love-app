@@ -96,18 +96,18 @@ const requiredThemeContractSnippets = [
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "warm paper red-blue preset",
-    snippet: "warm-paper-red-blue"
+    label: "warm paper preset",
+    snippet: "warm-paper"
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "peach mist blue preset",
-    snippet: "peach-mist-blue"
+    label: "peach mist preset",
+    snippet: "peach-mist"
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "wisteria tea preset",
-    snippet: "wisteria-tea"
+    label: "soft lavender preset",
+    snippet: "soft-lavender"
   },
   {
     file: "src/design-system/palettes.ts",
@@ -116,13 +116,13 @@ const requiredThemeContractSnippets = [
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "plum garden preset",
-    snippet: "plum-garden"
+    label: "muted plum preset",
+    snippet: "muted-plum"
   },
   {
     file: "src/design-system/palettes.ts",
-    label: "indigo letter preset",
-    snippet: "indigo-letter"
+    label: "indigo slate preset",
+    snippet: "indigo-slate"
   },
   {
     file: "src/design-system/color-scale.ts",
@@ -339,18 +339,18 @@ const dynamicAppTokens = new Set(
 )
 
 const expectedPaletteContracts = {
-  "warm-paper-red-blue": {
-    name: "暖纸红蓝",
+  "warm-paper": {
+    name: "暖纸基础",
     light: { page: "#FFF8F1", card: "#FFFFFF", text: "#2F2427", primary: "#A84E5A", accent: "#3F7897" },
     dark: { page: "#101826", card: "#202B3B", primary: "#E28A93", accent: "#8DBBD4" }
   },
-  "peach-mist-blue": {
+  "peach-mist": {
     name: "桃雾蓝灰",
     light: { page: "#FFF6F2", card: "#FFFEFC", text: "#302327", primary: "#A94F5B", accent: "#446F8D" },
     dark: { page: "#151A24", card: "#262B37", primary: "#E99AA4", accent: "#9FC6DA" }
   },
-  "wisteria-tea": {
-    name: "紫藤杏茶",
+  "soft-lavender": {
+    name: "柔紫杏茶",
     light: { page: "#F7F2FF", card: "#FFFFFF", text: "#2B2635", primary: "#7256A5", accent: "#A35461" },
     dark: { page: "#171624", card: "#282538", primary: "#B89AE6", accent: "#E59AA4" }
   },
@@ -359,13 +359,13 @@ const expectedPaletteContracts = {
     light: { page: "#FBF4E7", card: "#FFFDF8", text: "#2D261E", primary: "#9A5A33", accent: "#3F6952" },
     dark: { page: "#181713", card: "#29251D", primary: "#E3A46D", accent: "#9AC2A8" }
   },
-  "plum-garden": {
-    name: "梅子庭院",
+  "muted-plum": {
+    name: "梅子灰阶",
     light: { page: "#FCF6F4", card: "#FFFFFF", text: "#2B2328", primary: "#7F4865", accent: "#5D7D6D" },
     dark: { page: "#17171B", card: "#29272D", primary: "#D993B4", accent: "#A9C7B8" }
   },
-  "indigo-letter": {
-    name: "靛蓝信笺",
+  "indigo-slate": {
+    name: "靛蓝灰阶",
     light: { page: "#F8F4EC", card: "#FFFFFF", text: "#272626", primary: "#625C8E", accent: "#A15345" },
     dark: { page: "#121724", card: "#232A3A", primary: "#AAA6DA", accent: "#E09A88" }
   }
@@ -450,7 +450,7 @@ const contrastRatio = (foreground, background, backdrop) => {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-const loadRomanticPalettes = () => {
+const loadThemePalettes = () => {
   const source = readProjectFile("src/design-system/palettes.ts")
   const output = ts.transpileModule(source, {
     compilerOptions: {
@@ -478,7 +478,7 @@ const loadRomanticPalettes = () => {
   }
 
   vm.runInNewContext(output, sandbox, { filename: "src/design-system/palettes.ts" })
-  return Array.isArray(module.exports.romanticPalettes) ? module.exports.romanticPalettes : []
+  return Array.isArray(module.exports.themePalettes) ? module.exports.themePalettes : []
 }
 
 const findings = []
@@ -649,7 +649,7 @@ const validateContrast = ({ label, foreground, background, backdrop, minimum, fi
 }
 
 try {
-  const palettes = loadRomanticPalettes()
+  const palettes = loadThemePalettes()
   const paletteIds = palettes.map((palette) => palette.id)
 
   if (paletteIds.length !== expectedPaletteIds.length) {
@@ -737,8 +737,8 @@ try {
       const actionRoles = {
         primary: scheme.primary,
         accent: scheme.accent,
-        redPerson: scheme.redPerson,
-        bluePerson: scheme.bluePerson,
+        warmAccent: scheme.warmAccent,
+        coolAccent: scheme.coolAccent,
         danger: scheme.status.danger,
         warning: scheme.status.warning,
         success: scheme.status.success,

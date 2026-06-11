@@ -1,11 +1,11 @@
 import { resolvePaletteColorVars } from "@/design-system/color-scale"
 import { resolveAppCssAliases } from "@/design-system/css-vars"
 import type { ResolvedSizeTokens } from "@/design-system/size-resolver"
-import type { AppCssVars, AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
+import type { AppCssVars, AppTheme, ThemePalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
 
 export interface AppCssVarInput {
   theme: AppTheme
-  palette: RomanticPalette
+  palette: ThemePalette
   size: ResolvedSizeTokens
 }
 
@@ -25,7 +25,7 @@ export const resolveThemeProviderKey = (
   fontScale: ThemeFontScale
 ): string => [theme, paletteId, density, fontScale].join(":")
 
-export const resolveThemeColorVars = (theme: AppTheme, palette: RomanticPalette): AppCssVars =>
+export const resolveThemeColorVars = (theme: AppTheme, palette: ThemePalette): AppCssVars =>
   resolvePaletteColorVars(palette, theme)
 
 export const resolveAppCssVars = ({ theme, palette, size }: AppCssVarInput): AppCssVars => {

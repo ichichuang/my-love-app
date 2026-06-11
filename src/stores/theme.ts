@@ -1,7 +1,7 @@
 import { computed, ref, watch } from "vue"
 import { defineStore } from "pinia"
 import { makeCssVars } from "@/design-system/css-vars"
-import { defaultPalette, getPaletteById, hasPalette, romanticPalettes } from "@/design-system/palettes"
+import { defaultPalette, getPaletteById, hasPalette, themePalettes } from "@/design-system/palettes"
 import type { PaletteId } from "@/design-system/palettes"
 import { resolveNativeChromeTheme, resolveNavigationThemeFromNativeChrome } from "@/design-system/native-chrome-resolver"
 import { resolveSizeTokens } from "@/design-system/size-resolver"
@@ -11,12 +11,12 @@ import {
   resolveThemeMode,
   resolveThemeProviderKey
 } from "@/design-system/theme-resolver"
-import type { AppCssVars, AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
+import type { AppCssVars, AppTheme, ThemePalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
 import { resolveWotThemeVars } from "@/design-system/wot-theme"
 
 export type { PaletteId }
-export type { AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
-export { romanticPalettes } from "@/design-system/palettes"
+export type { AppTheme, ThemePalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
+export { themePalettes } from "@/design-system/palettes"
 
 interface SavedThemeState {
   mode: ThemeMode
@@ -25,7 +25,7 @@ interface SavedThemeState {
   fontScale: ThemeFontScale
 }
 
-const STORAGE_KEY = "coral-action-theme-v2"
+const STORAGE_KEY = "miniapp-template-theme-v1"
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
@@ -83,7 +83,7 @@ export const useThemeStore = defineStore("theme", () => {
 
   let themeChangeListener: UniNamespace.OnThemeChangeCallback | null = null
 
-  const selectedPalette = computed<RomanticPalette>(() => getPaletteById(paletteId.value))
+  const selectedPalette = computed<ThemePalette>(() => getPaletteById(paletteId.value))
   const resolvedMode = computed<AppTheme>(() => resolveThemeMode(mode.value, systemTheme.value))
   const effectiveTheme = resolvedMode
   const isDark = computed(() => resolvedMode.value === "dark")

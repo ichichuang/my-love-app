@@ -34,12 +34,12 @@ Wot UI 映射继续基于 `ConfigProviderThemeVars`，并通过项目级 `Requir
 
 当前预设固定为 6 套策展主题：
 
-- `warm-paper-red-blue`：暖纸红蓝，暖纸底色、安静红蓝，适合作为默认日记感。
-- `peach-mist-blue`：桃雾蓝灰，桃雾柔光、蓝灰书写，整体更轻。
-- `wisteria-tea`：紫藤杏茶，紫藤纸面、杏茶暖意，偏安静文艺。
-- `apricot-sage`：杏茶鼠尾草，杏茶纸感、鼠尾草绿，偏自然手绘。
-- `plum-garden`：梅子庭院，梅子色、庭院绿影，偏克制亲密。
-- `indigo-letter`：靛蓝信笺，靛蓝信纸、安静朱砂，偏书信感。
+- `warm-paper`：暖纸基础，暖纸底色、柔和主色，适合作为默认模板观感。
+- `peach-mist`：桃雾蓝灰，桃雾柔光、蓝灰辅助，整体更轻。
+- `soft-lavender`：柔紫杏茶，柔紫纸面、暖色强调，偏安静。
+- `apricot-sage`：杏茶鼠尾草，暖杏底色、鼠尾草辅助，偏自然。
+- `muted-plum`：梅子灰阶，梅子主色、柔和绿色辅助，偏克制。
+- `indigo-slate`：靛蓝灰阶，靛蓝主色、暖色辅助，偏稳重。
 
 每个预设都必须定义完整 `light` 和 `dark` 语义方案，并覆盖这些家族：
 
@@ -51,29 +51,29 @@ Wot UI 映射继续基于 `ConfigProviderThemeVars`，并通过项目级 `Requir
 - `border`
 - `primary`
 - `accent`
-- `red-person`
-- `blue-person`
+- `warm-accent`
+- `cool-accent`
 - `status`
 - `overlay`
 - `swatch`
-- `photo-badge`
+- `media-badge`
 
 可交互颜色家族必须包含 `base`、`soft`、`muted`、`pressed`、`active`、`foreground`、`border`、`disabled`、`divider`、`focus-ring`。`color-scale.ts` 将这些家族转换成 `--app-color-*` 变量，同时保留旧页面需要的兼容变量：
 
 - 背景：`--app-color-bg-page`、`--app-color-bg-page-soft`、`--app-color-bg-card`、`--app-color-bg-input`
 - 文本：`--app-color-text-primary`、`--app-color-text-secondary`、`--app-color-text-muted`、`--app-color-text-disabled`
 - 品牌：`--app-color-primary`、`--app-color-primary-soft`、`--app-color-primary-pressed`
-- 人物：`--app-color-red-person`、`--app-color-blue-person`
+- 扩展强调：`--app-color-warm-accent`、`--app-color-cool-accent`
 - 状态：`--app-color-danger`、`--app-color-warning`、`--app-color-success`、`--app-color-info`
 - 覆层：`--app-color-overlay-soft`、`--app-color-overlay-strong`、`--app-color-on-overlay`
 - 色板：`--app-color-swatch-*`
-- 照片角标：`--app-color-photo-badge-*`
+- 媒体角标：`--app-color-media-badge-*`
 
 `css-vars.ts` 输出常用终端 alias：`--app-bg`、`--app-surface`、`--app-field`、`--app-control`、`--app-primary`、`--app-accent`、`--app-text`、`--app-border`、`--app-divider`、`--app-focus-ring`、`--app-shadow`。
 
 对比度规则：
 
-- 主色、强调色、人物色、状态色、色板预览等实色块的文字对比度必须不低于 4.5:1。
+- 主色、强调色、扩展强调色、状态色、色板预览等实色块的文字对比度必须不低于 4.5:1。
 - `soft`、`muted`、`active` 等柔和色块与主文字的对比度必须不低于 3.0:1。
 - 只有当白字对当前实色块达到 4.5:1 时才使用白字；否则使用深色墨水前景，例如 `#111827`。
 - 深色模式的明亮主色、强调色和状态色通常使用深色前景，不强行使用白字。
@@ -153,7 +153,7 @@ CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
 
 开发预览页位于 `pages/design-preview/design-preview`，页面标题为“能力预览”。入口在设置页“能力预览”区域，只用于本地和开发阶段 QA，不显示 AppSecret、OpenID 或其他敏感凭据。
 
-预览页必须继续包裹在 `AppShell.vue` 内，并使用同一个 `useThemeStore`。QA 时可在页面内切换外观模式、策展配色、界面密度和字号，确认运行时 CSS 变量、Wot UI 主题变量、语义颜色、尺寸刻度、排版、组件令牌、阴影、动效、照片角标和状态色能立即刷新。
+预览页必须继续包裹在 `AppShell.vue` 内，并使用同一个 `useThemeStore`。QA 时可在页面内切换外观模式、策展配色、界面密度和字号，确认运行时 CSS 变量、Wot UI 主题变量、语义颜色、尺寸刻度、排版、组件令牌、阴影、动效、媒体角标和状态色能立即刷新。
 
 该页面属于开发者预览界面，允许展示 `--app-*` 技术令牌名；说明性文字、按钮、标题和状态文案仍必须使用简体中文。样式同样受 `pnpm scan:design-tokens` 管控，不允许在页面内新增 raw hex、`rgba()`、固定 rpx/px、直接阴影或直接过渡时长。
 

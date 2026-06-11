@@ -73,7 +73,7 @@
 
       <preview-section title="策展配色" note="每组色板展示浅色与深色语义输出。">
         <view class="preview-palette-list">
-          <view v-for="palette in romanticPalettes" :key="palette.id" class="preview-palette">
+          <view v-for="palette in themePalettes" :key="palette.id" class="preview-palette">
             <view class="preview-palette__meta">
               <text class="preview-palette__name">{{ palette.name }}</text>
               <text class="preview-palette__description">{{ palette.description }}</text>
@@ -154,7 +154,7 @@
         </view>
       </preview-section>
 
-      <preview-section title="组件令牌" note="卡片、输入、徽章、图片和覆层使用组件级变量。">
+      <preview-section title="组件令牌" note="卡片、输入、徽章、媒体和覆层使用组件级变量。">
         <view class="preview-component-stack">
           <view class="preview-card">
             <text class="preview-card__title">卡片标题</text>
@@ -162,7 +162,7 @@
           </view>
           <view class="preview-field">
             <text class="preview-field__label">输入区域</text>
-            <text class="preview-field__value">记录今天的心情</text>
+            <text class="preview-field__value">输入内容预览</text>
           </view>
           <view class="preview-badge-row">
             <text class="preview-badge">主色徽章</text>
@@ -171,11 +171,11 @@
           </view>
           <view class="preview-image">
             <view class="preview-image__mark" />
-            <text class="preview-image__label">图片占位</text>
-            <text class="preview-image__badge">照片</text>
+            <text class="preview-image__label">媒体占位</text>
+            <text class="preview-image__badge">媒体</text>
           </view>
           <view class="preview-overlay">
-            <text class="preview-overlay__text">覆层与照片角标令牌</text>
+            <text class="preview-overlay__text">覆层与媒体角标令牌</text>
           </view>
         </view>
       </preview-section>
@@ -213,8 +213,8 @@ import { computed, defineComponent, h } from "vue"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { makeCssVars } from "@/design-system/css-vars"
 import { resolveThemeColorVars } from "@/design-system/theme-resolver"
-import type { AppTheme, RomanticPalette } from "@/design-system/types"
-import { romanticPalettes, type ThemeDensity, type ThemeFontScale, type ThemeMode } from "@/stores/theme"
+import type { AppTheme, ThemePalette } from "@/design-system/types"
+import { themePalettes, type ThemeDensity, type ThemeFontScale, type ThemeMode } from "@/stores/theme"
 
 const PreviewSection = defineComponent({
   props: {
@@ -328,7 +328,7 @@ const diagnostics = computed(() => [
 
 const cssVars = makeCssVars
 
-const schemeStyle = (palette: RomanticPalette, mode: AppTheme) => {
+const schemeStyle = (palette: ThemePalette, mode: AppTheme) => {
   const vars = resolveThemeColorVars(mode, palette)
   return cssVars({
     "--preview-scheme-bg": vars["--app-color-bg-page"],
@@ -707,7 +707,7 @@ const shadowStyle = (token: string) =>
   overflow: hidden;
   border-radius: var(--app-radius-image);
   background:
-    radial-gradient(circle at 22% 18%, var(--app-heart-soft), transparent var(--app-space-40)),
+    radial-gradient(circle at 22% 18%, var(--app-decor-soft), transparent var(--app-space-40)),
     linear-gradient(135deg, var(--app-primary-soft), var(--app-accent-soft));
   box-shadow: var(--app-shadow-image);
 }
@@ -731,9 +731,9 @@ const shadowStyle = (token: string) =>
   top: var(--app-space-6);
   right: var(--app-space-6);
   padding: var(--app-space-2) var(--app-space-5);
-  border: var(--app-panel-border-width) solid var(--app-color-photo-badge-border);
+  border: var(--app-panel-border-width) solid var(--app-color-media-badge-border);
   border-radius: var(--app-radius-badge);
-  background: var(--app-photo-badge);
+  background: var(--app-media-badge);
   color: var(--app-color-on-overlay);
   font: var(--app-font-caption);
 }

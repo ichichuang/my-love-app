@@ -34,10 +34,10 @@ export const appCssAliasMap = {
   "--app-warning-soft": "--app-color-warning-soft",
   "--app-success": "--app-color-success",
   "--app-success-soft": "--app-color-success-soft",
-  "--app-heart-soft": "--app-color-heart-soft",
+  "--app-decor-soft": "--app-color-decor-soft",
   "--app-overlay-soft": "--app-color-overlay-soft",
   "--app-overlay-strong": "--app-color-overlay-strong",
-  "--app-photo-badge": "--app-color-photo-badge-bg",
+  "--app-media-badge": "--app-color-media-badge-bg",
   "--app-glow": "--app-color-page-glow",
   "--app-shadow": "--app-shadow-card"
 } as const satisfies Record<AppAliasVarName, AppCssVarName>
