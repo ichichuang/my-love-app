@@ -358,8 +358,6 @@ export const componentVarNames = [
   "--app-card-gap",
   "--app-list-gap",
   "--app-form-gap",
-  "--app-image-grid-gap",
-  "--app-entry-card-min-height",
   "--app-safe-action-bottom-gap",
   "--app-textarea-min-height",
   "--app-shell-header-gap",
@@ -373,18 +371,6 @@ export const componentVarNames = [
   "--app-empty-decor-size",
   "--app-empty-image-size",
   "--app-empty-mark-size",
-  "--app-home-logo-size",
-  "--app-home-decor-width",
-  "--app-home-decor-height",
-  "--app-home-decor-bottom",
-  "--app-entry-date-width",
-  "--app-entry-cover-width",
-  "--app-entry-cover-height",
-  "--app-entry-meta-padding-y",
-  "--app-entry-meta-padding-x",
-  "--app-image-badge-size",
-  "--app-image-remove-height",
-  "--app-image-remove-padding-x",
   "--app-option-group-gap",
   "--app-option-padding-x",
   "--app-option-padding-y",
@@ -395,8 +381,7 @@ export const componentVarNames = [
   "--app-option-swatch-foreground",
   "--app-swatch-height",
   "--app-swatch-gradient-size",
-  "--app-swatch-custom-button-width",
-  "--app-cloud-value-width"
+  "--app-swatch-custom-button-width"
 ] as const
 
 export type ComponentVarName = (typeof componentVarNames)[number]

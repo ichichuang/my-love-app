@@ -1,19 +1,15 @@
 # AI Coding Guidelines
 
-These guidelines are mandatory for future AI and Codex edits in this project. They preserve the architecture frozen after `miniapp-architecture-freeze-v1` and the product direction captured in the final design and development document in the project root.
+These guidelines are mandatory for future AI and Codex edits on the sanitized architecture branch.
 
-## 1. Architecture Boundaries
+## 1. Template Boundaries
 
-- Do not refactor the sealed base architecture.
-- Do not redesign the design-system foundation.
-- Do not change the CloudBase architecture.
-- Do not change the routing architecture beyond explicitly requested page additions.
-- Do not change the product boundary.
-- Do not add partner access.
-- Do not add cloud functions.
-- Do not add AppSecret.
+- Preserve the reusable UniApp Mini Program architecture.
+- Keep the settings page and capability preview page as the only registered pages unless a task explicitly asks for new pages.
+- Do not restore removed private product pages.
+- Do not add production AppIDs, cloud environment IDs, OpenIDs, AppSecrets, account credentials, or private product identifiers.
+- Do not add cloud services, login pages, account systems, payment, push notifications, public feeds, public comments, public sharing, or public social features unless explicitly requested.
 - Do not add UnoCSS or any utility CSS framework.
-- Do not add login pages, account systems, payment, push notifications, public feeds, public comments, public sharing, or public social features.
 
 ## 2. Page Shell and Native Chrome Rules
 
@@ -33,9 +29,9 @@ These guidelines are mandatory for future AI and Codex edits in this project. Th
 - Use Wot UI components for all polished user-facing controls whenever possible.
 - Use `wd-button` for CTA, save, delete, upload, confirmation, retry, and other explicit actions.
 - Use Wot UI form components for inputs, textareas, checkboxes, pickers, selectors, dialogs, popups, cells, tabs, tags, badges, loading states, empty/error affordances, and other interactive controls whenever available.
-- Use existing app components such as `app-shell`, `empty-state`, `app-option-group`, `app-option-button`, `entry-card`, `image-grid`, and `theme-swatch-picker` when they already match the need.
+- Use existing app components such as `app-shell`, `app-option-group`, `app-option-button`, and `theme-swatch-picker` when they already match the need.
 - If Wot UI does not provide a suitable component, first create or reuse a small app-level component that still follows the design-token system. Do not hand-roll raw native-looking controls in pages.
-- The only allowed platform-native structural exception is mandatory UniApp/page host infrastructure such as `page-meta`, and existing framework/layout primitives inside already-approved base components. New business UI must not introduce raw native controls as the primary user-facing control.
+- The only allowed platform-native structural exception is mandatory UniApp/page host infrastructure such as `page-meta`, and existing framework/layout primitives inside already-approved base components.
 
 ## 4. Design Token Rules
 
@@ -50,46 +46,21 @@ These guidelines are mandatory for future AI and Codex edits in this project. Th
 - Pages and components may consume registered tokens but must not define new `--app-*` tokens.
 - If a new token is unavoidable, add it only under `src/design-system/**` or `src/styles/tokens/**` and update `token-registry.ts`, documentation, and scanner expectations.
 
-## 5. Visual and Emotional Direction
-
-- The app must feel private, warm, cute, hand-drawn, clean, light, and intimate.
-- Cute means soft, private, gentle, and couple-oriented. Do not make it childish.
-- Hand-drawn feeling should come from red/blue couple cues, soft note-like cards, small tags, stamp-like details, gentle completion feedback, and restrained decorative marks.
-- Do not create ocean, coral reef, shell, pearl, commercial brand, glassmorphism, heavy gradient, childish cartoon, or over-3D styles.
-- Song pages should feel like "songs she wants to hear me sing," not a generic music manager.
-- Task pages should feel like "small things we want to do together," not an enterprise todo app.
-- Home should feel like a private memory stopover, not a dashboard.
-
-## 6. Language Rules
+## 5. Language Rules
 
 - User-facing UI copy must always be Simplified Chinese.
 - Do not ship English labels, placeholders, empty states, modal text, toast text, or button text.
 - English is allowed only in code identifiers, filenames, technical documentation, dependency names, and this AI coding guideline document.
 
-## 7. CloudBase and Data Rules
+## 6. New Feature Rules
 
-- Use the existing CloudBase service/repository/composable architecture.
-- Do not call `wx.cloud` directly from pages or components.
-- Keep `love_entries` as the database collection.
-- Keep `coupleId: "main"`.
-- Keep storage prefix `love-entries/main/`.
-- Keep owner-only Stage 1 behavior.
-- Do not manually set or overwrite `_openid`.
-- Store private file IDs and use temporary URLs; do not store public readable file URLs.
+- Add business pages only when explicitly requested.
+- Register new pages in `src/pages.json`.
+- New pages must follow the page shell and native chrome contract.
+- Prefer existing theme, token, and Wot UI infrastructure over new styling systems.
+- Keep private credentials and production identifiers outside tracked source.
 
-## 8. New Feature Implementation Rules
-
-- Use the final design and development document in the project root as the product and page-design source of truth.
-- Implement song list and must-do task features within the existing architecture.
-- Prefer a single `love_entries` collection with kind-compatible records if implementing these pages:
-  - `memory`
-  - `song`
-  - `task`
-- Old records without `kind` must remain compatible as memory records.
-- Song/task records must not appear in the memory timeline.
-- Existing memory CRUD, image upload, image temporary URLs, and file deletion must remain intact.
-
-## 9. Validation Rules
+## 7. Validation Rules
 
 After any page, component, style, design-token, repository, or documentation change, run:
 
@@ -104,21 +75,22 @@ git diff --check
 
 Also verify:
 
-- The build output still contains `love-d4g006mox4b78e5c6`.
-- The build output still contains `wx04b0ef4f0de5c5c5`.
+- There is no committed production AppID.
+- There is no cloud environment ID.
+- There is no OpenID allowlist.
 - There is no AppSecret.
 - There is no UnoCSS.
 - There is no English user-facing UI copy.
-- CloudBase collection, storage prefix, and owner-only constraints are unchanged.
+- Only intended pages are registered.
 
-## 10. Reporting Format
+## 8. Reporting Format
 
 Return implementation results using:
 
 - A. Summary
 - B. Files changed
-- C. AI coding guideline content added
+- C. Architecture constraints preserved
 - D. UI library and native-control policy
-- E. Architecture constraints preserved
+- E. Privacy cleanup result
 - F. Validation result
-- G. Manual review checklist
+- G. Residual risks

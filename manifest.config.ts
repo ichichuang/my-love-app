@@ -1,12 +1,12 @@
 const manifest = {
-  name: "珊瑚行动",
-  appid: "wx04b0ef4f0de5c5c5",
-  description: "只给两个人使用的私密回忆微信小程序。",
+  name: "小程序架构模板",
+  appid: "",
+  description: "可复用的 UniApp 微信小程序开发架构。",
   versionName: "1.0.0",
   versionCode: "100",
   transformPx: false,
   "mp-weixin": {
-    appid: "wx04b0ef4f0de5c5c5",
+    appid: "",
     darkmode: true,
     themeLocation: "theme.json",
     setting: {

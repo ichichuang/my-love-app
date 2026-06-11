@@ -109,7 +109,7 @@ Wot UI 映射继续基于 `ConfigProviderThemeVars`，并通过项目级 `Requir
 - spacing：`--app-page-padding-x`、`--app-section-gap`、`--app-card-padding`、`--app-form-gap`
 - radius：`--app-radius-card`、`--app-radius-button`、`--app-radius-input`、`--app-radius-image`
 - controls：`--app-control-height-sm`、`--app-control-height-md`、`--app-control-height-lg`
-- components：`--app-entry-card-min-height`、`--app-swatch-height`、`--app-image-badge-size`
+- components：`--app-swatch-height`、`--app-option-min-height`、`--app-safe-action-bottom-gap`
 - shadows：`--app-shadow-card`、`--app-shadow-focus` 等由颜色方案和尺寸系统共同输出
 - motion：`--app-transition-fast`、`--app-transition-normal`、`--app-press-opacity`
 
@@ -151,7 +151,7 @@ CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
 
 ## 6. 设计系统预览页
 
-开发预览页位于 `pages/design-preview/design-preview`，页面标题为“设计系统预览”。入口在设置页“开发预览”区域，只用于本地和开发阶段 QA，不显示 AppSecret、OpenID 或其他敏感凭据。
+开发预览页位于 `pages/design-preview/design-preview`，页面标题为“能力预览”。入口在设置页“能力预览”区域，只用于本地和开发阶段 QA，不显示 AppSecret、OpenID 或其他敏感凭据。
 
 预览页必须继续包裹在 `AppShell.vue` 内，并使用同一个 `useThemeStore`。QA 时可在页面内切换外观模式、策展配色、界面密度和字号，确认运行时 CSS 变量、Wot UI 主题变量、语义颜色、尺寸刻度、排版、组件令牌、阴影、动效、照片角标和状态色能立即刷新。
 
@@ -167,7 +167,7 @@ CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
 - 不要绕过 `wd-config-provider` 设置 Wot UI 主题。
 - 不要在页面或组件里直接写 hex、`rgba()`、固定 rpx/px、直接 `box-shadow`、直接 transition duration。
 - 不要新增英文用户界面文案。
-- 不要把 Stage 1 从本人测试扩展为公开社交、分享、评论、公开资料、支付、推送或网页登录。
+- 不要在架构模板分支内加入具体业务账号、支付、推送、公开社交或网页登录能力。
 
 ## 8. 校验
 

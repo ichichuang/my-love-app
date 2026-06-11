@@ -16,7 +16,7 @@ const clearTimer = (timer: ReturnType<typeof setTimeout> | null): void => {
 
 const reportNativeChromeThemeFailure = (error: unknown): void => {
   if (import.meta.env.DEV) {
-    console.warn("[珊瑚行动] 原生界面主题同步失败", error)
+    console.warn("[小程序架构] 原生界面主题同步失败", error)
   }
 }
 

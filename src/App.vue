@@ -2,7 +2,6 @@
 import { watch } from "vue"
 import { onLaunch, onShow } from "@dcloudio/uni-app"
 import { scheduleNativeChromeTheme } from "@/design-system/nav-theme"
-import { initCloudBase } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
 
 const theme = useThemeStore()
@@ -28,7 +27,6 @@ watch(
 onLaunch(() => {
   theme.initTheme()
   scheduleCurrentNativeChromeTheme()
-  initCloudBase()
 })
 
 onShow(() => {

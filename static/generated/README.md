@@ -6,4 +6,4 @@ Optional files the app can be restyled around later:
 
 - `static/generated/cover-light.png`
 - `static/generated/cover-dark.png`
-- `static/generated/empty-memory.png`
+- `static/generated/empty-state.png`

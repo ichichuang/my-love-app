@@ -6,11 +6,6 @@ declare module '*.vue' {
   export default component
 }
 
-interface ImportMetaEnv {
-  readonly VITE_WECHAT_APPID?: string
-  readonly VITE_CLOUDBASE_ENV_ID?: string
-}
-
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }

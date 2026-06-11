@@ -7,49 +7,27 @@
       "^app-shell$": "@/components/AppShell.vue",
       "^app-option-button$": "@/components/AppOptionButton.vue",
       "^app-option-group$": "@/components/AppOptionGroup.vue",
-      "^empty-state$": "@/components/EmptyState.vue",
-      "^entry-card$": "@/components/EntryCard.vue",
-      "^image-grid$": "@/components/ImageGrid.vue",
       "^theme-swatch-picker$": "@/components/ThemeSwatchPicker.vue",
       "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
     }
   },
   "pages": [
     {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "珊瑚行动",
-        "enablePullDownRefresh": true
-      }
-    },
-    {
-      "path": "pages/detail/detail",
-      "style": {
-        "navigationBarTitleText": "记忆详情"
-      }
-    },
-    {
-      "path": "pages/create/create",
-      "style": {
-        "navigationBarTitleText": "写下此刻"
-      }
-    },
-    {
       "path": "pages/settings/settings",
       "style": {
-        "navigationBarTitleText": "私密偏好"
+        "navigationBarTitleText": "基础设置"
       }
     },
     {
       "path": "pages/design-preview/design-preview",
       "style": {
-        "navigationBarTitleText": "设计系统预览"
+        "navigationBarTitleText": "能力预览"
       }
     }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "@navTxtStyle",
-    "navigationBarTitleText": "珊瑚行动",
+    "navigationBarTitleText": "小程序架构",
     "navigationBarBackgroundColor": "@navBgColor",
     "backgroundColor": "@pageBgColor",
     "backgroundColorTop": "@pageBgTopColor",

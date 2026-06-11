@@ -95,8 +95,6 @@ const structuralVars = (density: ThemeDensity) => {
     "--app-button-height": control.lg,
     "--app-input-height": isCompact ? control.md : "88rpx",
     "--app-nav-height": control.lg,
-    "--app-image-grid-gap": spacing.md,
-    "--app-entry-card-min-height": isCompact ? "156rpx" : "168rpx",
     "--app-safe-action-bottom-gap": isCompact ? "144rpx" : "156rpx",
     "--app-textarea-min-height": isCompact ? "232rpx" : "260rpx",
 
@@ -113,21 +111,6 @@ const structuralVars = (density: ThemeDensity) => {
     "--app-empty-image-size": isCompact ? "136rpx" : "148rpx",
     "--app-empty-mark-size": isCompact ? "116rpx" : "128rpx",
 
-    "--app-home-logo-size": isCompact ? "96rpx" : "106rpx",
-    "--app-home-decor-width": isCompact ? "104rpx" : "116rpx",
-    "--app-home-decor-height": isCompact ? "58rpx" : "64rpx",
-    "--app-home-decor-bottom": isCompact ? "88rpx" : "98rpx",
-
-    "--app-entry-date-width": isCompact ? "86rpx" : "94rpx",
-    "--app-entry-cover-width": isCompact ? "128rpx" : "142rpx",
-    "--app-entry-cover-height": isCompact ? "156rpx" : "168rpx",
-    "--app-entry-meta-padding-y": spacing.xs,
-    "--app-entry-meta-padding-x": isCompact ? "12rpx" : "14rpx",
-
-    "--app-image-badge-size": isCompact ? "30rpx" : "34rpx",
-    "--app-image-remove-height": isCompact ? "38rpx" : "42rpx",
-    "--app-image-remove-padding-x": isCompact ? "12rpx" : "14rpx",
-
     "--app-option-group-gap": isCompact ? "12rpx" : "14rpx",
     "--app-option-padding-x": isCompact ? "18rpx" : "22rpx",
     "--app-option-padding-y": isCompact ? "14rpx" : "18rpx",
@@ -139,8 +122,6 @@ const structuralVars = (density: ThemeDensity) => {
     "--app-swatch-height": isCompact ? "116rpx" : "126rpx",
     "--app-swatch-gradient-size": isCompact ? "66rpx" : "72rpx",
     "--app-swatch-custom-button-width": isCompact ? "136rpx" : "148rpx",
-
-    "--app-cloud-value-width": "420rpx",
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",

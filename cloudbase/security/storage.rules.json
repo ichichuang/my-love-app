@@ -1,4 +1,0 @@
-{
-  "read": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && /^love-entries\\/main\\//.test(resource.path)",
-  "write": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && /^love-entries\\/main\\//.test(resource.path)"
-}
