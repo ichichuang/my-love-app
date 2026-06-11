@@ -1,15 +1,1 @@
-:root,
-page {
-  --app-primary: var(--app-color-primary);
-  --app-accent: var(--app-color-accent);
-  --app-bg: var(--app-color-bg-page);
-  --app-bg-deep: var(--app-color-bg-page-soft);
-  --app-surface: var(--app-color-bg-card);
-  --app-surface-strong: var(--app-color-bg-card-elevated);
-  --app-field: var(--app-color-bg-input);
-  --app-text: var(--app-color-text-primary);
-  --app-text-soft: var(--app-color-text-secondary);
-  --app-border: var(--app-color-border);
-  --app-glow: var(--app-color-page-glow);
-  --app-shadow: var(--app-shadow-card);
-}
+/* Runtime semantic aliases are injected as terminal values by AppShell. */

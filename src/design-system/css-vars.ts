@@ -1,0 +1,59 @@
+import type { AppCssVars } from "@/design-system/types"
+
+export const appCssAliasMap = {
+  "--app-primary": "--app-color-primary",
+  "--app-primary-soft": "--app-color-primary-soft",
+  "--app-primary-muted": "--app-color-primary-muted",
+  "--app-primary-pressed": "--app-color-primary-pressed",
+  "--app-primary-active": "--app-color-primary-active",
+  "--app-accent": "--app-color-accent",
+  "--app-accent-soft": "--app-color-accent-soft",
+  "--app-bg": "--app-color-bg-page",
+  "--app-bg-deep": "--app-color-bg-page-soft",
+  "--app-bg-muted": "--app-color-bg-page-muted",
+  "--app-surface": "--app-color-bg-card",
+  "--app-surface-strong": "--app-color-bg-card-elevated",
+  "--app-surface-pressed": "--app-color-bg-card-pressed",
+  "--app-field": "--app-color-bg-input",
+  "--app-control": "--app-color-bg-control",
+  "--app-text": "--app-color-text-primary",
+  "--app-text-soft": "--app-color-text-secondary",
+  "--app-text-muted": "--app-color-text-muted",
+  "--app-text-disabled": "--app-color-text-disabled",
+  "--app-text-inverse": "--app-color-text-inverse",
+  "--app-border": "--app-color-border",
+  "--app-border-muted": "--app-color-border-muted",
+  "--app-border-strong": "--app-color-border-strong",
+  "--app-divider": "--app-color-border-divider",
+  "--app-focus-ring": "--app-color-border-focus-ring",
+  "--app-danger": "--app-color-danger",
+  "--app-danger-soft": "--app-color-danger-soft",
+  "--app-warning": "--app-color-warning",
+  "--app-warning-soft": "--app-color-warning-soft",
+  "--app-success": "--app-color-success",
+  "--app-success-soft": "--app-color-success-soft",
+  "--app-heart-soft": "--app-color-heart-soft",
+  "--app-overlay-soft": "--app-color-overlay-soft",
+  "--app-overlay-strong": "--app-color-overlay-strong",
+  "--app-photo-badge": "--app-color-photo-badge-bg",
+  "--app-glow": "--app-color-page-glow",
+  "--app-shadow": "--app-shadow-card"
+} as const
+
+export const appCssAliasNames = Object.keys(appCssAliasMap)
+
+export const resolveAppCssAliases = (vars: AppCssVars): AppCssVars => {
+  return Object.entries(appCssAliasMap).reduce<AppCssVars>((aliases, [aliasName, sourceName]) => {
+    const value = vars[sourceName]
+    if (typeof value === "string") {
+      aliases[aliasName] = value
+    }
+    return aliases
+  }, {})
+}
+
+export const makeCssVars = (vars: AppCssVars): string =>
+  Object.entries(vars)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("; ")

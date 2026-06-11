@@ -4,6 +4,13 @@
   "easycom": {
     "autoscan": true,
     "custom": {
+      "^app-shell$": "@/components/AppShell.vue",
+      "^app-option-button$": "@/components/AppOptionButton.vue",
+      "^app-option-group$": "@/components/AppOptionGroup.vue",
+      "^empty-state$": "@/components/EmptyState.vue",
+      "^entry-card$": "@/components/EntryCard.vue",
+      "^image-grid$": "@/components/ImageGrid.vue",
+      "^theme-swatch-picker$": "@/components/ThemeSwatchPicker.vue",
       "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
     }
   },
@@ -31,6 +38,12 @@
       "path": "pages/settings/settings",
       "style": {
         "navigationBarTitleText": "私密偏好"
+      }
+    },
+    {
+      "path": "pages/design-preview/design-preview",
+      "style": {
+        "navigationBarTitleText": "设计系统预览"
       }
     }
   ],

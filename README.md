@@ -116,25 +116,38 @@ Scan for likely hardcoded design values outside the token system:
 pnpm scan:design-tokens
 ```
 
-Design tokens live under `src/styles/tokens/**`. Theme state, curated palettes, Wot UI `themeVars`, density, and font scale are governed by `src/stores/theme.ts`. See `docs/DESIGN_SYSTEM.zh-CN.md` before changing UI colors, spacing, typography, shadows, radii, or motion.
+Design tokens live under `src/styles/tokens/**` for static fallbacks and `src/design-system/**` for runtime resolution. Palettes define complete light/dark semantic schemes, `size-scale.ts` and `typography-resolver.ts` derive density/font-scale output, `css-vars.ts` emits terminal aliases, `wot-theme.ts` maps only supported Wot UI variables, and `nav-theme.ts` is the only native navigation-bar side-effect boundary. `src/stores/theme.ts` owns theme state, persistence, and system theme listening.
+
+`AppShell.vue` is the only runtime CSS variable injection root. It binds `theme.appStyle` to the root view and passes `theme.wotThemeVars` plus `theme.providerKey` to `wd-config-provider`. Settings selectors and palette swatches use `AppOptionGroup.vue` and `AppOptionButton.vue`; CTA actions remain on Wot `wd-button`.
+
+The design-token scan checks raw style values, unknown `--app-*` tokens, pages bypassing `AppShell`, selector buttons bypassing `AppOptionButton`, Wot/AppShell contracts, and forbidden theme side effects outside `nav-theme.ts`.
+
+The developer-facing design-system preview page is registered at:
+
+```text
+pages/design-preview/design-preview
+```
+
+Open it from the settings page to QA current theme mode, palette, density, font scale, Wot UI theme output, semantic colors, spacing, radius, typography, component tokens, shadows, motion, overlays, photo badges, and status colors. It must remain a developer preview only and must not expose secrets or account-management flows.
 
 ## Validation
 
-The project was verified with:
+Before reporting a UI or theme-system change complete, run:
 
 ```bash
-pnpm type-check
 pnpm scan:ui-copy
 pnpm scan:design-tokens
+pnpm type-check
 pnpm build:mp-weixin
-pnpm dev:mp-weixin
+git diff --check
 ```
 
-`pnpm dev:mp-weixin` reached `Build complete. Watching for changes...` and was then stopped.
+After a production build, verify `dist/build/mp-weixin` still contains `love-d4g006mox4b78e5c6` and `wx04b0ef4f0de5c5c5`, contains no AppSecret pattern, has no UnoCSS dependency/config/reference, and has no English user-facing UI copy.
 
 ## Architecture
 
-- `src/stores/theme.ts` owns theme mode, system theme listener, palette state, Wot theme vars, and app CSS variables.
+- `src/stores/theme.ts` owns theme mode, system theme listener, palette selection, density, font scale, and persistence.
+- `src/design-system/*` resolves palettes, terminal app CSS variables, Wot theme vars, size tokens, and debounced navigation-bar theme updates.
 - `src/services/cloudbase.ts` is the only native `wx.cloud` boundary.
 - `src/services/repositories/entries.ts` maps database documents to typed entry records.
 - `src/composables/useCrud.ts` and `src/composables/useFileUpload.ts` keep page async state predictable.

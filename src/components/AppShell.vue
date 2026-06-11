@@ -1,5 +1,5 @@
 <template>
-  <wd-config-provider :theme="theme.wotTheme" :theme-vars="theme.wotThemeVars">
+  <wd-config-provider :key="theme.providerKey" :theme="theme.wotTheme" :theme-vars="theme.wotThemeVars">
     <view class="app-shell theme-transition" :class="theme.themeClasses" :style="theme.appStyle">
       <view v-if="title || $slots.actions" class="app-shell__header">
         <view>

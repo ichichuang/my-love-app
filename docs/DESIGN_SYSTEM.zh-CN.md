@@ -1,115 +1,156 @@
 # 设计系统
 
-## 1. 架构
+## 1. 架构边界
 
-全局样式入口是 `src/styles/index.scss`，按层导入：
+运行时主题系统分成三层：
 
-- `tokens/primitive.scss`：原始颜色、间距、字号、圆角、阴影、动效值。
-- `tokens/light.scss` 和 `tokens/dark.scss`：浅色、深色语义变量默认映射。
-- `tokens/size.scss`：页面、卡片、表单、按钮、输入框、图片网格尺寸。
-- `tokens/typography.scss`：页面标题、分区标题、正文、说明文字、按钮、卡片标题。
-- `tokens/radius.scss`：卡片、按钮、输入框、图片、底部面板圆角。
-- `tokens/shadow.scss`：卡片、悬浮层、按钮、图片、标志阴影。
-- `tokens/motion.scss`：过渡时长、缓动、按压透明度和位移。
-- `tokens/component.scss`：AppShell、空状态、首页、记录卡片、图片网格、色板、云开发信息等组件尺寸。
-- `tokens/semantic.scss`：兼容旧变量名，并把页面组件常用变量统一到语义层。
+- `src/styles/tokens/**`：编译期默认令牌，只给 UniApp 和首次渲染提供兜底值。
+- `src/design-system/**`：纯解析层，负责配色、尺寸、排版、Wot UI 变量和 CSS 变量字符串。除 `nav-theme.ts` 外不能调用 `uni`、`wx`、定时器或存储。
+- `src/stores/theme.ts`：唯一主题状态源，只负责模式、配色、密度、字号、持久化、系统主题监听和调用解析器。
 
-页面和组件只能消费 `var(--app-xxx)`、`src/styles/mixins.scss` 或已有组件 API。不要在页面和组件里直接写新颜色、字号、间距、阴影、圆角或动效数值。
+`AppShell.vue` 是唯一运行时 CSS 变量注入根。所有页面必须包在 `app-shell` 内，根 `view` 绑定 `theme.themeClasses` 与 `theme.appStyle`。`theme.appStyle` 必须包含展开后的终端变量，例如 `--app-bg: #fffaf3`，不能只输出 `--app-bg: var(--app-color-bg-page)`。
 
-## 2. 原始令牌
+原生导航栏不参与同步主题切换链路。`App.vue` 只监听 `theme.navigationTheme` 并调用 `scheduleNavigationTheme`；真正的 `uni.setNavigationBarColor` 只允许出现在 `src/design-system/nav-theme.ts`，并由 debounce、delay 和 `fail` callback 兜底。
 
-原始令牌保存不可再拆分的值，例如：
+## 2. 颜色令牌
 
-- 颜色：`--app-red-50`、`--app-red-500`、`--app-blue-500`、`--app-ivory-50`、`--app-neutral-900`
-- 间距：`--app-space-1` 到 `--app-space-64`
-- 圆角：`--app-radius-sm`、`--app-radius-md`、`--app-radius-xl`、`--app-radius-pill`
-- 字号：`--app-font-size-xs` 到 `--app-font-size-page-title`
-- 阴影：`--app-shadow-sm`、`--app-shadow-md`、`--app-shadow-lg`
-- 动效：`--app-duration-fast`、`--app-duration-normal`、`--app-ease-standard`
+配色只允许使用 `src/design-system/palettes.ts` 中的策展预设，不提供任意十六进制输入。
 
-原始令牌只应在 `src/styles/tokens/**` 和主题 store 的语义映射里使用。
+当前预设：
 
-## 3. 语义令牌
+- `warm-red-blue`：暖白红蓝，默认手绘小人方向。
+- `soft-pink-blue`：软粉蓝，更轻的粉蓝记忆感。
+- `night-red-blue`：夜航红蓝，深色模式更稳。
 
-页面和组件优先使用语义令牌：
+每个预设都必须定义完整 `light` 和 `dark` 语义方案，并覆盖这些家族：
 
-- 背景：`--app-color-bg-page`、`--app-color-bg-card`、`--app-color-bg-input`
-- 文本：`--app-color-text-primary`、`--app-color-text-secondary`、`--app-color-text-muted`
-- 品牌：`--app-color-primary`、`--app-color-primary-soft`、`--app-color-red-person`、`--app-color-blue-person`
-- 状态：`--app-color-danger`、`--app-color-warning`、`--app-color-success`
-- 布局：`--app-page-padding-x`、`--app-section-gap`、`--app-card-padding`、`--app-form-gap`
-- 组件：`--app-entry-card-min-height`、`--app-image-grid-gap`、`--app-swatch-height`
+- `page`
+- `card`
+- `input`
+- `control`
+- `text`
+- `border`
+- `primary`
+- `accent`
+- `red-person`
+- `blue-person`
+- `status`
+- `overlay`
+- `swatch`
+- `photo-badge`
 
-`--app-primary`、`--app-bg`、`--app-surface`、`--app-text` 等旧变量名仍保留为兼容别名。
+可交互颜色家族必须包含 `base`、`soft`、`muted`、`pressed`、`active`、`foreground`、`border`、`disabled`、`divider`、`focus-ring`。`color-scale.ts` 将这些家族转换成 `--app-color-*` 变量，同时保留旧页面需要的兼容变量：
 
-## 4. 深浅色与配色
+- 背景：`--app-color-bg-page`、`--app-color-bg-page-soft`、`--app-color-bg-card`、`--app-color-bg-input`
+- 文本：`--app-color-text-primary`、`--app-color-text-secondary`、`--app-color-text-muted`、`--app-color-text-disabled`
+- 品牌：`--app-color-primary`、`--app-color-primary-soft`、`--app-color-primary-pressed`
+- 人物：`--app-color-red-person`、`--app-color-blue-person`
+- 状态：`--app-color-danger`、`--app-color-warning`、`--app-color-success`、`--app-color-info`
+- 覆层：`--app-color-overlay-soft`、`--app-color-overlay-strong`、`--app-color-on-overlay`
+- 色板：`--app-color-swatch-*`
+- 照片角标：`--app-color-photo-badge-*`
 
-`src/stores/theme.ts` 是主题唯一状态源：
+`css-vars.ts` 输出常用终端 alias：`--app-bg`、`--app-surface`、`--app-field`、`--app-control`、`--app-primary`、`--app-accent`、`--app-text`、`--app-border`、`--app-divider`、`--app-focus-ring`、`--app-shadow`。
 
-- `mode`：`system`、`light`、`dark`
-- `resolvedMode`：实际生效的 `light` 或 `dark`
-- `paletteId`：当前策展配色
-- `density`：`comfortable` 或 `compact`
-- `fontScale`：`normal` 或 `large`
-- `appCssVars`：注入到 AppShell 根节点的应用 CSS 变量
-- `wotThemeVars`：传给 Wot UI 的主题变量
+## 3. 尺寸与排版
 
-浅色模式使用暖白页面背景、柔和卡片、深墨文字、红蓝小人强调色。深色模式使用深海军蓝或暖炭黑背景、深色卡片和柔和红蓝强调色，避免纯黑和霓虹感。
+`size-scale.ts` 定义 rpx 矩阵键：`2xs`、`xs`、`sm`、`md`、`lg`、`xl`、`2xl`、`3xl`。
 
-当前配色：
+`density` 只影响：
 
-- 暖白红蓝：默认配色，匹配红蓝手绘小人。
-- 软粉蓝：更轻的粉蓝浪漫感。
-- 夜航红蓝：更适合深色模式的红蓝系统。
+- 间距和 gap
+- 页面、卡片、表单留白
+- 控件高度
+- 圆角
+- 组件结构尺寸，例如记录卡片、图片网格、色板、底部操作区
 
-新增配色时，只改 `romanticPalettes`，并提供语义输出：`primary`、`primarySoft`、`primaryPressed`、`redPerson`、`bluePerson`、`heartSoft`、`bgWarm`、`cardWarm`、`borderSoft`、深色主色和深色背景。
+`fontScale` 只影响：
 
-## 5. 尺寸与排版
+- 字号 ramp
+- 语义字体 shorthand
+- Wot UI 字号
 
-全局尺寸在 `tokens/size.scss` 和 `tokens/component.scss` 管理：
+语义输出由 `size-resolver.ts` 汇总：
 
-- 页面留白：`--app-page-padding-x`、`--app-page-padding-y`
-- 卡片：`--app-card-padding`、`--app-card-gap`
-- 列表和表单：`--app-list-gap`、`--app-form-gap`
-- 控件：`--app-control-height-sm/md/lg`、`--app-button-height`、`--app-input-height`
-- 图片：`--app-image-grid-gap`、`--app-radius-image`
+- spacing：`--app-page-padding-x`、`--app-section-gap`、`--app-card-padding`、`--app-form-gap`
+- radius：`--app-radius-card`、`--app-radius-button`、`--app-radius-input`、`--app-radius-image`
+- controls：`--app-control-height-sm`、`--app-control-height-md`、`--app-control-height-lg`
+- components：`--app-entry-card-min-height`、`--app-swatch-height`、`--app-image-badge-size`
+- shadows：`--app-shadow-card`、`--app-shadow-focus` 等由颜色方案和尺寸系统共同输出
+- motion：`--app-transition-fast`、`--app-transition-normal`、`--app-press-opacity`
 
-排版在 `tokens/typography.scss` 管理。组件使用 `--app-font-page-title`、`--app-font-section-title`、`--app-font-body`、`--app-font-caption`、`--app-font-card-title` 等语义字体。
+页面和组件只能消费 `var(--app-xxx)` 或 `src/styles/mixins.scss`。不要在页面或组件内新增固定 rpx/px、固定字号、直接阴影、直接过渡时长、十六进制颜色或 `rgba()`。
 
-## 6. Wot UI 映射
+## 4. Wot UI 映射
 
 Wot UI 通过 `AppShell.vue` 的 `wd-config-provider` 接收：
 
+- `:key="theme.providerKey"`
 - `:theme="theme.wotTheme"`
 - `:theme-vars="theme.wotThemeVars"`
 
-当前只使用已在 `wot-design-uni/components/wd-config-provider/types.ts` 中确认存在的变量，例如 `colorTheme`、`colorTitle`、`colorContent`、`colorSecondary`、`colorBorder`、`colorBg`、`darkBackground`、`buttonLargeRadius`。
+`providerKey` 由 `resolvedMode`、`paletteId`、`density`、`fontScale` 组成，用于强制 Wot UI 在主题输入变化时刷新。
 
-不确定的 Wot 变量不要猜；优先使用应用级 CSS 变量。
+`wot-theme.ts` 只能使用 `wot-design-uni/components/wd-config-provider/types.ts` 中已确认支持的变量。当前映射覆盖：
 
-## 7. 全局注入方式
+- 颜色：`colorTheme`、`colorSuccess`、`colorWarning`、`colorDanger`、`colorBlue`、`colorTitle`、`colorContent`、`colorSecondary`、`colorAid`、`colorBorder`、`colorBg`
+- 深色：`darkBackground`、`darkBackground2`、`darkBackground3`、`darkColor`、`darkColor2`、`darkColor3`、`darkBorderColor`
+- 字号：`fsTitle`、`fsContent`、`fsSecondary`、`fsAid`
+- 按钮：`buttonSmallHeight`、`buttonMediumHeight`、`buttonLargeHeight`、`buttonSmallRadius`、`buttonMediumRadius`、`buttonLargeRadius`、`buttonSmallFs`、`buttonMediumFs`、`buttonLargeFs`
 
-UniApp mp-weixin 下最稳定的方式是：
+不确定的 Wot 变量不要猜，优先使用应用级 CSS 变量或局部组件。
 
-1. `src/App.vue` 全局导入 `src/styles/index.scss`，提供默认令牌。
-2. `src/components/AppShell.vue` 在根 `view` 上绑定 `theme.themeClasses` 和 `theme.appStyle`。
-3. `theme.appStyle` 以内联 CSS 变量覆盖当前配色、深浅色、密度和字号。
+## 5. 选项按钮
 
-所有页面都包在 `AppShell` 里，因此变量可以稳定传递到页面、组件和 Wot UI 子树。
+微信原生 `button` 有默认伪元素边框。`App.vue` 必须保留全局 reset：
 
-## 8. 禁止做法
+- `button`
+- `button::after`
+- `button:after`
 
-- 不要在 `src/components/**` 或 `src/pages/**` 里新增十六进制颜色、`rgba()`、固定 `rpx/px` 尺寸、直接 `box-shadow` 或直接过渡时长。
+设置页模式、密度、字号选择和 `ThemeSwatchPicker` 必须使用：
+
+- `AppOptionGroup.vue`
+- `AppOptionButton.vue`
+
+CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
+
+## 6. 设计系统预览页
+
+开发预览页位于 `pages/design-preview/design-preview`，页面标题为“设计系统预览”。入口在设置页“开发预览”区域，只用于本地和开发阶段 QA，不显示 AppSecret、OpenID 或其他敏感凭据。
+
+预览页必须继续包裹在 `AppShell.vue` 内，并使用同一个 `useThemeStore`。QA 时可在页面内切换外观模式、策展配色、界面密度和字号，确认运行时 CSS 变量、Wot UI 主题变量、语义颜色、尺寸刻度、排版、组件令牌、阴影、动效、照片角标和状态色能立即刷新。
+
+该页面属于开发者预览界面，允许展示 `--app-*` 技术令牌名；说明性文字、按钮、标题和状态文案仍必须使用简体中文。样式同样受 `pnpm scan:design-tokens` 管控，不允许在页面内新增 raw hex、`rgba()`、固定 rpx/px、直接阴影或直接过渡时长。
+
+## 7. 禁止做法
+
+- 不要新增 UnoCSS 或其他 utility CSS 框架。
 - 不要新增任意颜色输入器。
-- 不要把主题状态分散到页面。
+- 不要在页面、组件或 store 内调用 `uni.setNavigationBarColor`。
+- 不要绕过 `AppShell` 注入 `theme.appStyle`。
 - 不要绕过 `wd-config-provider` 设置 Wot UI 主题。
-- 不要把 “Coral” 视觉化为海洋、珊瑚礁或商业化品牌风。
+- 不要在页面或组件里直接写 hex、`rgba()`、固定 rpx/px、直接 `box-shadow`、直接 transition duration。
+- 不要新增英文用户界面文案。
+- 不要把 Stage 1 从本人测试扩展为公开社交、分享、评论、公开资料、支付、推送或网页登录。
+
+## 8. 校验
 
 提交前运行：
 
 ```bash
-pnpm scan:design-tokens
 pnpm scan:ui-copy
+pnpm scan:design-tokens
 pnpm type-check
 pnpm build:mp-weixin
+git diff --check
 ```
+
+`scan:design-tokens` 会检查：
+
+- 页面是否绕过 `AppShell`
+- `AppShell` 是否仍注入 `theme.appStyle`、`themeVars` 和 `providerKey`
+- `src/design-system/**` 是否存在禁用的运行时副作用
+- 设置页和色板是否绕过 `AppOptionButton`
+- 页面和组件是否出现 raw style 值
+- 使用的 `--app-*` 是否已登记在令牌系统中
