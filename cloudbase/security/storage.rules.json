@@ -1,17 +1,4 @@
 {
-  "version": "1.0",
-  "rules": [
-    {
-      "path": "love-entries/main/**",
-      "read": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__']",
-      "write": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__']",
-      "delete": "auth.openid != null && auth.openid in ['__OWNER_OPENID__','__PARTNER_OPENID__']"
-    },
-    {
-      "path": "**",
-      "read": false,
-      "write": false,
-      "delete": false
-    }
-  ]
+  "read": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && /^love-entries\\/main\\//.test(resource.path)",
+  "write": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && /^love-entries\\/main\\//.test(resource.path)"
 }

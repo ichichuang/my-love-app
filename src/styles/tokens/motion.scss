@@ -1,0 +1,13 @@
+:root,
+page {
+  --app-transition-fast: var(--app-duration-fast) var(--app-ease-standard);
+  --app-transition-normal: var(--app-duration-normal) var(--app-ease-standard);
+  --app-transition-slow: var(--app-duration-slow) var(--app-ease-emphasized);
+  --app-transition-theme: background-color var(--app-transition-normal), border-color var(--app-transition-normal), color var(--app-transition-normal), opacity 220ms var(--app-ease-standard), box-shadow var(--app-transition-normal);
+  --app-press-scale: 0.99;
+  --app-press-opacity: 0.82;
+  --app-muted-opacity: 0.78;
+  --app-decor-opacity: 0.7;
+  --app-disabled-opacity: 0.3;
+  --app-fade-offset-y: var(--app-space-6);
+}

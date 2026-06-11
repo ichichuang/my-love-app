@@ -1,6 +1,12 @@
 <template>
   <view class="empty-state">
-    <view class="empty-state__mark">
+    <image
+      v-if="imageSrc"
+      class="empty-state__image"
+      :src="imageSrc"
+      mode="aspectFit"
+    />
+    <view v-else class="empty-state__mark">
       <view class="empty-state__line empty-state__line--top" />
       <view class="empty-state__line empty-state__line--bottom" />
     </view>
@@ -14,6 +20,7 @@
 defineProps<{
   title: string
   body: string
+  imageSrc?: string
 }>()
 </script>
 
@@ -22,53 +29,73 @@ defineProps<{
 
 .empty-state {
   @include panel;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 54rpx 36rpx;
+  padding: var(--app-empty-padding-y) var(--app-empty-padding-x);
   text-align: center;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  position: absolute;
+  top: var(--app-card-padding);
+  right: var(--app-section-gap);
+  width: var(--app-empty-decor-size);
+  height: var(--app-empty-decor-size);
+  border-top: var(--app-border-width-focus) solid var(--app-border);
+  border-right: var(--app-border-width-focus) solid var(--app-border);
+  content: "";
+  opacity: var(--app-decor-opacity);
+}
+
+.empty-state__image {
+  width: var(--app-empty-image-size);
+  height: var(--app-empty-image-size);
+  margin-bottom: var(--app-card-gap);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-image);
+  background: var(--app-surface-strong);
+  box-shadow: var(--app-shadow-logo);
 }
 
 .empty-state__mark {
   position: relative;
-  width: 128rpx;
-  height: 128rpx;
-  margin-bottom: 26rpx;
-  border: 1rpx solid var(--app-border);
-  border-radius: 50%;
+  width: var(--app-empty-mark-size);
+  height: var(--app-empty-mark-size);
+  margin-bottom: var(--app-card-gap);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-round);
   background: var(--app-surface-strong);
 }
 
 .empty-state__line {
   position: absolute;
-  left: 32rpx;
-  width: 64rpx;
-  height: 2rpx;
+  left: var(--app-space-14);
+  width: var(--app-space-24);
+  height: var(--app-border-width-focus);
   background: var(--app-primary);
 }
 
 .empty-state__line--top {
-  top: 48rpx;
+  top: var(--app-space-20);
   transform: rotate(-22deg);
 }
 
 .empty-state__line--bottom {
-  top: 74rpx;
+  top: var(--app-space-28);
   transform: rotate(22deg);
 }
 
 .empty-state__title {
   color: var(--app-text);
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 34rpx;
-  font-weight: 600;
-  line-height: 1.25;
+  font: var(--app-font-card-title);
 }
 
 .empty-state__body {
-  margin-top: 14rpx;
+  margin-top: var(--app-space-5);
   color: var(--app-text-soft);
-  font-size: 25rpx;
-  line-height: 1.55;
+  font: var(--app-font-body);
 }
 </style>

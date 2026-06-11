@@ -17,15 +17,14 @@ onShow(() => {
 </script>
 
 <style lang="scss">
-@import "./styles/variables.scss";
-@import "./styles/mixins.scss";
+@import "./styles/index.scss";
 @import "./styles/transitions.scss";
 
 page {
   min-height: 100%;
   background: var(--app-bg);
   color: var(--app-text);
-  transition: background-color 260ms ease, color 260ms ease;
+  transition: background-color var(--app-transition-normal), color var(--app-transition-normal);
 }
 
 view,

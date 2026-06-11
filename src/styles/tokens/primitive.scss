@@ -1,0 +1,119 @@
+:root,
+page {
+  --app-red-50: #fff1f1;
+  --app-red-100: #f9d7d6;
+  --app-red-300: #df8b87;
+  --app-red-500: #bd5a62;
+  --app-red-700: #8f3846;
+
+  --app-blue-50: #eef6fb;
+  --app-blue-100: #d8eaf5;
+  --app-blue-300: #8bb8d3;
+  --app-blue-500: #4f87aa;
+  --app-blue-700: #2d5f7b;
+
+  --app-pink-50: #fff3f6;
+  --app-pink-100: #f7dce4;
+  --app-pink-300: #e5a8b8;
+  --app-pink-500: #c96f86;
+
+  --app-ivory-50: #fffaf3;
+  --app-ivory-100: #f7efe3;
+  --app-ivory-200: #efe0d2;
+
+  --app-navy-700: #243247;
+  --app-navy-800: #182334;
+  --app-navy-900: #101827;
+
+  --app-neutral-50: #fffdf9;
+  --app-neutral-100: #f4eee8;
+  --app-neutral-200: #e5d8cf;
+  --app-neutral-500: #8a7672;
+  --app-neutral-700: #58484b;
+  --app-neutral-900: #2b2024;
+
+  --app-white: #ffffff;
+  --app-black: #000000;
+
+  --app-space-0: 0;
+  --app-space-1: 4rpx;
+  --app-space-2: 8rpx;
+  --app-space-3: 10rpx;
+  --app-space-4: 12rpx;
+  --app-space-5: 14rpx;
+  --app-space-6: 16rpx;
+  --app-space-7: 18rpx;
+  --app-space-8: 20rpx;
+  --app-space-9: 22rpx;
+  --app-space-10: 24rpx;
+  --app-space-11: 26rpx;
+  --app-space-12: 28rpx;
+  --app-space-13: 30rpx;
+  --app-space-14: 32rpx;
+  --app-space-15: 34rpx;
+  --app-space-16: 36rpx;
+  --app-space-18: 42rpx;
+  --app-space-20: 48rpx;
+  --app-space-24: 64rpx;
+  --app-space-28: 72rpx;
+  --app-space-32: 88rpx;
+  --app-space-36: 106rpx;
+  --app-space-40: 128rpx;
+  --app-space-44: 148rpx;
+  --app-space-48: 168rpx;
+  --app-space-56: 220rpx;
+  --app-space-64: 260rpx;
+
+  --app-border-width-hairline: 1rpx;
+  --app-border-width-focus: 2rpx;
+
+  --app-radius-xs: 8rpx;
+  --app-radius-sm: 12rpx;
+  --app-radius-md: 24rpx;
+  --app-radius-lg: 28rpx;
+  --app-radius-xl: 36rpx;
+  --app-radius-2xl: 42rpx;
+  --app-radius-pill: 999rpx;
+  --app-radius-round: 50%;
+
+  --app-font-size-xs: 18rpx;
+  --app-font-size-sm: 20rpx;
+  --app-font-size-md: 22rpx;
+  --app-font-size-base: 24rpx;
+  --app-font-size-body: 26rpx;
+  --app-font-size-lg: 28rpx;
+  --app-font-size-xl: 30rpx;
+  --app-font-size-2xl: 32rpx;
+  --app-font-size-3xl: 34rpx;
+  --app-font-size-4xl: 36rpx;
+  --app-font-size-5xl: 38rpx;
+  --app-font-size-6xl: 42rpx;
+  --app-font-size-7xl: 46rpx;
+  --app-font-size-page-title: 48rpx;
+  --app-line-height-none: 1;
+  --app-line-height-tight: 1.15;
+  --app-line-height-snug: 1.25;
+  --app-line-height-normal: 1.4;
+  --app-line-height-relaxed: 1.55;
+  --app-line-height-loose: 1.7;
+  --app-font-weight-medium: 500;
+  --app-font-weight-semibold: 600;
+  --app-font-family-body: "PingFang SC", "Microsoft YaHei", sans-serif;
+  --app-font-family-display: "Songti SC", "STSong", serif;
+
+  --app-shadow-color-soft: rgba(85, 44, 50, 0.12);
+  --app-shadow-color-card: rgba(85, 44, 50, 0.14);
+  --app-shadow-color-dark: rgba(0, 0, 0, 0.34);
+  --app-shadow-none: none;
+  --app-shadow-sm: 0 12rpx 30rpx var(--app-shadow-color-soft);
+  --app-shadow-md: 0 16rpx 42rpx var(--app-shadow-color-soft);
+  --app-shadow-lg: 0 24rpx 80rpx var(--app-shadow-color-card);
+  --app-shadow-xl: 0 28rpx 96rpx var(--app-shadow-color-dark);
+  --app-shadow-focus: 0 0 0 4rpx var(--app-color-primary);
+
+  --app-duration-fast: 180ms;
+  --app-duration-normal: 260ms;
+  --app-duration-slow: 320ms;
+  --app-ease-standard: ease;
+  --app-ease-emphasized: ease-in-out;
+}

@@ -1,17 +1,18 @@
 # 珊瑚行动
 
-Private two-person WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, Pinia, Wot UI, SCSS, and native CloudBase `wx.cloud`.
+Private WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, Pinia, Wot UI, SCSS, and native CloudBase `wx.cloud`.
 
 ## What It Does
 
 - Light, dark, and follow-system theme modes.
-- Romantic palette picker plus custom hex seed color.
+- Curated romantic palette picker with governed design tokens.
 - Full journal CRUD: create, list, view, edit, and delete memory entries.
 - CloudBase document database storage for entries.
 - CloudBase file upload, private file IDs, temporary-link display, and file deletion.
 - Wot UI configured through `src/pages.json` easycom mapping.
 - User-facing UI copy is Simplified Chinese only.
-- Product scope is private two-person memory keeping, not public social networking.
+- Stage 1 scope is owner-only smoke testing with one WeChat account.
+- Later product scope is private two-person memory keeping, not public social networking.
 
 See `docs/PRODUCT_REQUIREMENTS.zh-CN.md` for the product rules future changes must preserve.
 
@@ -39,12 +40,25 @@ Create a CloudBase environment linked to the Mini Program, then create the colle
 love_entries
 ```
 
-Apply these rule files in the CloudBase console:
+Stage 1 is owner-only testing. The only OpenID allowed to read, create, update, and delete `love_entries` is:
+
+```text
+oT1b65CCto1yDiTjtQvQASTsI0to
+```
+
+Apply the owner-only database rule file in the CloudBase console:
 
 - `cloudbase/security/database.rules.json`
-- `cloudbase/security/storage.rules.json`
 
-Before applying them, replace `__OWNER_OPENID__` and `__PARTNER_OPENID__` with the two real Mini Program OpenIDs allowed to access the shared archive.
+Do not add the partner OpenID during Stage 1. Partner access is a later TODO after the owner-only smoke test passes.
+
+For CloudBase storage permissions during Stage 1, use this console preset if custom storage rules are not available:
+
+```text
+仅创建者及管理员可读写
+```
+
+`cloudbase/security/storage.rules.json` is kept as a reference-only custom rule for future use. If the CloudBase console cannot apply custom storage rules, use the preset permission above instead.
 
 Storage paths are written under:
 
@@ -53,6 +67,8 @@ love-entries/main/
 ```
 
 The app stores CloudBase `fileID` values and requests temporary URLs through `wx.cloud.getTempFileURL`. It does not store public file URLs.
+
+Later TODO: add the girlfriend's OpenID to the database and storage access model after the owner-only smoke test is complete.
 
 ## Development
 
@@ -94,12 +110,22 @@ pnpm scan:ui-copy
 
 The scan is intentionally narrow and checks likely Vue template text, labels, placeholders, modal text, and toast text. Technical identifiers and package names are allowed.
 
+Scan for likely hardcoded design values outside the token system:
+
+```bash
+pnpm scan:design-tokens
+```
+
+Design tokens live under `src/styles/tokens/**`. Theme state, curated palettes, Wot UI `themeVars`, density, and font scale are governed by `src/stores/theme.ts`. See `docs/DESIGN_SYSTEM.zh-CN.md` before changing UI colors, spacing, typography, shadows, radii, or motion.
+
 ## Validation
 
 The project was verified with:
 
 ```bash
 pnpm type-check
+pnpm scan:ui-copy
+pnpm scan:design-tokens
 pnpm build:mp-weixin
 pnpm dev:mp-weixin
 ```

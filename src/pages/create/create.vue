@@ -1,54 +1,76 @@
 <template>
   <app-shell title="写下此刻" eyebrow="新的回忆">
-    <view class="entry-form">
-      <view class="field">
-        <text class="field__label">标题</text>
-        <input
-          class="field__input"
-          :value="title"
-          placeholder="比如：一起散步的夜晚"
-          placeholder-class="field__placeholder"
-          maxlength="48"
-          @input="onTitleInput"
-        />
-      </view>
+    <view class="create-intro">
+      <text class="create-intro__title">把这一刻放进私密盒子</text>
+      <text class="create-intro__body">文字和照片会写入云开发，只在本人测试阶段可见。</text>
+    </view>
 
-      <view class="field-grid">
-        <view class="field">
-          <text class="field__label">日期</text>
-          <picker mode="date" :value="occurredAt" @change="onDateChange">
-            <view class="field__picker">{{ occurredAt }}</view>
-          </picker>
+    <view class="entry-form">
+      <view class="form-section">
+        <view class="form-section__head">
+          <text class="form-section__title">基本内容</text>
+          <text class="form-section__note">先写最想留下的部分</text>
         </view>
 
         <view class="field">
-          <text class="field__label">心情</text>
+          <text class="field__label">标题</text>
           <input
             class="field__input"
-            :value="mood"
-            placeholder="温柔"
+            :value="title"
+            placeholder="比如：一起散步的夜晚"
             placeholder-class="field__placeholder"
-            maxlength="16"
-            @input="onMoodInput"
+            maxlength="48"
+            @input="onTitleInput"
+          />
+        </view>
+
+        <view class="field">
+          <text class="field__label">内容</text>
+          <textarea
+            class="field__textarea"
+            :value="content"
+            placeholder="写下想一起记住的话"
+            placeholder-class="field__placeholder"
+            maxlength="1200"
+            @input="onContentInput"
           />
         </view>
       </view>
 
-      <view class="field">
-        <text class="field__label">内容</text>
-        <textarea
-          class="field__textarea"
-          :value="content"
-          placeholder="写下想一起记住的话"
-          placeholder-class="field__placeholder"
-          maxlength="1200"
-          @input="onContentInput"
-        />
+      <view class="form-section">
+        <view class="form-section__head">
+          <text class="form-section__title">时间和心情</text>
+          <text class="form-section__note">给回忆一个坐标</text>
+        </view>
+
+        <view class="field-grid">
+          <view class="field">
+            <text class="field__label">日期</text>
+            <picker mode="date" :value="occurredAt" @change="onDateChange">
+              <view class="field__picker">{{ occurredAt }}</view>
+            </picker>
+          </view>
+
+          <view class="field">
+            <text class="field__label">心情</text>
+            <input
+              class="field__input"
+              :value="mood"
+              placeholder="温柔"
+              placeholder-class="field__placeholder"
+              maxlength="16"
+              @input="onMoodInput"
+            />
+          </view>
+        </view>
       </view>
 
-      <view class="upload-panel">
+      <view class="form-section upload-panel">
         <view class="upload-panel__head">
-          <text class="upload-panel__title">私密照片</text>
+          <view>
+            <text class="upload-panel__title">私密照片</text>
+            <text class="upload-panel__note">最多上传 9 张，适合放小票、风景和合照。</text>
+          </view>
           <text class="upload-panel__meta">{{ files.length }}/9</text>
         </view>
         <image-grid :files="files" editable @remove="removeFileAt" />
@@ -63,7 +85,9 @@
         </wd-button>
       </view>
 
-      <wd-button block size="large" :loading="saving" @click="saveEntry">保存回忆</wd-button>
+      <view class="create-save">
+        <wd-button block size="large" :loading="saving" @click="saveEntry">保存回忆</wd-button>
+      </view>
     </view>
   </app-shell>
 </template>
@@ -165,26 +189,71 @@ const saveEntry = async () => {
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: var(--app-form-gap);
+  padding-bottom: var(--app-safe-action-bottom-gap);
 }
 
-.field,
-.upload-panel {
+.create-intro,
+.form-section {
   @include panel;
-  padding: 26rpx;
+  padding: var(--app-card-padding);
+}
+
+.create-intro {
+  margin-bottom: var(--app-form-gap);
+  background:
+    linear-gradient(135deg, var(--app-surface), var(--app-surface-strong));
+}
+
+.create-intro__title {
+  display: block;
+  color: var(--app-text);
+  font: var(--app-font-card-title);
+}
+
+.create-intro__body {
+  display: block;
+  margin-top: var(--app-space-4);
+  color: var(--app-text-soft);
+  font: var(--app-font-body);
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-card-gap);
+}
+
+.form-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--app-space-8);
+}
+
+.form-section__title {
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+.form-section__note,
+.upload-panel__note {
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-md);
+  line-height: var(--app-line-height-normal);
 }
 
 .field-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20rpx;
+  gap: var(--app-space-8);
 }
 
 .field__label,
 .upload-panel__meta {
   @include label;
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: var(--app-space-5);
 }
 
 .field__input,
@@ -192,15 +261,15 @@ const saveEntry = async () => {
   @include field;
   display: flex;
   align-items: center;
-  padding: 0 22rpx;
-  line-height: 88rpx;
+  padding: var(--app-space-0) var(--app-field-padding-x);
+  line-height: var(--app-input-height);
 }
 
 .field__textarea {
   @include field;
-  min-height: 260rpx;
-  padding: 22rpx;
-  line-height: 1.55;
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+  line-height: var(--app-line-height-relaxed);
 }
 
 .field__placeholder {
@@ -209,18 +278,36 @@ const saveEntry = async () => {
 
 .upload-panel__head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 18rpx;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-7);
 }
 
 .upload-panel__title {
+  display: block;
   color: var(--app-text);
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: var(--app-font-size-xl);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+.upload-panel__note {
+  display: block;
+  margin-top: var(--app-space-2);
 }
 
 :deep(.upload-panel__button) {
-  margin-top: 20rpx;
+  margin-top: var(--app-space-8);
+}
+
+.create-save {
+  position: fixed;
+  right: $app-page-x;
+  bottom: 0;
+  left: $app-page-x;
+  z-index: 20;
+  padding: var(--app-space-7) var(--app-space-0) calc(var(--app-space-8) + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, transparent 0%, var(--app-bg) 38%, var(--app-bg) 100%);
 }
 </style>

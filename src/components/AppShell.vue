@@ -1,6 +1,6 @@
 <template>
   <wd-config-provider :theme="theme.wotTheme" :theme-vars="theme.wotThemeVars">
-    <view class="app-shell theme-transition" :style="theme.appStyle">
+    <view class="app-shell theme-transition" :class="theme.themeClasses" :style="theme.appStyle">
       <view v-if="title || $slots.actions" class="app-shell__header">
         <view>
           <text v-if="eyebrow" class="app-shell__eyebrow">{{ eyebrow }}</text>
@@ -38,32 +38,30 @@ const theme = useThemeStore()
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24rpx;
-  margin-bottom: 28rpx;
+  gap: var(--app-shell-header-gap);
+  margin-bottom: var(--app-shell-header-bottom);
+  padding-top: var(--app-shell-header-top);
 }
 
 .app-shell__eyebrow {
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: var(--app-shell-eyebrow-bottom);
   color: var(--app-accent);
-  font-size: 22rpx;
+  font-size: var(--app-font-size-md);
   letter-spacing: 0;
-  line-height: 1.2;
+  line-height: var(--app-line-height-tight);
 }
 
 .app-shell__title {
   display: block;
   color: var(--app-text);
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 46rpx;
-  font-weight: 600;
-  line-height: 1.16;
+  font: var(--app-font-page-title);
 }
 
 .app-shell__actions {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: var(--app-space-6);
   flex-shrink: 0;
 }
 </style>

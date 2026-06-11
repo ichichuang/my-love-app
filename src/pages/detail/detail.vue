@@ -15,25 +15,42 @@
     />
 
     <view v-else-if="!editing" class="detail">
-      <view class="detail__hero">
-        <text class="detail__mood">{{ entry.mood }}</text>
-        <text class="detail__title">{{ entry.title }}</text>
-        <text class="detail__date">{{ entry.occurredAt }}</text>
-      </view>
+      <view class="detail-card">
+        <view class="detail__hero">
+          <view class="detail__mood-row">
+            <text class="detail__mood">{{ entry.mood }}</text>
+            <text class="detail__tag">私密回忆</text>
+          </view>
+          <text class="detail__title">{{ entry.title }}</text>
+          <text class="detail__date">{{ entry.occurredAt }}</text>
+        </view>
 
-      <image-grid :files="entry.files" />
+        <image-grid :files="entry.files" />
 
-      <view class="detail__content">
-        <text>{{ entry.content || "这段回忆还没有写下文字。" }}</text>
+        <view class="detail__content">
+          <text>{{ entry.content || "这段回忆还没有写下文字。" }}</text>
+        </view>
       </view>
 
       <view class="detail__actions">
         <wd-button plain block @click="startEditing">编辑回忆</wd-button>
-        <wd-button block type="error" :loading="deleting" @click="confirmDelete">删除回忆</wd-button>
+      </view>
+
+      <view class="danger-zone">
+        <view>
+          <text class="danger-zone__title">删除测试记录</text>
+          <text class="danger-zone__body">需要清理测试记录时再删除，会同时删除云端文件。</text>
+        </view>
+        <wd-button plain block type="error" :loading="deleting" @click="confirmDelete">删除这条回忆</wd-button>
       </view>
     </view>
 
     <view v-else class="entry-form">
+      <view class="edit-intro">
+        <text class="edit-intro__title">正在编辑这条回忆</text>
+        <text class="edit-intro__body">保存后会更新原记录，云端路径和集合保持不变。</text>
+      </view>
+
       <view class="field">
         <text class="field__label">标题</text>
         <input
@@ -78,7 +95,10 @@
 
       <view class="upload-panel">
         <view class="upload-panel__head">
-          <text class="upload-panel__title">私密照片</text>
+          <view>
+            <text class="upload-panel__title">私密照片</text>
+            <text class="upload-panel__note">移除照片后，保存成功会清理对应云端文件。</text>
+          </view>
           <text class="upload-panel__meta">{{ files.length }}/9</text>
         </view>
         <image-grid :files="files" editable @remove="removeEditFile" />
@@ -106,6 +126,7 @@ import { shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
+import { useThemeStore } from "@/stores/theme"
 import {
   deleteEntry,
   deleteEntryFiles,
@@ -115,6 +136,7 @@ import {
 } from "@/services/repositories/entries"
 
 const entryId = shallowRef("")
+const theme = useThemeStore()
 const entry = shallowRef<EntryRecord | null>(null)
 const loading = shallowRef(false)
 const editing = shallowRef(false)
@@ -247,7 +269,7 @@ const confirmDelete = () => {
     title: "删除回忆",
     content: "这会同时删除这条记录和它的云端文件。",
     confirmText: "删除",
-    confirmColor: "#9f2f3e",
+    confirmColor: theme.appCssVars["--app-color-danger"],
     success: (result) => {
       if (result.confirm) {
         void deleteCurrentEntry()
@@ -304,79 +326,140 @@ onLoad((query) => {
 @import "../../styles/mixins.scss";
 
 .status-panel,
-.detail__hero,
-.detail__content,
+.detail-card,
 .field,
-.upload-panel {
+.upload-panel,
+.edit-intro,
+.danger-zone {
   @include panel;
-  padding: 28rpx;
+  padding: var(--app-card-padding);
 }
 
 .status-panel {
   color: var(--app-text-soft);
-  font-size: 26rpx;
+  font-size: var(--app-font-size-body);
 }
 
 .detail {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: var(--app-card-gap);
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-card-gap);
 }
 
 .detail__hero {
   display: flex;
   flex-direction: column;
+  padding-bottom: var(--app-space-3);
+  border-bottom: var(--app-panel-border-width) solid var(--app-border);
+}
+
+.detail__mood-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-space-7);
 }
 
 .detail__mood {
   color: var(--app-accent);
-  font-size: 24rpx;
+  font-size: var(--app-font-size-base);
+}
+
+.detail__tag {
+  padding: var(--app-space-2) var(--app-space-5);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-surface-strong);
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-sm);
 }
 
 .detail__title {
-  margin-top: 12rpx;
+  margin-top: var(--app-space-4);
   color: var(--app-text);
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 46rpx;
-  font-weight: 600;
-  line-height: 1.15;
+  font: var(--app-font-detail-title);
 }
 
 .detail__date {
-  margin-top: 18rpx;
+  margin-top: var(--app-space-7);
   color: var(--app-text-soft);
-  font-size: 24rpx;
+  font-size: var(--app-font-size-base);
 }
 
 .detail__content {
   color: var(--app-text);
-  font-size: 30rpx;
-  line-height: 1.7;
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-line-height-loose);
+  padding-top: var(--app-space-1);
 }
 
 .detail__actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 18rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-8);
+  border-color: var(--app-color-danger-border);
+  box-shadow: var(--app-shadow-none);
+}
+
+.danger-zone__title {
+  display: block;
+  color: var(--app-text);
+  font-size: var(--app-font-size-lg);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+.danger-zone__body {
+  display: block;
+  margin-top: var(--app-space-2);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
 }
 
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: var(--app-form-gap);
+}
+
+.edit-intro {
+  background:
+    linear-gradient(135deg, var(--app-surface), var(--app-surface-strong));
+}
+
+.edit-intro__title {
+  display: block;
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+.edit-intro__body {
+  display: block;
+  margin-top: var(--app-space-3);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
 }
 
 .field-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20rpx;
+  gap: var(--app-space-8);
 }
 
 .field__label,
 .upload-panel__meta {
   @include label;
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: var(--app-space-5);
 }
 
 .field__input,
@@ -384,15 +467,15 @@ onLoad((query) => {
   @include field;
   display: flex;
   align-items: center;
-  padding: 0 22rpx;
-  line-height: 88rpx;
+  padding: var(--app-space-0) var(--app-field-padding-x);
+  line-height: var(--app-input-height);
 }
 
 .field__textarea {
   @include field;
-  min-height: 260rpx;
-  padding: 22rpx;
-  line-height: 1.55;
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+  line-height: var(--app-line-height-relaxed);
 }
 
 .field__placeholder {
@@ -401,18 +484,28 @@ onLoad((query) => {
 
 .upload-panel__head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 18rpx;
+  gap: var(--app-space-8);
+  margin-bottom: var(--app-space-7);
 }
 
 .upload-panel__title {
+  display: block;
   color: var(--app-text);
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: var(--app-font-size-xl);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+.upload-panel__note {
+  display: block;
+  margin-top: var(--app-space-2);
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-md);
+  line-height: var(--app-line-height-normal);
 }
 
 :deep(.upload-panel__button) {
-  margin-top: 20rpx;
+  margin-top: var(--app-space-8);
 }
 </style>

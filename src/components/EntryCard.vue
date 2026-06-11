@@ -10,6 +10,9 @@
         <text class="entry-card__mood">{{ entry.mood }}</text>
         <text class="entry-card__title">{{ entry.title }}</text>
         <text class="entry-card__excerpt">{{ excerpt }}</text>
+        <view class="entry-card__meta">
+          <text>{{ imageCountLabel }}</text>
+        </view>
       </view>
 
       <image
@@ -39,8 +42,17 @@ const emit = defineEmits<{
 
 const coverUrl = computed(() => props.entry.files[0]?.tempFileURL ?? "")
 
+const imageCountLabel = computed(() => {
+  const count = props.entry.files.length
+  return count > 0 ? `${count} 张照片` : "文字回忆"
+})
+
 const excerpt = computed(() => {
   const text = props.entry.content.trim()
+  if (!text) {
+    return "这段回忆还没有写下文字。"
+  }
+
   return text.length > 48 ? `${text.slice(0, 48)}...` : text
 })
 
@@ -67,13 +79,14 @@ const dateParts = computed(() => {
   @include panel;
   @include pressable;
   display: grid;
-  grid-template-columns: 96rpx 1fr;
-  gap: 22rpx;
-  padding: 24rpx;
+  grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr);
+  gap: var(--app-card-gap);
+  padding: var(--app-space-9);
+  overflow: hidden;
 
   &:active {
-    opacity: 0.82;
-    transform: scale(0.99);
+    opacity: var(--app-press-opacity);
+    transform: scale(var(--app-press-scale));
   }
 }
 
@@ -82,29 +95,31 @@ const dateParts = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 154rpx;
-  border-radius: 28rpx;
-  background: var(--app-surface-strong);
+  min-height: var(--app-entry-card-min-height);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-card);
+  background:
+    linear-gradient(180deg, var(--app-surface-strong), var(--app-field));
   color: var(--app-primary);
 }
 
 .entry-card__month {
-  font-size: 20rpx;
-  line-height: 1.2;
+  font-size: var(--app-font-size-sm);
+  line-height: var(--app-line-height-tight);
 }
 
 .entry-card__day {
-  margin-top: 6rpx;
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 38rpx;
-  font-weight: 600;
-  line-height: 1;
+  margin-top: var(--app-space-1);
+  font-family: var(--app-font-family-display);
+  font-size: var(--app-font-size-5xl);
+  font-weight: var(--app-font-weight-semibold);
+  line-height: var(--app-line-height-none);
 }
 
 .entry-card__body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 136rpx;
-  gap: 20rpx;
+  grid-template-columns: minmax(0, 1fr) var(--app-entry-cover-width);
+  gap: var(--app-space-8);
   min-width: 0;
 }
 
@@ -116,18 +131,15 @@ const dateParts = computed(() => {
 
 .entry-card__mood {
   color: var(--app-accent);
-  font-size: 22rpx;
-  line-height: 1.3;
+  font-size: var(--app-font-size-md);
+  line-height: var(--app-line-height-snug);
 }
 
 .entry-card__title {
   display: block;
-  margin-top: 8rpx;
+  margin-top: var(--app-space-2);
   color: var(--app-text);
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 34rpx;
-  font-weight: 600;
-  line-height: 1.25;
+  font: var(--app-font-card-title);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -135,20 +147,31 @@ const dateParts = computed(() => {
 
 .entry-card__excerpt {
   display: -webkit-box;
-  margin-top: 12rpx;
+  margin-top: var(--app-space-4);
   color: var(--app-text-soft);
-  font-size: 24rpx;
-  line-height: 1.45;
+  font: var(--app-font-caption);
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
+.entry-card__meta {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: auto;
+  padding: var(--app-entry-meta-padding-y) var(--app-entry-meta-padding-x);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-badge);
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-sm);
+  line-height: var(--app-line-height-none);
+}
+
 .entry-card__cover,
 .entry-card__placeholder {
-  width: 136rpx;
-  height: 154rpx;
-  border-radius: 28rpx;
+  width: var(--app-entry-cover-width);
+  height: var(--app-entry-cover-height);
+  border-radius: var(--app-radius-image);
 }
 
 .entry-card__cover {
@@ -159,14 +182,14 @@ const dateParts = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1rpx solid var(--app-border);
+  border: var(--app-panel-border-width) solid var(--app-border);
   background:
     linear-gradient(135deg, var(--app-surface-strong), var(--app-field));
 }
 
 .entry-card__placeholder-mark {
   color: var(--app-primary);
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 42rpx;
+  font-family: var(--app-font-family-display);
+  font-size: var(--app-font-size-6xl);
 }
 </style>

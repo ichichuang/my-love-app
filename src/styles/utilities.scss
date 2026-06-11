@@ -1,0 +1,11 @@
+.app-text-display {
+  font-family: var(--app-font-family-display);
+}
+
+.app-token-border {
+  border: var(--app-panel-border-width) solid var(--app-border);
+}
+
+.app-token-pill {
+  border-radius: var(--app-radius-pill);
+}

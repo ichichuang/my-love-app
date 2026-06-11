@@ -1,0 +1,16 @@
+:root,
+page {
+  --app-shadow-card: var(--app-shadow-lg);
+  --app-shadow-floating: var(--app-shadow-xl);
+  --app-shadow-button: 0 12rpx 28rpx var(--app-shadow-color-soft);
+  --app-shadow-image: var(--app-shadow-sm);
+  --app-shadow-logo: var(--app-shadow-md);
+}
+
+.app-theme--dark {
+  --app-shadow-card: 0 24rpx 72rpx rgba(0, 0, 0, 0.24);
+  --app-shadow-floating: var(--app-shadow-xl);
+  --app-shadow-button: 0 12rpx 28rpx rgba(0, 0, 0, 0.2);
+  --app-shadow-image: 0 12rpx 30rpx rgba(0, 0, 0, 0.2);
+  --app-shadow-logo: 0 16rpx 42rpx rgba(0, 0, 0, 0.22);
+}

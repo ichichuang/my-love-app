@@ -1,0 +1,28 @@
+:root,
+page {
+  --app-font-page-title: var(--app-font-weight-semibold) var(--app-font-size-page-title) / var(--app-line-height-tight) var(--app-font-family-display);
+  --app-font-section-title: var(--app-font-weight-semibold) var(--app-font-size-2xl) / var(--app-line-height-snug) var(--app-font-family-body);
+  --app-font-body: var(--app-font-size-body) / var(--app-line-height-relaxed) var(--app-font-family-body);
+  --app-font-caption: var(--app-font-size-base) / var(--app-line-height-normal) var(--app-font-family-body);
+  --app-font-button: var(--app-font-weight-medium) var(--app-font-size-body) / var(--app-line-height-none) var(--app-font-family-body);
+  --app-font-card-title: var(--app-font-weight-semibold) var(--app-font-size-3xl) / var(--app-line-height-snug) var(--app-font-family-display);
+  --app-font-hero-title: var(--app-font-weight-semibold) var(--app-font-size-6xl) / var(--app-line-height-tight) var(--app-font-family-display);
+  --app-font-detail-title: var(--app-font-weight-semibold) var(--app-font-size-7xl) / var(--app-line-height-tight) var(--app-font-family-display);
+}
+
+.app-font-scale--large {
+  --app-font-size-xs: 20rpx;
+  --app-font-size-sm: 22rpx;
+  --app-font-size-md: 24rpx;
+  --app-font-size-base: 26rpx;
+  --app-font-size-body: 28rpx;
+  --app-font-size-lg: 30rpx;
+  --app-font-size-xl: 32rpx;
+  --app-font-size-2xl: 34rpx;
+  --app-font-size-3xl: 36rpx;
+  --app-font-size-4xl: 38rpx;
+  --app-font-size-5xl: 40rpx;
+  --app-font-size-6xl: 44rpx;
+  --app-font-size-7xl: 48rpx;
+  --app-font-size-page-title: 50rpx;
+}

@@ -1,0 +1,34 @@
+:root,
+page,
+.app-theme--light {
+  --app-color-bg-page: var(--app-ivory-50);
+  --app-color-bg-page-soft: var(--app-ivory-100);
+  --app-color-bg-card: var(--app-white);
+  --app-color-bg-card-elevated: #fffdfb;
+  --app-color-bg-input: #fffefa;
+  --app-color-text-primary: var(--app-neutral-900);
+  --app-color-text-secondary: var(--app-neutral-700);
+  --app-color-text-muted: var(--app-neutral-500);
+  --app-color-text-inverse: var(--app-white);
+  --app-color-border: rgba(68, 42, 48, 0.14);
+  --app-color-border-strong: rgba(68, 42, 48, 0.22);
+  --app-color-primary: var(--app-red-500);
+  --app-color-primary-soft: var(--app-red-100);
+  --app-color-primary-pressed: var(--app-red-700);
+  --app-color-red-person: var(--app-red-500);
+  --app-color-blue-person: var(--app-blue-500);
+  --app-color-danger: #9f2f3e;
+  --app-color-warning: #b7791f;
+  --app-color-success: #43866a;
+  --app-color-heart-soft: var(--app-pink-100);
+  --app-color-accent: var(--app-blue-500);
+  --app-color-overlay-soft: rgba(43, 32, 36, 0.28);
+  --app-color-overlay-strong: rgba(43, 32, 36, 0.72);
+  --app-color-on-overlay: var(--app-white);
+  --app-color-on-swatch: var(--app-white);
+  --app-color-swatch-active-border: rgba(255, 255, 255, 0.86);
+  --app-color-swatch-active-bg: rgba(255, 255, 255, 0.26);
+  --app-color-photo-badge-border: rgba(255, 255, 255, 0.48);
+  --app-color-danger-border: rgba(159, 47, 62, 0.2);
+  --app-color-page-glow: rgba(189, 90, 98, 0.16);
+}

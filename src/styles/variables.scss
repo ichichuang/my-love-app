@@ -1,17 +1,6 @@
-$app-primary: #b84f62;
-$app-accent: #c49a5a;
-$app-danger: #9f2f3e;
-$app-bg: #fff7f4;
-$app-surface: #ffffff;
-$app-surface-strong: #f5ebe6;
-$app-text: #2b2024;
-$app-text-soft: #766268;
-$app-border: rgba(68, 42, 48, 0.14);
-$app-shadow: 0 24rpx 80rpx rgba(85, 44, 50, 0.14);
-
-$app-radius-sm: 12rpx;
-$app-radius-md: 24rpx;
-$app-radius-lg: 36rpx;
-
-$app-page-x: 32rpx;
-$app-page-y: 32rpx;
+$app-page-x: var(--app-page-padding-x);
+$app-page-y: var(--app-page-padding-y);
+$app-card-padding: var(--app-card-padding);
+$app-radius-card: var(--app-radius-card);
+$app-radius-button: var(--app-radius-button);
+$app-radius-input: var(--app-radius-input);

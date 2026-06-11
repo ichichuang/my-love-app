@@ -9,7 +9,10 @@
         @click="preview(index)"
       />
       <view v-else class="image-grid__fallback">
-        <text>私密</text>
+        <text>私密图片</text>
+      </view>
+      <view v-if="file.tempFileURL" class="image-grid__veil">
+        <text>{{ index + 1 }}</text>
       </view>
       <button
         v-if="editable"
@@ -55,7 +58,7 @@ const preview = (index: number) => {
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14rpx;
+  gap: var(--app-image-grid-gap);
 }
 
 .image-grid__item {
@@ -63,9 +66,10 @@ const preview = (index: number) => {
   min-width: 0;
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1rpx solid var(--app-border);
-  border-radius: 24rpx;
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-image);
   background: var(--app-surface-strong);
+  box-shadow: var(--app-shadow-image);
 }
 
 .image-grid__image,
@@ -79,25 +83,40 @@ const preview = (index: number) => {
   align-items: center;
   justify-content: center;
   color: var(--app-text-soft);
-  font-size: 22rpx;
+  font-size: var(--app-font-size-md);
+}
+
+.image-grid__veil {
+  position: absolute;
+  top: var(--app-space-2);
+  left: var(--app-space-2);
+  min-width: var(--app-image-badge-size);
+  height: var(--app-image-badge-size);
+  border: var(--app-panel-border-width) solid var(--app-color-photo-badge-border);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-color-overlay-soft);
+  color: var(--app-color-on-overlay);
+  font-size: var(--app-font-size-xs);
+  line-height: var(--app-image-badge-size);
+  text-align: center;
 }
 
 .image-grid__remove {
   position: absolute;
-  right: 8rpx;
-  bottom: 8rpx;
+  right: var(--app-space-2);
+  bottom: var(--app-space-2);
   min-width: 0;
-  height: 42rpx;
-  padding: 0 14rpx;
+  height: var(--app-image-remove-height);
+  padding: var(--app-space-0) var(--app-image-remove-padding-x);
   border: 0;
-  border-radius: 999rpx;
-  background: var(--app-primary);
-  color: var(--app-surface);
-  font-size: 20rpx;
-  line-height: 42rpx;
+  border-radius: var(--app-radius-pill);
+  background: var(--app-color-overlay-strong);
+  color: var(--app-color-on-overlay);
+  font-size: var(--app-font-size-sm);
+  line-height: var(--app-image-remove-height);
 }
 
 .image-grid__remove--active {
-  opacity: 0.75;
+  opacity: var(--app-muted-opacity);
 }
 </style>

@@ -6,20 +6,20 @@
 .theme-transition textarea,
 .theme-transition image {
   transition:
-    background-color 260ms ease,
-    border-color 260ms ease,
-    color 260ms ease,
-    opacity 220ms ease,
-    box-shadow 260ms ease;
+    background-color var(--app-transition-normal),
+    border-color var(--app-transition-normal),
+    color var(--app-transition-normal),
+    opacity var(--app-transition-fast),
+    box-shadow var(--app-transition-normal);
 }
 
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity var(--app-transition-fast), transform var(--app-transition-fast);
 }
 
 .fade-slide-enter-from,
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateY(16rpx);
+  transform: translateY(var(--app-fade-offset-y));
 }
