@@ -38,8 +38,11 @@
       @click.stop
     >
       <view class="app-pet-bubble__tail" :style="bubbleTailStyle" />
-      <text class="app-pet-bubble__title">想去哪儿呀？</text>
-      <text class="app-pet-bubble__subtitle">先挑一个，我带你过去。</text>
+      <view class="app-pet-bubble__paper-corner" />
+      <view class="app-pet-bubble__speech">
+        <text class="app-pet-bubble__title">想去哪儿呀？</text>
+        <text class="app-pet-bubble__subtitle">我悄悄带你过去。</text>
+      </view>
 
       <view class="app-pet-bubble__actions">
         <wd-button
@@ -57,7 +60,6 @@
 
       <view class="app-pet-bubble__close">
         <wd-button
-          block
           plain
           size="small"
           custom-class="app-pet-bubble__hide-button"
@@ -159,19 +161,19 @@ const viewport = ref<ViewportMetrics>({
 
 const menuItems: MenuItem[] = [
   {
-    label: "写一条小回忆",
+    label: "写回忆",
     path: "/pages/create/create"
   },
   {
-    label: "去小歌单",
+    label: "小歌单",
     path: "/pages/songs/songs"
   },
   {
-    label: "勾一件小约定",
+    label: "小约定",
     path: "/pages/tasks/tasks"
   },
   {
-    label: "换换小程序样子",
+    label: "换样子",
     path: "/pages/settings/settings"
   }
 ]
@@ -276,6 +278,8 @@ const resolvePetEdgeGap = (): number => {
   const smallestSide = Math.min(petSize.value.width, petSize.value.height)
   return smallestSide > 0 ? smallestSide / 4 : 0
 }
+
+const resolveBubbleEdgeGap = (): number => resolvePetEdgeGap() / 2
 
 const resolveDragThreshold = (): number => {
   const smallestSide = Math.min(petSize.value.width, petSize.value.height)
@@ -416,7 +420,7 @@ const chooseVerticalPlacement = (centerY: number, requiredSpace: number): Vertic
 }
 
 const resolveBubbleLayout = () => {
-  const gap = resolvePetEdgeGap()
+  const gap = resolveBubbleEdgeGap()
   const centerX = petPosition.value.left + petSize.value.width / 2
   const centerY = petPosition.value.top + petSize.value.height / 2
   const horizontal = chooseHorizontalPlacement(centerX, bubbleSize.value.width + gap)
@@ -681,15 +685,14 @@ onMounted(async () => {
   z-index: 15;
   display: flex;
   flex-direction: column;
-  width: calc(var(--app-space-64) + var(--app-space-56));
+  width: calc(var(--app-space-64) + var(--app-space-24));
   max-width: calc(100vw - var(--app-page-padding-x) - var(--app-page-padding-x));
-  gap: var(--app-space-5);
-  padding: var(--app-space-10);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-2xl) var(--app-radius-3xl) var(--app-radius-2xl) var(--app-radius-3xl);
-  background:
-    linear-gradient(135deg, var(--app-surface), var(--app-field));
-  box-shadow: var(--app-shadow-floating);
+  gap: var(--app-space-2);
+  padding: var(--app-space-7) var(--app-space-8) var(--app-space-6);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-3xl) var(--app-radius-2xl) var(--app-radius-3xl) var(--app-radius-xl);
+  background: var(--app-field);
+  box-shadow: var(--app-shadow-button);
   opacity: var(--app-space-0);
   pointer-events: none;
   transform: translateY(var(--app-fade-offset-y)) scale(var(--app-press-scale));
@@ -723,37 +726,37 @@ onMounted(async () => {
 .app-pet-bubble::after {
   position: absolute;
   z-index: 0;
-  border: var(--app-panel-border-width) solid var(--app-border);
-  background: var(--app-surface);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  background: var(--app-field);
   content: "";
   pointer-events: none;
 }
 
 .app-pet-bubble::before {
-  top: calc(var(--app-space-0) - var(--app-space-7));
-  left: var(--app-space-13);
-  width: var(--app-space-32);
-  height: var(--app-space-18);
+  top: calc(var(--app-space-0) - var(--app-space-4));
+  left: var(--app-space-9);
+  width: var(--app-space-20);
+  height: var(--app-space-10);
   border-bottom: 0;
   border-radius: var(--app-radius-pill) var(--app-radius-pill) var(--app-space-0) var(--app-space-0);
 }
 
 .app-pet-bubble::after {
-  right: var(--app-space-16);
-  bottom: calc(var(--app-space-0) - var(--app-space-5));
-  width: var(--app-space-24);
-  height: var(--app-space-12);
+  right: var(--app-space-11);
+  bottom: calc(var(--app-space-0) - var(--app-space-3));
+  width: var(--app-space-16);
+  height: var(--app-space-7);
   border-top: 0;
   border-radius: var(--app-space-0) var(--app-space-0) var(--app-radius-pill) var(--app-radius-pill);
-  background: var(--app-field);
 }
 
 .app-pet-bubble__tail {
   position: absolute;
   z-index: 0;
-  width: var(--app-space-10);
-  height: var(--app-space-10);
-  border: var(--app-panel-border-width) solid var(--app-border);
+  width: var(--app-space-12);
+  height: var(--app-space-12);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-xs);
   background: var(--app-field);
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(45deg);
@@ -779,16 +782,47 @@ onMounted(async () => {
   border-bottom: 0;
 }
 
-.app-pet-bubble__title {
+.app-pet-bubble__paper-corner {
+  position: absolute;
+  top: var(--app-space-5);
+  right: var(--app-space-5);
+  z-index: 0;
+  width: var(--app-space-10);
+  height: var(--app-space-10);
+  border-top: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-right: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-space-0) var(--app-radius-sm) var(--app-space-0) var(--app-space-0);
+  opacity: var(--app-decor-opacity);
+  pointer-events: none;
+}
+
+.app-pet-bubble__speech {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-1);
+  padding-bottom: var(--app-space-2);
+}
+
+.app-pet-bubble__speech::after {
+  position: absolute;
+  bottom: var(--app-space-0);
+  left: var(--app-space-0);
+  width: var(--app-space-24);
+  height: var(--app-border-width-hairline);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-border-muted);
+  content: "";
+  opacity: var(--app-decor-opacity);
+}
+
+.app-pet-bubble__title {
   color: var(--app-text);
   font: var(--app-font-card-title);
 }
 
 .app-pet-bubble__subtitle {
-  position: relative;
-  z-index: 1;
   color: var(--app-text-soft);
   font: var(--app-font-caption);
 }
@@ -796,29 +830,45 @@ onMounted(async () => {
 .app-pet-bubble__actions {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-space-4);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--app-space-2);
   margin-top: var(--app-space-2);
 }
 
 .app-pet-bubble__close {
   position: relative;
   z-index: 1;
+  display: flex;
+  justify-content: flex-end;
 }
 
 :deep(.app-pet-bubble__action-button) {
-  justify-content: flex-start;
+  justify-content: center;
+  height: var(--app-control-scale-xs);
+  min-height: var(--app-control-scale-xs);
+  padding: var(--app-space-0) var(--app-space-4);
   border-color: var(--app-border-muted);
-  background: var(--app-field);
+  border-radius: var(--app-radius-md) var(--app-radius-lg) var(--app-radius-md) var(--app-radius-lg);
+  background: var(--app-surface);
   box-shadow: var(--app-shadow-none);
   color: var(--app-text);
+  font: var(--app-font-caption);
+}
+
+:deep(.app-pet-bubble__action-button:nth-child(2n)) {
+  border-radius: var(--app-radius-lg) var(--app-radius-md) var(--app-radius-lg) var(--app-radius-md);
+  background: var(--app-surface-strong);
 }
 
 :deep(.app-pet-bubble__hide-button) {
+  height: var(--app-control-scale-2xs);
+  min-height: var(--app-control-scale-2xs);
+  padding: var(--app-space-0) var(--app-space-3);
   border-color: transparent;
   background: transparent;
   box-shadow: var(--app-shadow-none);
   color: var(--app-text-muted);
+  font: var(--app-font-caption);
 }
 </style>

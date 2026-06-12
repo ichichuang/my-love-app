@@ -18,13 +18,10 @@
     >
       <wd-button custom-class="tasks-empty__button" @click="goTaskEdit">加一件事</wd-button>
     </empty-state>
-
-    <app-pet-navigator />
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 
 const theme = useNativeChromeSync()

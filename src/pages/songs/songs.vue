@@ -81,15 +81,12 @@
         </view>
       </view>
     </view>
-
-    <app-pet-navigator />
   </app-shell>
 </template>
 
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
-import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import {
   listSongs,
