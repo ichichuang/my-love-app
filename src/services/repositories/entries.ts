@@ -1,6 +1,7 @@
 import { appConfig } from "@/config/app"
 import {
   addDocument,
+  CloudBaseUserError,
   deleteCloudFiles,
   getDocument,
   getTemporaryFileURLs,
@@ -9,6 +10,8 @@ import {
   updateDocument,
   type CloudFile
 } from "@/services/cloudbase"
+
+export type LoveEntryKind = "memory" | "song" | "task"
 
 export interface EntryDraft {
   title: string
@@ -20,6 +23,7 @@ export interface EntryDraft {
 
 export interface EntryRecord extends EntryDraft {
   id: string
+  kind: "memory"
   createdAt: number
   updatedAt: number
 }
@@ -29,6 +33,7 @@ type StoredCloudFile = Omit<CloudFile, "tempFileURL">
 interface StoredEntryDocument {
   _id?: string
   coupleId: string
+  kind?: LoveEntryKind
   title: string
   content: string
   occurredAt: string
@@ -44,6 +49,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const asString = (value: unknown, fallback = ""): string => (typeof value === "string" ? value : fallback)
 
 const asNumber = (value: unknown, fallback = 0): number => (typeof value === "number" ? value : fallback)
+
+const normalizeKind = (value: unknown): LoveEntryKind =>
+  value === "memory" || value === "song" || value === "task" ? value : "memory"
+
+const entryUnavailableError = (): CloudBaseUserError =>
+  new CloudBaseUserError("回忆暂时打不开，请检查这条记录是否仍然存在。")
 
 const stripTemporaryUrl = (file: CloudFile): StoredCloudFile => ({
   fileID: file.fileID,
@@ -85,12 +96,17 @@ const normalizeEntry = (document: StoredEntryDocument): EntryRecord | null => {
     return null
   }
 
+  if (normalizeKind(document.kind) !== "memory") {
+    return null
+  }
+
   const files = Array.isArray(document.files)
     ? document.files.map(normalizeStoredFile).filter((file): file is StoredCloudFile => file !== null)
     : []
 
   return {
     id,
+    kind: "memory",
     title: asString(document.title, "未命名纪念"),
     content: asString(document.content),
     occurredAt: asString(document.occurredAt),
@@ -116,6 +132,7 @@ const attachTemporaryUrls = async (entries: EntryRecord[]): Promise<EntryRecord[
 
 const toStoredDraft = (draft: EntryDraft, timestamp: number): Omit<StoredEntryDocument, "_id"> => ({
   coupleId: appConfig.coupleId,
+  kind: "memory",
   title: draft.title.trim(),
   content: draft.content.trim(),
   occurredAt: draft.occurredAt,
@@ -141,7 +158,7 @@ export const listEntries = async (): Promise<EntryRecord[]> => {
   return attachTemporaryUrls(entries)
 }
 
-export const getEntry = async (id: string): Promise<EntryRecord> => {
+const getNormalizedEntry = async (id: string): Promise<EntryRecord> => {
   const document = await getDocument<StoredEntryDocument>(appConfig.entriesCollection, id)
   const normalized = normalizeEntry({
     ...document,
@@ -149,9 +166,14 @@ export const getEntry = async (id: string): Promise<EntryRecord> => {
   })
 
   if (!normalized) {
-    throw new Error("回忆不存在")
+    throw entryUnavailableError()
   }
 
+  return normalized
+}
+
+export const getEntry = async (id: string): Promise<EntryRecord> => {
+  const normalized = await getNormalizedEntry(id)
   const [entry] = await attachTemporaryUrls([normalized])
   return entry
 }
@@ -163,9 +185,12 @@ export const createEntry = async (draft: EntryDraft): Promise<EntryRecord> => {
 }
 
 export const updateEntry = async (id: string, draft: EntryDraft): Promise<EntryRecord> => {
+  await getNormalizedEntry(id)
+
   const now = Date.now()
   await updateDocument<Omit<StoredEntryDocument, "_id">>(appConfig.entriesCollection, id, {
     coupleId: appConfig.coupleId,
+    kind: "memory",
     title: draft.title.trim(),
     content: draft.content.trim(),
     occurredAt: draft.occurredAt,

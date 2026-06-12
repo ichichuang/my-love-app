@@ -63,11 +63,14 @@
         />
       </view>
     </view>
+
+    <app-pet-navigator />
   </app-shell>
 </template>
 
 <script setup lang="ts">
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { useCrud } from "@/composables/useCrud"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"

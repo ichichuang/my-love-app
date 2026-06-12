@@ -26,6 +26,18 @@ These guidelines are mandatory for future AI and Codex edits in this project. Th
 - Do not call `uni.setNavigationBarColor`, `uni.setBackgroundColor`, or `uni.setBackgroundTextStyle` from pages, components, stores, or services.
 - Native chrome updates must only go through `src/design-system/nav-theme.ts`.
 
+## 2.1 Non-Traditional Navigation and Pet Guide Rules
+
+- Do not add a traditional bottom `tabBar`.
+- Do not use WeChat `custom-tab-bar`.
+- Implement the future pet navigator as a normal Vue component, recommended path `src/components/AppPetNavigator.vue`.
+- Keep page routes registered through `src/pages.json`.
+- Keep navigation actions on `uni.navigateTo`, `uni.redirectTo`, and `uni.navigateBack`.
+- The pet navigator is only a Stage 1 owner-only guide into writing memories, song list, must-do tasks, and settings.
+- The pet navigator must not represent the girlfriend account, imply both people are online, act as a chatbot, automatically read or rewrite user data, or add partner access, invitations, binding, sharing, comments, or public features.
+- First implementation should manually mount `AppPetNavigator` on selected pages before changing `AppShell`. Only evaluate an optional `AppShell` slot or optional child component after that need is proven.
+- Pet visuals may use paper-ball, note, red/blue line-person, short hand-drawn line, slight blink/breath/nod, and short Chinese prompt patterns. Do not use ocean, coral reef, shells, pearls, complex animal IP, childish cartoon, mascot branding, 3D pets, sticker-heavy UI, or large-area animation.
+
 ## 3. UI Library First Rule
 
 - Do not use native UI controls for business UI.
@@ -56,6 +68,8 @@ These guidelines are mandatory for future AI and Codex edits in this project. Th
 - Cute means soft, private, gentle, and couple-oriented. Do not make it childish.
 - Hand-drawn feeling should come from red/blue couple cues, soft note-like cards, small tags, stamp-like details, gentle completion feedback, and restrained decorative marks.
 - Do not create ocean, coral reef, shell, pearl, commercial brand, glassmorphism, heavy gradient, childish cartoon, or over-3D styles.
+- Micro-animations must be gentle and token-driven: slight pet breathing, soft menu expansion, card press, completion tuck-away, or gentle check feedback. Do not add page-level showpiece transitions, high-frequency loops, particles, strong bounce, large animated gradients, or decoration that hurts reading or tapping.
+- Use registered motion tokens for transition and animation durations. Do not write raw transition duration or raw animation duration in pages or components.
 - Song pages should feel like "songs she wants to hear me sing," not a generic music manager.
 - Task pages should feel like "small things we want to do together," not an enterprise todo app.
 - Home should feel like a private memory stopover, not a dashboard.
@@ -65,6 +79,8 @@ These guidelines are mandatory for future AI and Codex edits in this project. Th
 - User-facing UI copy must always be Simplified Chinese.
 - Do not ship English labels, placeholders, empty states, modal text, toast text, or button text.
 - English is allowed only in code identifiers, filenames, technical documentation, dependency names, and this AI coding guideline document.
+- Playful copy is allowed for home guidance, the pet menu, empty states, completion feedback, song explanations, and task explanations.
+- Delete confirmations, errors, permission failures, cloud failures, save failures, and irreversible-data warnings must stay restrained and explicit.
 
 ## 7. CloudBase and Data Rules
 

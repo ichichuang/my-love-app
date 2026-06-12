@@ -35,6 +35,30 @@
       }
     },
     {
+      "path": "pages/songs/songs",
+      "style": {
+        "navigationBarTitleText": "点歌清单"
+      }
+    },
+    {
+      "path": "pages/song-edit/song-edit",
+      "style": {
+        "navigationBarTitleText": "加一首歌"
+      }
+    },
+    {
+      "path": "pages/tasks/tasks",
+      "style": {
+        "navigationBarTitleText": "必做事项"
+      }
+    },
+    {
+      "path": "pages/task-edit/task-edit",
+      "style": {
+        "navigationBarTitleText": "加一件事"
+      }
+    },
+    {
       "path": "pages/settings/settings",
       "style": {
         "navigationBarTitleText": "私密偏好"

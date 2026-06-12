@@ -106,11 +106,14 @@
         </view>
       </view>
     </view>
+
+    <app-pet-navigator />
   </app-shell>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue"
+import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { appConfig } from "@/config/app"
 import type { ThemeDensity, ThemeFontScale, ThemeMode } from "@/stores/theme"
