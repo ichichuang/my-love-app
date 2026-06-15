@@ -7,100 +7,121 @@
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
   <app-shell title="写下此刻" eyebrow="新的回忆">
-    <view class="create-intro">
-      <text class="create-intro__title">把这一刻放进私密盒子</text>
-      <text class="create-intro__body">文字和照片会写入云开发，只在本人测试阶段可见。</text>
-    </view>
-
-    <view class="entry-form">
-      <view class="form-section">
-        <view class="form-section__head">
-          <text class="form-section__title">基本内容</text>
-          <text class="form-section__note">先写最想留下的部分</text>
+    <view class="create-page">
+      <view class="create-hero">
+        <view class="create-hero__copy">
+          <text class="create-hero__kicker">回忆收纳夹</text>
+          <text class="create-hero__title">把今天的一点小事夹进来</text>
+          <text class="create-hero__body">像写一张小日记纸页，文字和照片都会留在私密回忆里。</text>
         </view>
-
-        <view class="field">
-          <text class="field__label">标题</text>
-          <input
-            class="field__input"
-            :value="title"
-            placeholder="比如：一起散步的夜晚"
-            placeholder-class="field__placeholder"
-            maxlength="48"
-            @input="onTitleInput"
-          />
-        </view>
-
-        <view class="field">
-          <text class="field__label">内容</text>
-          <textarea
-            class="field__textarea"
-            :value="content"
-            placeholder="写下想一起记住的话"
-            placeholder-class="field__placeholder"
-            maxlength="1200"
-            @input="onContentInput"
-          />
+        <view class="create-hero__marks">
+          <view class="create-hero__mark create-hero__mark--red" />
+          <view class="create-hero__mark create-hero__mark--blue" />
         </view>
       </view>
 
-      <view class="form-section">
-        <view class="form-section__head">
-          <text class="form-section__title">时间和心情</text>
-          <text class="form-section__note">给回忆一个坐标</text>
+      <view class="memory-paper">
+        <view class="memory-paper__fold" />
+        <view class="memory-paper__header">
+          <view>
+            <text class="memory-paper__eyebrow">小日记纸页</text>
+            <text class="memory-paper__title">新的回忆</text>
+          </view>
+          <text class="memory-paper__stamp">私密</text>
         </view>
 
-        <view class="field-grid">
-          <view class="field">
-            <text class="field__label">日期</text>
-            <picker mode="date" :value="occurredAt" @change="onDateChange">
-              <view class="field__picker">{{ occurredAt }}</view>
-            </picker>
+        <view class="paper-field paper-field--title">
+          <text class="paper-field__question">把哪件小事收起来？</text>
+          <wd-input
+            v-model="title"
+            no-border
+            placeholder="比如：一起散步的夜晚"
+            :placeholder-style="placeholderStyle"
+            :maxlength="48"
+            custom-class="paper-field__input-root paper-field__input-root--title"
+            custom-input-class="paper-field__input-inner paper-field__input-inner--title"
+          />
+        </view>
+
+        <view class="paper-field">
+          <text class="paper-field__question">想留下哪句话？</text>
+          <wd-textarea
+            v-model="content"
+            no-border
+            placeholder="写一点不想忘记的小事"
+            :placeholder-style="placeholderStyle"
+            :maxlength="1200"
+            custom-class="paper-field__textarea-root"
+            custom-textarea-container-class="paper-field__textarea-box"
+            custom-textarea-class="paper-field__textarea-inner"
+          />
+        </view>
+
+        <view class="paper-tag-row">
+          <view class="paper-field paper-field--tag">
+            <text class="paper-field__question">今天是哪一天？</text>
+            <wd-input
+              v-model="occurredAt"
+              no-border
+              placeholder="例如 2026-06-11"
+              :placeholder-style="placeholderStyle"
+              :maxlength="10"
+              custom-class="paper-field__input-root"
+              custom-input-class="paper-field__input-inner"
+            />
           </view>
 
-          <view class="field">
-            <text class="field__label">心情</text>
-            <input
-              class="field__input"
-              :value="mood"
+          <view class="paper-field paper-field--tag">
+            <text class="paper-field__question">今天的小心情</text>
+            <wd-input
+              v-model="mood"
+              no-border
               placeholder="温柔"
-              placeholder-class="field__placeholder"
-              maxlength="16"
-              @input="onMoodInput"
+              :placeholder-style="placeholderStyle"
+              :maxlength="16"
+              custom-class="paper-field__input-root"
+              custom-input-class="paper-field__input-inner"
             />
           </view>
         </view>
-      </view>
 
-      <view class="form-section upload-panel">
-        <view class="upload-panel__head">
-          <view>
-            <text class="upload-panel__title">私密照片</text>
-            <text class="upload-panel__note">最多上传 9 张，适合放小票、风景和合照。</text>
+        <view class="photo-folder">
+          <view class="photo-folder__tab">
+            <text>私密相册夹</text>
           </view>
-          <text class="upload-panel__meta">{{ files.length }}/9</text>
-        </view>
-        <image-grid :files="files" editable @remove="removeFileAt" />
-        <wd-button
-          block
-          plain
-          :loading="uploading"
-          custom-class="upload-panel__button"
-          @click="chooseAndUploadImages"
-        >
-          添加照片
-        </wd-button>
-      </view>
+          <view class="photo-folder__body">
+            <view class="photo-folder__head">
+              <view>
+                <text class="photo-folder__title">放几张照片在这里</text>
+                <text class="photo-folder__note">可以放小票、风景、合照，最多 9 张。</text>
+              </view>
+              <text class="photo-folder__count">{{ files.length }}/9</text>
+            </view>
 
-      <view class="create-save">
-        <wd-button block size="large" :loading="saving" @click="saveEntry">保存回忆</wd-button>
+            <image-grid :files="files" editable @remove="removeFileAt" />
+
+            <wd-button
+              block
+              plain
+              :loading="uploading"
+              custom-class="photo-folder__button"
+              @click="chooseAndUploadImages"
+            >
+              放几张照片进去
+            </wd-button>
+          </view>
+        </view>
+
+        <view class="create-save">
+          <wd-button block size="large" :loading="saving" @click="saveEntry">{{ saveButtonText }}</wd-button>
+        </view>
       </view>
     </view>
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from "vue"
+import { computed, shallowRef } from "vue"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
@@ -109,60 +130,43 @@ import { createEntry } from "@/services/repositories/entries"
 const theme = useNativeChromeSync()
 const today = new Date()
 const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+const datePattern = /^\d{4}-\d{2}-\d{2}$/
+const placeholderStyle = "color: var(--app-text-muted);"
 
 const title = shallowRef("")
 const content = shallowRef("")
 const mood = shallowRef("温柔")
 const occurredAt = shallowRef(todayString)
 const saving = shallowRef(false)
+const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "轻轻收好"))
 
 const { files, uploading, chooseAndUploadImages, removeFileAt } = useFileUpload()
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
-
-const eventValue = (event: Event): string => {
-  const raw = event as unknown
-  if (!isRecord(raw)) {
-    return ""
-  }
-
-  const detail = raw.detail
-  if (isRecord(detail) && typeof detail.value === "string") {
-    return detail.value
-  }
-
-  return ""
-}
-
-const onTitleInput = (event: Event) => {
-  title.value = eventValue(event)
-}
-
-const onMoodInput = (event: Event) => {
-  mood.value = eventValue(event)
-}
-
-const onContentInput = (event: Event) => {
-  content.value = eventValue(event)
-}
-
-const onDateChange = (event: Event) => {
-  occurredAt.value = eventValue(event)
-}
-
 const saveEntry = async () => {
-  if (!title.value.trim()) {
+  const titleToSave = title.value.trim()
+  const contentToSave = content.value.trim()
+  const moodToSave = mood.value.trim() || "温柔"
+  const dateToSave = occurredAt.value.trim() || todayString
+
+  if (!titleToSave) {
     uni.showToast({
-      title: "请先写一个标题。",
+      title: "先给这条小回忆起个名字",
       icon: "none"
     })
     return
   }
 
-  if (!content.value.trim() && files.value.length === 0) {
+  if (!contentToSave && files.value.length === 0) {
     uni.showToast({
-      title: "请写一点内容，或至少添加一张照片。",
+      title: "写一句话，或者放一张照片进去",
+      icon: "none"
+    })
+    return
+  }
+
+  if (occurredAt.value.trim() && !datePattern.test(occurredAt.value.trim())) {
+    uni.showToast({
+      title: "日期先写成 2026-06-11 这样",
       icon: "none"
     })
     return
@@ -171,10 +175,10 @@ const saveEntry = async () => {
   saving.value = true
   try {
     const entry = await createEntry({
-      title: title.value,
-      content: content.value,
-      mood: mood.value || "温柔",
-      occurredAt: occurredAt.value,
+      title: titleToSave,
+      content: contentToSave,
+      mood: moodToSave,
+      occurredAt: dateToSave,
       files: files.value
     })
 
@@ -195,128 +199,288 @@ const saveEntry = async () => {
 <style lang="scss" scoped>
 @import "../../styles/mixins.scss";
 
-.entry-form {
+.create-page {
   display: flex;
   flex-direction: column;
   gap: var(--app-form-gap);
-  padding-bottom: var(--app-safe-action-bottom-gap);
 }
 
-.create-intro,
-.form-section {
+.create-hero,
+.memory-paper,
+.photo-folder__body {
   @include panel;
-  padding: var(--app-card-padding);
 }
 
-.create-intro {
-  margin-bottom: var(--app-form-gap);
+.create-hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--app-card-padding);
   background:
     linear-gradient(135deg, var(--app-surface), var(--app-surface-strong));
 }
 
-.create-intro__title {
-  display: block;
+.create-hero::before {
+  position: absolute;
+  right: var(--app-space-10);
+  bottom: var(--app-space-8);
+  width: var(--app-space-40);
+  height: var(--app-space-20);
+  border-top: var(--app-panel-border-width) dashed var(--app-divider);
+  content: "";
+  opacity: var(--app-decor-opacity);
+  transform: rotate(-7deg);
+}
+
+.create-hero__copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-4);
+}
+
+.create-hero__kicker,
+.memory-paper__eyebrow,
+.photo-folder__count {
+  @include label;
+}
+
+.create-hero__title {
   color: var(--app-text);
   font: var(--app-font-card-title);
 }
 
-.create-intro__body {
-  display: block;
-  margin-top: var(--app-space-4);
+.create-hero__body {
   color: var(--app-text-soft);
   font: var(--app-font-body);
 }
 
-.form-section {
+.create-hero__marks {
+  position: absolute;
+  top: var(--app-card-padding);
+  right: var(--app-card-padding);
+  display: flex;
+  gap: var(--app-space-4);
+}
+
+.create-hero__mark {
+  width: var(--app-space-4);
+  height: var(--app-space-18);
+  border-radius: var(--app-radius-pill);
+  opacity: var(--app-decor-opacity);
+}
+
+.create-hero__mark--red {
+  background: var(--app-color-red-person);
+  transform: rotate(-12deg);
+}
+
+.create-hero__mark--blue {
+  background: var(--app-color-blue-person);
+  transform: rotate(10deg);
+}
+
+.memory-paper {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--app-card-gap);
+  overflow: hidden;
+  padding: var(--app-card-padding);
+  background:
+    linear-gradient(180deg, var(--app-surface-strong), var(--app-surface));
 }
 
-.form-section__head {
+.memory-paper::before,
+.memory-paper::after {
+  position: absolute;
+  left: var(--app-card-padding);
+  right: var(--app-card-padding);
+  border-top: var(--app-panel-border-width) dashed var(--app-divider);
+  content: "";
+  opacity: var(--app-decor-opacity);
+}
+
+.memory-paper::before {
+  top: var(--app-space-48);
+}
+
+.memory-paper::after {
+  bottom: var(--app-space-48);
+}
+
+.memory-paper__fold {
+  position: absolute;
+  top: var(--app-space-0);
+  right: var(--app-space-0);
+  width: var(--app-space-28);
+  height: var(--app-space-28);
+  border-left: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom-left-radius: var(--app-radius-md);
+  background: var(--app-primary-soft);
+  opacity: var(--app-decor-opacity);
+}
+
+.memory-paper__header {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--app-space-8);
 }
 
-.form-section__title {
+.memory-paper__title {
+  display: block;
+  margin-top: var(--app-space-2);
   color: var(--app-text);
   font: var(--app-font-section-title);
 }
 
-.form-section__note,
-.upload-panel__note {
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-md);
-  line-height: var(--app-line-height-normal);
+.memory-paper__stamp {
+  flex-shrink: 0;
+  padding: var(--app-space-3) var(--app-space-7);
+  border: var(--app-panel-border-width) solid var(--app-primary);
+  border-radius: var(--app-radius-badge);
+  color: var(--app-primary);
+  font: var(--app-font-caption);
+  opacity: var(--app-decor-opacity);
+  transform: rotate(6deg);
 }
 
-.field-grid {
+.paper-field,
+.photo-folder,
+.create-save {
+  position: relative;
+  z-index: 1;
+}
+
+.paper-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-5);
+}
+
+.paper-field__question {
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+:deep(.paper-field__input-root),
+:deep(.paper-field__textarea-root) {
+  @include field;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+:deep(.paper-field__input-root) {
+  display: flex;
+  align-items: center;
+  padding: var(--app-space-0) var(--app-field-padding-x);
+}
+
+:deep(.paper-field__input-root--title) {
+  background: var(--app-surface);
+}
+
+:deep(.paper-field__input-root .wd-input__body),
+:deep(.paper-field__input-root .wd-input__value),
+:deep(.paper-field__textarea-root .wd-textarea__value) {
+  width: 100%;
+}
+
+:deep(.paper-field__input-inner) {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
+}
+
+:deep(.paper-field__input-inner--title) {
+  font-size: var(--app-font-size-2xl);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+:deep(.paper-field__textarea-root) {
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+}
+
+:deep(.paper-field__textarea-box),
+:deep(.paper-field__textarea-inner) {
+  min-height: var(--app-textarea-min-height);
+}
+
+:deep(.paper-field__textarea-inner) {
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-line-height-relaxed);
+}
+
+.paper-tag-row {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--app-space-8);
 }
 
-.field__label,
-.upload-panel__meta {
-  @include label;
-  display: block;
-  margin-bottom: var(--app-space-5);
-}
-
-.field__input,
-.field__picker {
-  @include field;
+.photo-folder {
   display: flex;
-  align-items: center;
-  padding: var(--app-space-0) var(--app-field-padding-x);
-  line-height: var(--app-input-height);
+  flex-direction: column;
+  padding-top: var(--app-space-7);
 }
 
-.field__textarea {
-  @include field;
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
-  line-height: var(--app-line-height-relaxed);
+.photo-folder__tab {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: var(--app-space-4) var(--app-space-9);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom-width: var(--app-space-0);
+  border-radius: var(--app-radius-lg) var(--app-radius-lg) var(--app-space-0) var(--app-space-0);
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font: var(--app-font-caption);
 }
 
-.field__placeholder {
-  color: var(--app-text-soft);
+.photo-folder__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-8);
+  padding: var(--app-card-padding);
+  border-top-left-radius: var(--app-space-0);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-none);
 }
 
-.upload-panel__head {
+.photo-folder__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--app-space-8);
-  margin-bottom: var(--app-space-7);
 }
 
-.upload-panel__title {
+.photo-folder__title {
   display: block;
   color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  font-weight: var(--app-font-weight-semibold);
+  font: var(--app-font-section-title);
 }
 
-.upload-panel__note {
+.photo-folder__note {
   display: block;
   margin-top: var(--app-space-2);
+  color: var(--app-text-soft);
+  font: var(--app-font-body);
 }
 
-:deep(.upload-panel__button) {
-  margin-top: var(--app-space-8);
+:deep(.photo-folder__button) {
+  box-shadow: var(--app-shadow-none);
 }
 
 .create-save {
-  position: fixed;
-  right: $app-page-x;
-  bottom: 0;
-  left: $app-page-x;
-  z-index: 20;
-  padding: var(--app-space-7) var(--app-space-0) calc(var(--app-space-8) + env(safe-area-inset-bottom));
-  background:
-    linear-gradient(180deg, transparent 0%, var(--app-bg) 38%, var(--app-bg) 100%);
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--app-space-2);
 }
 </style>
