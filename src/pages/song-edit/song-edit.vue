@@ -8,7 +8,7 @@
   />
   <app-shell :title="pageTitle" :eyebrow="pageEyebrow">
     <template #actions>
-      <wd-button size="small" plain :disabled="formDisabled" @click="backToSongs">取消</wd-button>
+      <wd-button size="small" plain :disabled="formDisabled" @click="backToSongs">{{ backActionText }}</wd-button>
     </template>
 
     <view v-if="loading" class="song-edit-status">
@@ -29,34 +29,48 @@
     <view v-else class="song-edit">
       <view class="song-note">
         <view class="song-note__head">
-          <view>
-            <text class="song-note__title">点歌便签</text>
-            <text class="song-note__body">歌名先收好，什么时候唱都不着急。</text>
+          <view class="song-note__intro">
+            <text class="song-note__kicker">点歌便签</text>
+            <text class="song-note__question">想把哪首歌放进小歌单？</text>
+            <text class="song-note__body">只写歌名也可以，剩下的以后慢慢补。</text>
           </view>
           <text class="song-note__stamp">{{ songStatusLabels[songStatus] }}</text>
         </view>
 
-        <view class="song-note__fields">
-          <view class="song-field">
-            <text class="song-field__label">歌名</text>
+        <view class="song-title-slip">
+          <view class="song-title-slip__line">
+            <text class="song-title-slip__quote">《</text>
             <wd-input
               v-model="title"
-              clearable
               no-border
               :disabled="formDisabled"
               placeholder="歌名先写这里"
               :placeholder-style="placeholderStyle"
               :maxlength="48"
-              custom-class="song-field__input-root"
-              custom-input-class="song-field__input-inner"
+              custom-class="song-title-slip__input-root"
+              custom-input-class="song-title-slip__input-inner"
             />
+            <text class="song-title-slip__quote">》</text>
           </view>
+        </view>
 
+        <view class="song-detail-toggle-row">
+          <wd-button
+            size="small"
+            plain
+            :disabled="formDisabled"
+            custom-class="song-detail-toggle"
+            @click="toggleDetails"
+          >
+            {{ detailToggleText }}
+          </wd-button>
+        </view>
+
+        <view v-if="detailsExpanded" class="song-note__details">
           <view class="song-field">
-            <text class="song-field__label">歌手 / 版本</text>
+            <text class="song-field__prompt">是谁的版本？</text>
             <wd-input
               v-model="artist"
-              clearable
               no-border
               :disabled="formDisabled"
               placeholder="是哪个版本呀？"
@@ -68,10 +82,9 @@
           </view>
 
           <view class="song-field">
-            <text class="song-field__label">想听原因</text>
+            <text class="song-field__prompt">为什么想听？</text>
             <wd-textarea
               v-model="content"
-              clearable
               no-border
               :disabled="formDisabled"
               placeholder="为什么想听这首？"
@@ -82,42 +95,42 @@
               custom-textarea-class="song-field__textarea-inner"
             />
           </view>
-        </view>
 
-        <view class="song-note__section">
-          <view class="song-note__section-head">
-            <text class="song-note__section-title">心愿程度</text>
-            <text class="song-note__section-note">小印章一样选一下</text>
+          <view class="song-note__section">
+            <view class="song-note__section-head">
+              <text class="song-note__section-title">心愿贴纸</text>
+              <text class="song-note__section-note">像小印章一样贴一下</text>
+            </view>
+            <app-option-group :columns="3">
+              <app-option-button
+                v-for="option in priorityOptions"
+                :key="option.value"
+                :active="songPriority === option.value"
+                :disabled="formDisabled"
+                @click="setSongPriority(option.value)"
+              >
+                <text class="song-choice__label">{{ option.label }}</text>
+              </app-option-button>
+            </app-option-group>
           </view>
-          <app-option-group :columns="3">
-            <app-option-button
-              v-for="option in priorityOptions"
-              :key="option.value"
-              :active="songPriority === option.value"
-              :disabled="formDisabled"
-              @click="setSongPriority(option.value)"
-            >
-              <text class="song-choice__label">{{ option.label }}</text>
-            </app-option-button>
-          </app-option-group>
-        </view>
 
-        <view class="song-note__section">
-          <view class="song-note__section-head">
-            <text class="song-note__section-title">当前状态</text>
-            <text class="song-note__section-note">只在小歌单里轻轻标记</text>
+          <view class="song-note__section">
+            <view class="song-note__section-head">
+              <text class="song-note__section-title">小歌单状态</text>
+              <text class="song-note__section-note">只在小歌单里轻轻标记</text>
+            </view>
+            <app-option-group :columns="3">
+              <app-option-button
+                v-for="option in statusOptions"
+                :key="option.value"
+                :active="songStatus === option.value"
+                :disabled="formDisabled"
+                @click="setSongStatus(option.value)"
+              >
+                <text class="song-choice__label">{{ option.label }}</text>
+              </app-option-button>
+            </app-option-group>
           </view>
-          <app-option-group :columns="3">
-            <app-option-button
-              v-for="option in statusOptions"
-              :key="option.value"
-              :active="songStatus === option.value"
-              :disabled="formDisabled"
-              @click="setSongStatus(option.value)"
-            >
-              <text class="song-choice__label">{{ option.label }}</text>
-            </app-option-button>
-          </app-option-group>
         </view>
 
         <view v-if="saved" class="song-saved">
@@ -177,6 +190,7 @@ const saving = shallowRef(false)
 const saved = shallowRef(false)
 const deleting = shallowRef(false)
 const songLoaded = shallowRef(false)
+const detailsExpanded = shallowRef(false)
 
 const title = shallowRef("")
 const artist = shallowRef("")
@@ -223,8 +237,10 @@ const statusOptions: Array<{
 const isEditMode = computed(() => songId.value.length > 0)
 const canDeleteSong = computed(() => isEditMode.value && songLoaded.value && !hasLoadError.value)
 const formDisabled = computed(() => saving.value || saved.value || deleting.value)
-const pageTitle = computed(() => (isEditMode.value ? "编辑曲目" : "加一首歌"))
-const pageEyebrow = computed(() => (isEditMode.value ? "小小歌单" : "新的点歌"))
+const pageTitle = computed(() => "点歌便签")
+const pageEyebrow = computed(() => (isEditMode.value ? "改一张小纸条" : "丢进小歌单"))
+const backActionText = computed(() => (isEditMode.value ? "先不改了" : "先不写了"))
+const detailToggleText = computed(() => (detailsExpanded.value ? "先收起小细节" : "想再补一句"))
 const saveButtonText = computed(() => {
   if (saving.value) {
     return "正在轻轻收好"
@@ -234,7 +250,7 @@ const saveButtonText = computed(() => {
     return "已经轻轻收好"
   }
 
-  return isEditMode.value ? "保存修改" : "保存这首歌"
+  return isEditMode.value ? "收好这张纸条" : "放进小歌单"
 })
 
 const decodeQueryId = (value: unknown): string => {
@@ -262,6 +278,7 @@ const resetForm = () => {
   songStatus.value = "wanted"
   saved.value = false
   songLoaded.value = false
+  detailsExpanded.value = false
 }
 
 const setSongPriority = (value: SongPriority) => {
@@ -272,6 +289,16 @@ const setSongPriority = (value: SongPriority) => {
 const setSongStatus = (value: SongStatus) => {
   songStatus.value = value
   saved.value = false
+}
+
+const shouldExpandSongDetails = (song: SongDraft): boolean =>
+  song.artist.trim().length > 0 ||
+  song.content.trim().length > 0 ||
+  song.songPriority !== "normal" ||
+  song.songStatus !== "wanted"
+
+const toggleDetails = () => {
+  detailsExpanded.value = !detailsExpanded.value
 }
 
 const loadSong = async () => {
@@ -292,6 +319,7 @@ const loadSong = async () => {
     content.value = song.content
     songPriority.value = song.songPriority
     songStatus.value = song.songStatus
+    detailsExpanded.value = shouldExpandSongDetails(song)
     saved.value = false
     songLoaded.value = true
   } catch {
@@ -430,7 +458,8 @@ onLoad((query) => {
 
 .song-edit,
 .song-note,
-.song-note__fields,
+.song-note__intro,
+.song-note__details,
 .song-note__section,
 .song-edit-actions,
 .song-edit-error__actions {
@@ -449,21 +478,6 @@ onLoad((query) => {
   padding: var(--app-card-padding);
 }
 
-.song-note__title,
-.song-note__section-title {
-  display: block;
-  color: var(--app-text);
-  font: var(--app-font-section-title);
-}
-
-.song-note__body,
-.song-note__section-note {
-  display: block;
-  margin-top: var(--app-space-3);
-  color: var(--app-text-soft);
-  font: var(--app-font-caption);
-}
-
 .song-edit-status {
   color: var(--app-text-soft);
   font: var(--app-font-body);
@@ -476,15 +490,70 @@ onLoad((query) => {
   overflow: hidden;
 }
 
-.song-note__head,
-.song-note__section-head {
+.song-note::before {
+  position: absolute;
+  top: var(--app-space-0);
+  right: var(--app-space-14);
+  width: var(--app-space-24);
+  height: var(--app-space-20);
+  border-left: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom: var(--app-panel-border-width) solid var(--app-border);
+  background: var(--app-surface-strong);
+  content: "";
+  opacity: var(--app-decor-opacity);
+  transform: rotate(-3deg);
+}
+
+.song-note::after {
+  position: absolute;
+  top: var(--app-card-padding);
+  left: var(--app-card-padding);
+  width: var(--app-space-32);
+  height: var(--app-border-width-focus);
+  background: var(--app-accent);
+  content: "";
+  opacity: var(--app-decor-opacity);
+  transform: rotate(-2deg);
+}
+
+.song-note__head {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--app-space-8);
 }
 
+.song-note__intro {
+  min-width: 0;
+  gap: var(--app-space-3);
+  padding-top: var(--app-space-8);
+}
+
+.song-note__kicker {
+  @include label;
+  display: block;
+  color: var(--app-accent);
+}
+
+.song-note__question,
+.song-note__section-title {
+  display: block;
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+.song-note__body,
+.song-note__section-note {
+  display: block;
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
 .song-note__stamp {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   padding: var(--app-space-3) var(--app-space-7);
   border: var(--app-panel-border-width) solid var(--app-primary);
@@ -494,24 +563,101 @@ onLoad((query) => {
   font: var(--app-font-caption);
 }
 
-.song-note__fields,
-.song-note__section {
-  gap: var(--app-space-7);
+.song-title-slip {
+  position: relative;
+  z-index: 1;
+  padding: var(--app-space-5) var(--app-field-padding-x);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-input);
+  background: var(--app-field);
 }
 
-.song-note__section {
+.song-title-slip::after {
+  position: absolute;
+  right: var(--app-field-padding-x);
+  bottom: var(--app-space-5);
+  left: var(--app-field-padding-x);
+  height: var(--app-panel-border-width);
+  background: var(--app-divider);
+  content: "";
+}
+
+.song-title-slip__line {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-3);
+}
+
+.song-title-slip__quote {
+  flex-shrink: 0;
+  color: var(--app-primary);
+  font: var(--app-font-section-title);
+  line-height: var(--app-line-height-none);
+}
+
+:deep(.song-title-slip__input-root) {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  padding: var(--app-space-0);
+  background: transparent;
+  color: var(--app-text);
+}
+
+:deep(.song-title-slip__input-root .wd-input__body),
+:deep(.song-title-slip__input-root .wd-input__value) {
+  width: 100%;
+}
+
+:deep(.song-title-slip__input-inner) {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
+}
+
+.song-detail-toggle-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+}
+
+:deep(.song-detail-toggle) {
+  color: var(--app-primary);
+  box-shadow: var(--app-shadow-none);
+}
+
+.song-note__details {
+  position: relative;
+  z-index: 1;
+  gap: var(--app-space-7);
   padding-top: var(--app-card-gap);
   border-top: var(--app-panel-border-width) solid var(--app-divider);
 }
 
-.song-field {
-  position: relative;
+.song-note__section {
+  gap: var(--app-space-7);
+  padding-top: var(--app-card-gap);
+  border-top: var(--app-panel-border-width) solid var(--app-divider);
 }
 
-.song-field__label {
-  @include label;
+.song-note__section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-3);
+}
+
+.song-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-5);
+}
+
+.song-field__prompt {
   display: block;
-  margin-bottom: var(--app-space-5);
+  color: var(--app-text);
+  font: var(--app-font-section-title);
 }
 
 :deep(.song-field__input-root),
