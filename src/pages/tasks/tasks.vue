@@ -29,7 +29,7 @@
     </empty-state>
 
     <view v-else class="tasks-content">
-      <view class="tasks-progress">
+      <view v-if="totalCount > 0" class="tasks-progress">
         <view class="tasks-progress__head">
           <view class="tasks-progress__copy">
             <text class="tasks-progress__title">已经轻轻勾上 {{ doneCount }} / {{ totalCount }}</text>
@@ -188,7 +188,13 @@ const doneCount = computed(() => tasks.value.filter((task) => task.taskDone === 
 const undoneCount = computed(() => totalCount.value - doneCount.value)
 const progressPercent = computed(() => (totalCount.value > 0 ? Math.round((doneCount.value / totalCount.value) * 100) : 0))
 const progressWidth = computed(() => `${progressPercent.value}%`)
-const undoneCountText = computed(() => (undoneCount.value > 0 ? `还有 ${undoneCount.value} 件等我们` : "这页小约定都收好啦"))
+const undoneCountText = computed(() => {
+  if (totalCount.value === 0) {
+    return ""
+  }
+
+  return undoneCount.value > 0 ? `还有 ${undoneCount.value} 件等我们` : "这页小约定都收好啦"
+})
 
 const decoratedTasks = computed<TaskListItem[]>(() =>
   tasks.value.map((task) => {
