@@ -124,29 +124,44 @@
           <wd-button block size="large" :loading="saving" :disabled="formDisabled" @click="saveTask">
             {{ saveButtonText }}
           </wd-button>
+          <wd-button
+            v-if="canDeleteTask"
+            block
+            type="text"
+            custom-class="task-delete-button"
+            @click="confirmDeleteTask"
+          >
+            删除这件事
+          </wd-button>
         </view>
       </view>
     </view>
+
+    <wd-message-box />
   </app-shell>
 </template>
 
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
+import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
-import { createTask, getTask, updateTask, type TaskDraft } from "@/services/repositories/tasks"
+import { createTask, deleteTask, getTask, updateTask, type TaskDraft } from "@/services/repositories/tasks"
 
 const saveFeedbackDelayMs = 520
 const placeholderStyle = "color: var(--app-text-muted)"
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const theme = useNativeChromeSync()
+const message = useMessage()
 
 const taskId = shallowRef("")
 const loading = shallowRef(false)
 const hasLoadError = shallowRef(false)
 const saving = shallowRef(false)
 const saved = shallowRef(false)
+const deleting = shallowRef(false)
+const taskLoaded = shallowRef(false)
 const detailsExpanded = shallowRef(false)
 
 const title = shallowRef("")
@@ -169,7 +184,10 @@ const statusOptions: Array<{
 ]
 
 const isEditMode = computed(() => taskId.value.length > 0)
-const formDisabled = computed(() => saving.value || saved.value)
+const canDeleteTask = computed(
+  () => isEditMode.value && taskLoaded.value && !hasLoadError.value && !saving.value && !saved.value && !deleting.value
+)
+const formDisabled = computed(() => saving.value || saved.value || deleting.value)
 const pageTitle = computed(() => "小约定票根")
 const pageEyebrow = computed(() => (isEditMode.value ? "改一张小计划" : "新的计划"))
 const backActionText = computed(() => (isEditMode.value ? "先不改了" : "先不写了"))
@@ -210,6 +228,7 @@ const resetForm = () => {
   taskDone.value = false
   detailsExpanded.value = false
   saved.value = false
+  taskLoaded.value = false
 }
 
 const shouldExpandTaskDetails = (task: TaskDraft): boolean =>
@@ -234,6 +253,7 @@ const loadTask = async () => {
 
   loading.value = true
   hasLoadError.value = false
+  taskLoaded.value = false
 
   try {
     const task = await getTask(taskId.value)
@@ -243,6 +263,7 @@ const loadTask = async () => {
     taskDone.value = task.taskDone
     detailsExpanded.value = shouldExpandTaskDetails(task)
     saved.value = false
+    taskLoaded.value = true
   } catch {
     resetForm()
     hasLoadError.value = true
@@ -329,6 +350,56 @@ const saveTask = async () => {
     if (!saved.value) {
       saving.value = false
     }
+  }
+}
+
+const deleteCurrentTask = async () => {
+  if (!canDeleteTask.value || deleting.value) {
+    return
+  }
+
+  deleting.value = true
+
+  try {
+    await deleteTask(taskId.value)
+    uni.showToast({
+      title: "已经从小清单移走",
+      icon: "none"
+    })
+    backToTasks()
+  } catch {
+    uni.showToast({
+      title: "这件小事暂时没删掉，请稍后再试。",
+      icon: "none"
+    })
+  } finally {
+    deleting.value = false
+  }
+}
+
+const confirmDeleteTask = async () => {
+  if (!canDeleteTask.value || deleting.value) {
+    return
+  }
+
+  try {
+    await message.confirm({
+      title: "删除这件事",
+      msg: "这会删除这条必做事项记录。",
+      cancelButtonText: "取消",
+      confirmButtonText: "删除",
+      confirmButtonProps: {
+        plain: true,
+        type: "error"
+      },
+      cancelButtonProps: {
+        plain: true,
+        type: "info"
+      }
+    })
+    await deleteCurrentTask()
+  } catch {
+    return
   }
 }
 
@@ -533,6 +604,11 @@ onLoad((query) => {
 
 :deep(.task-detail-toggle) {
   color: var(--app-accent);
+  box-shadow: var(--app-shadow-none);
+}
+
+:deep(.task-delete-button) {
+  color: var(--app-danger);
   box-shadow: var(--app-shadow-none);
 }
 
