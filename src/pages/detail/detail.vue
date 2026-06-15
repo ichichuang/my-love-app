@@ -6,7 +6,7 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :title="editing ? '编辑回忆' : '记忆详情'" eyebrow="私密档案">
+  <app-shell :title="editing ? '编辑回忆' : '回忆详情'" :eyebrow="editing ? '重新整理这张纸页' : '收好的小事'">
     <template #actions>
       <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
     </template>
@@ -21,116 +21,166 @@
       body="请检查云开发环境和访问权限。"
     />
 
-    <view v-else-if="!editing" class="detail">
-      <view class="detail-card">
-        <view class="detail__hero">
-          <view class="detail__mood-row">
-            <text class="detail__mood">{{ entry.mood }}</text>
-            <text class="detail__tag">私密回忆</text>
+    <view v-else-if="!editing" class="detail-page">
+      <view class="memory-sheet">
+        <view class="memory-sheet__fold" />
+        <view class="memory-sheet__header">
+          <view class="memory-sheet__stub">
+            <text class="memory-sheet__stub-label">日期小票根</text>
+            <text class="memory-sheet__date">{{ entry.occurredAt }}</text>
           </view>
-          <text class="detail__title">{{ entry.title }}</text>
-          <text class="detail__date">{{ entry.occurredAt }}</text>
+          <text class="memory-sheet__mood">{{ entry.mood || "温柔" }}</text>
         </view>
 
-        <image-grid :files="entry.files" />
-
-        <view class="detail__content">
-          <text>{{ entry.content || "这段回忆还没有写下文字。" }}</text>
+        <view class="memory-sheet__title-block">
+          <text class="memory-sheet__kicker">保存好的纸质记忆</text>
+          <text class="memory-sheet__title">{{ entry.title }}</text>
         </view>
-      </view>
 
-      <view class="detail__actions">
-        <wd-button plain block @click="startEditing">编辑回忆</wd-button>
+        <view v-if="entry.files.length > 0" class="album-panel">
+          <view class="album-panel__tab">
+            <text>私密相册页</text>
+          </view>
+          <view class="album-panel__body">
+            <image-grid :files="entry.files" />
+          </view>
+        </view>
+
+        <view class="note-paper">
+          <text class="note-paper__label">正文纸条</text>
+          <text class="note-paper__content">{{ entry.content || "这段回忆还没有写下文字。" }}</text>
+        </view>
+
+        <view class="detail-actions">
+          <wd-button block size="large" @click="startEditing">编辑这条回忆</wd-button>
+        </view>
       </view>
 
       <view class="danger-zone">
         <view>
-          <text class="danger-zone__title">删除测试记录</text>
-          <text class="danger-zone__body">需要清理测试记录时再删除，会同时删除云端文件。</text>
+          <text class="danger-zone__title">删除这条回忆</text>
+          <text class="danger-zone__body">这会删除这条记录和对应照片。</text>
         </view>
-        <wd-button plain block type="error" :loading="deleting" @click="confirmDelete">删除这条回忆</wd-button>
-      </view>
-    </view>
-
-    <view v-else class="entry-form">
-      <view class="edit-intro">
-        <text class="edit-intro__title">正在编辑这条回忆</text>
-        <text class="edit-intro__body">保存后会更新原记录，云端路径和集合保持不变。</text>
-      </view>
-
-      <view class="field">
-        <text class="field__label">标题</text>
-        <input
-          class="field__input"
-          :value="title"
-          maxlength="48"
-          placeholder-class="field__placeholder"
-          @input="onTitleInput"
-        />
-      </view>
-
-      <view class="field-grid">
-        <view class="field">
-          <text class="field__label">日期</text>
-          <picker mode="date" :value="occurredAt" @change="onDateChange">
-            <view class="field__picker">{{ occurredAt }}</view>
-          </picker>
-        </view>
-
-        <view class="field">
-          <text class="field__label">心情</text>
-          <input
-            class="field__input"
-            :value="mood"
-            maxlength="16"
-            placeholder-class="field__placeholder"
-            @input="onMoodInput"
-          />
-        </view>
-      </view>
-
-      <view class="field">
-        <text class="field__label">内容</text>
-        <textarea
-          class="field__textarea"
-          :value="content"
-          maxlength="1200"
-          placeholder-class="field__placeholder"
-          @input="onContentInput"
-        />
-      </view>
-
-      <view class="upload-panel">
-        <view class="upload-panel__head">
-          <view>
-            <text class="upload-panel__title">私密照片</text>
-            <text class="upload-panel__note">移除照片后，保存成功会清理对应云端文件。</text>
-          </view>
-          <text class="upload-panel__meta">{{ files.length }}/9</text>
-        </view>
-        <image-grid :files="files" editable @remove="removeEditFile" />
         <wd-button
-          block
           plain
-          :loading="uploading"
-          custom-class="upload-panel__button"
-          @click="chooseAndUploadImages"
+          block
+          type="error"
+          :loading="deleting"
+          @click="confirmDelete"
         >
-          添加照片
+          删除这条回忆
         </wd-button>
       </view>
+    </view>
 
-      <view class="detail__actions">
-        <wd-button plain block @click="cancelEditing">取消</wd-button>
-        <wd-button block size="large" :loading="saving" @click="saveChanges">保存修改</wd-button>
+    <view v-else class="edit-page">
+      <view class="edit-sheet">
+        <view class="edit-sheet__fold" />
+        <view class="edit-sheet__header">
+          <view>
+            <text class="edit-sheet__eyebrow">正在整理这张回忆纸页</text>
+            <text class="edit-sheet__title">把纸页重新夹好</text>
+          </view>
+          <text class="edit-sheet__stamp">私密</text>
+        </view>
+
+        <view class="paper-field paper-field--title">
+          <text class="paper-field__question">把哪件小事收起来？</text>
+          <wd-input
+            v-model="title"
+            no-border
+            placeholder="比如：一起散步的夜晚"
+            :placeholder-style="placeholderStyle"
+            :maxlength="48"
+            custom-class="paper-field__input-root paper-field__input-root--title"
+            custom-input-class="paper-field__input-inner paper-field__input-inner--title"
+          />
+        </view>
+
+        <view class="paper-field">
+          <text class="paper-field__question">想留下哪句话？</text>
+          <wd-textarea
+            v-model="content"
+            no-border
+            placeholder="写一点不想忘记的小事"
+            :placeholder-style="placeholderStyle"
+            :maxlength="1200"
+            custom-class="paper-field__textarea-root"
+            custom-textarea-container-class="paper-field__textarea-box"
+            custom-textarea-class="paper-field__textarea-inner"
+          />
+        </view>
+
+        <view class="paper-tag-row">
+          <view class="paper-field paper-field--tag">
+            <text class="paper-field__question">今天是哪一天？</text>
+            <wd-input
+              v-model="occurredAt"
+              no-border
+              placeholder="例如 2026-06-11"
+              :placeholder-style="placeholderStyle"
+              :maxlength="10"
+              custom-class="paper-field__input-root"
+              custom-input-class="paper-field__input-inner"
+            />
+          </view>
+
+          <view class="paper-field paper-field--tag">
+            <text class="paper-field__question">今天的小心情</text>
+            <wd-input
+              v-model="mood"
+              no-border
+              placeholder="温柔"
+              :placeholder-style="placeholderStyle"
+              :maxlength="16"
+              custom-class="paper-field__input-root"
+              custom-input-class="paper-field__input-inner"
+            />
+          </view>
+        </view>
+
+        <view class="photo-folder">
+          <view class="photo-folder__tab">
+            <text>私密相册夹</text>
+          </view>
+          <view class="photo-folder__body">
+            <view class="photo-folder__head">
+              <view>
+                <text class="photo-folder__title">照片贴纸放这里</text>
+                <text class="photo-folder__note">移除照片后，保存成功会清理对应云端文件。</text>
+              </view>
+              <text class="photo-folder__count">{{ files.length }}/9</text>
+            </view>
+
+            <image-grid :files="files" editable @remove="removeEditFile" />
+
+            <wd-button
+              block
+              plain
+              :loading="uploading"
+              custom-class="photo-folder__button"
+              @click="chooseAndUploadImages"
+            >
+              添加照片
+            </wd-button>
+          </view>
+        </view>
+
+        <view class="edit-actions">
+          <wd-button plain block @click="cancelEditing">取消</wd-button>
+          <wd-button block size="large" :loading="saving" @click="saveChanges">保存修改</wd-button>
+        </view>
       </view>
     </view>
+
+    <wd-message-box />
   </app-shell>
 </template>
 
 <script setup lang="ts">
 import { shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
+import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
@@ -142,8 +192,12 @@ import {
   type EntryRecord
 } from "@/services/repositories/entries"
 
+const datePattern = /^\d{4}-\d{2}-\d{2}$/
+const placeholderStyle = "color: var(--app-text-muted);"
+
 const entryId = shallowRef("")
 const theme = useNativeChromeSync()
+const message = useMessage()
 const entry = shallowRef<EntryRecord | null>(null)
 const loading = shallowRef(false)
 const editing = shallowRef(false)
@@ -158,21 +212,21 @@ const occurredAt = shallowRef("")
 
 const { files, uploading, setFiles, chooseAndUploadImages, removeFileAt } = useFileUpload()
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
-
-const eventValue = (event: Event): string => {
-  const raw = event as unknown
-  if (!isRecord(raw)) {
+const decodeQueryId = (value: unknown): string => {
+  if (typeof value !== "string") {
     return ""
   }
 
-  const detail = raw.detail
-  if (isRecord(detail) && typeof detail.value === "string") {
-    return detail.value
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ""
   }
 
-  return ""
+  try {
+    return decodeURIComponent(trimmed)
+  } catch {
+    return trimmed
+  }
 }
 
 const hydrateForm = (nextEntry: EntryRecord) => {
@@ -228,13 +282,26 @@ const removeEditFile = async (index: number) => {
 }
 
 const saveChanges = async () => {
-  if (!entry.value) {
+  if (!entry.value || saving.value) {
     return
   }
 
-  if (!title.value.trim()) {
+  const titleToSave = title.value.trim()
+  const contentToSave = content.value.trim()
+  const moodToSave = mood.value.trim() || "温柔"
+  const dateToSave = occurredAt.value.trim()
+
+  if (!titleToSave) {
     uni.showToast({
-      title: "请先写一个标题。",
+      title: "先给这条小回忆起个名字",
+      icon: "none"
+    })
+    return
+  }
+
+  if (!dateToSave || !datePattern.test(dateToSave)) {
+    uni.showToast({
+      title: "日期先写成 2026-06-11 这样",
       icon: "none"
     })
     return
@@ -243,10 +310,10 @@ const saveChanges = async () => {
   saving.value = true
   try {
     const nextEntry = await updateEntry(entry.value.id, {
-      title: title.value,
-      content: content.value,
-      mood: mood.value || "温柔",
-      occurredAt: occurredAt.value,
+      title: titleToSave,
+      content: contentToSave,
+      mood: moodToSave,
+      occurredAt: dateToSave,
       files: files.value
     })
 
@@ -267,22 +334,30 @@ const saveChanges = async () => {
   }
 }
 
-const confirmDelete = () => {
-  if (!entry.value) {
+const confirmDelete = async () => {
+  if (!entry.value || deleting.value) {
     return
   }
 
-  uni.showModal({
-    title: "删除回忆",
-    content: "这会同时删除这条记录和它的云端文件。",
-    confirmText: "删除",
-    confirmColor: theme.appCssVars["--app-color-danger"],
-    success: (result) => {
-      if (result.confirm) {
-        void deleteCurrentEntry()
+  try {
+    await message.confirm({
+      title: "删除这条回忆",
+      msg: "这会删除这条记录和对应照片。",
+      cancelButtonText: "取消",
+      confirmButtonText: "删除",
+      confirmButtonProps: {
+        plain: true,
+        type: "error"
+      },
+      cancelButtonProps: {
+        plain: true,
+        type: "info"
       }
-    }
-  })
+    })
+    await deleteCurrentEntry()
+  } catch {
+    return
+  }
 }
 
 const deleteCurrentEntry = async () => {
@@ -306,25 +381,8 @@ const deleteCurrentEntry = async () => {
   }
 }
 
-const onTitleInput = (event: Event) => {
-  title.value = eventValue(event)
-}
-
-const onMoodInput = (event: Event) => {
-  mood.value = eventValue(event)
-}
-
-const onContentInput = (event: Event) => {
-  content.value = eventValue(event)
-}
-
-const onDateChange = (event: Event) => {
-  occurredAt.value = eventValue(event)
-}
-
 onLoad((query) => {
-  const id = query && typeof query.id === "string" ? query.id : ""
-  entryId.value = decodeURIComponent(id)
+  entryId.value = decodeQueryId(query?.id)
   void loadEntry()
 })
 </script>
@@ -333,88 +391,203 @@ onLoad((query) => {
 @import "../../styles/mixins.scss";
 
 .status-panel,
-.detail-card,
-.field,
-.upload-panel,
-.edit-intro,
-.danger-zone {
+.memory-sheet,
+.danger-zone,
+.edit-sheet,
+.album-panel__body,
+.photo-folder__body,
+.note-paper {
   @include panel;
-  padding: var(--app-card-padding);
 }
 
 .status-panel {
+  padding: var(--app-card-padding);
   color: var(--app-text-soft);
-  font-size: var(--app-font-size-body);
+  font: var(--app-font-body);
 }
 
-.detail {
+.detail-page,
+.edit-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-form-gap);
+}
+
+.memory-sheet,
+.edit-sheet {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--app-card-gap);
+  overflow: hidden;
+  padding: var(--app-card-padding);
+  background:
+    linear-gradient(180deg, var(--app-surface-strong), var(--app-surface));
 }
 
-.detail-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-card-gap);
+.memory-sheet::before,
+.memory-sheet::after,
+.edit-sheet::before,
+.edit-sheet::after {
+  position: absolute;
+  left: var(--app-card-padding);
+  right: var(--app-card-padding);
+  border-top: var(--app-panel-border-width) dashed var(--app-divider);
+  content: "";
+  opacity: var(--app-decor-opacity);
 }
 
-.detail__hero {
-  display: flex;
-  flex-direction: column;
-  padding-bottom: var(--app-space-3);
+.memory-sheet::before,
+.edit-sheet::before {
+  top: var(--app-space-48);
+}
+
+.memory-sheet::after,
+.edit-sheet::after {
+  bottom: var(--app-space-48);
+}
+
+.memory-sheet__fold,
+.edit-sheet__fold {
+  position: absolute;
+  top: var(--app-space-0);
+  right: var(--app-space-0);
+  width: var(--app-space-28);
+  height: var(--app-space-28);
+  border-left: var(--app-panel-border-width) solid var(--app-border);
   border-bottom: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom-left-radius: var(--app-radius-md);
+  background: var(--app-primary-soft);
+  opacity: var(--app-decor-opacity);
 }
 
-.detail__mood-row {
+.memory-sheet__header,
+.edit-sheet__header {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--app-space-7);
+  gap: var(--app-space-8);
 }
 
-.detail__mood {
-  color: var(--app-accent);
-  font-size: var(--app-font-size-base);
+.memory-sheet__stub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-2);
+  padding: var(--app-space-5) var(--app-space-8);
+  border: var(--app-panel-border-width) dashed var(--app-border);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-field);
 }
 
-.detail__tag {
-  padding: var(--app-space-2) var(--app-space-5);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-surface-strong);
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-sm);
+.memory-sheet__stub-label,
+.memory-sheet__kicker,
+.edit-sheet__eyebrow,
+.photo-folder__count,
+.note-paper__label {
+  @include label;
 }
 
-.detail__title {
-  margin-top: var(--app-space-4);
+.memory-sheet__date {
+  color: var(--app-text);
+  font: var(--app-font-caption);
+}
+
+.memory-sheet__mood,
+.edit-sheet__stamp {
+  flex-shrink: 0;
+  padding: var(--app-space-3) var(--app-space-7);
+  border: var(--app-panel-border-width) solid var(--app-primary);
+  border-radius: var(--app-radius-badge);
+  color: var(--app-primary);
+  font: var(--app-font-caption);
+  opacity: var(--app-decor-opacity);
+  transform: rotate(6deg);
+}
+
+.memory-sheet__title-block,
+.album-panel,
+.note-paper,
+.detail-actions,
+.paper-field,
+.photo-folder,
+.edit-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.memory-sheet__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-4);
+}
+
+.memory-sheet__title {
   color: var(--app-text);
   font: var(--app-font-detail-title);
 }
 
-.detail__date {
-  margin-top: var(--app-space-7);
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-base);
+.album-panel,
+.photo-folder {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--app-space-7);
 }
 
-.detail__content {
+.album-panel__tab,
+.photo-folder__tab {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: var(--app-space-4) var(--app-space-9);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom-width: var(--app-space-0);
+  border-radius: var(--app-radius-lg) var(--app-radius-lg) var(--app-space-0) var(--app-space-0);
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font: var(--app-font-caption);
+}
+
+.album-panel__body,
+.photo-folder__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-8);
+  padding: var(--app-card-padding);
+  border-top-left-radius: var(--app-space-0);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-none);
+}
+
+.note-paper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-5);
+  padding: var(--app-card-padding);
+  background: var(--app-field);
+  box-shadow: var(--app-shadow-none);
+}
+
+.note-paper__content {
   color: var(--app-text);
   font-size: var(--app-font-size-xl);
   line-height: var(--app-line-height-loose);
-  padding-top: var(--app-space-1);
 }
 
-.detail__actions {
+.detail-actions,
+.edit-actions {
   display: flex;
   flex-direction: column;
+  gap: var(--app-space-6);
 }
 
 .danger-zone {
   display: flex;
   flex-direction: column;
   gap: var(--app-space-8);
+  padding: var(--app-card-padding);
   border-color: var(--app-color-danger-border);
+  background: var(--app-surface);
   box-shadow: var(--app-shadow-none);
 }
 
@@ -432,79 +605,98 @@ onLoad((query) => {
   font: var(--app-font-caption);
 }
 
-.entry-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-form-gap);
-}
-
-.edit-intro {
-  background:
-    linear-gradient(135deg, var(--app-surface), var(--app-surface-strong));
-}
-
-.edit-intro__title {
+.edit-sheet__title {
   display: block;
+  margin-top: var(--app-space-2);
   color: var(--app-text);
   font: var(--app-font-section-title);
 }
 
-.edit-intro__body {
-  display: block;
-  margin-top: var(--app-space-3);
-  color: var(--app-text-soft);
-  font: var(--app-font-caption);
+.paper-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-5);
 }
 
-.field-grid {
+.paper-field__question {
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+:deep(.paper-field__input-root),
+:deep(.paper-field__textarea-root) {
+  @include field;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+:deep(.paper-field__input-root) {
+  display: flex;
+  align-items: center;
+  padding: var(--app-space-0) var(--app-field-padding-x);
+}
+
+:deep(.paper-field__input-root--title) {
+  background: var(--app-surface);
+}
+
+:deep(.paper-field__input-root .wd-input__body),
+:deep(.paper-field__input-root .wd-input__value),
+:deep(.paper-field__textarea-root .wd-textarea__value) {
+  width: 100%;
+}
+
+:deep(.paper-field__input-inner) {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
+}
+
+:deep(.paper-field__input-inner--title) {
+  font-size: var(--app-font-size-2xl);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+:deep(.paper-field__textarea-root) {
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+}
+
+:deep(.paper-field__textarea-box),
+:deep(.paper-field__textarea-inner) {
+  min-height: var(--app-textarea-min-height);
+}
+
+:deep(.paper-field__textarea-inner) {
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-line-height-relaxed);
+}
+
+.paper-tag-row {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--app-space-8);
 }
 
-.field__label,
-.upload-panel__meta {
-  @include label;
-  display: block;
-  margin-bottom: var(--app-space-5);
-}
-
-.field__input,
-.field__picker {
-  @include field;
-  display: flex;
-  align-items: center;
-  padding: var(--app-space-0) var(--app-field-padding-x);
-  line-height: var(--app-input-height);
-}
-
-.field__textarea {
-  @include field;
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
-  line-height: var(--app-line-height-relaxed);
-}
-
-.field__placeholder {
-  color: var(--app-text-soft);
-}
-
-.upload-panel__head {
+.photo-folder__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--app-space-8);
-  margin-bottom: var(--app-space-7);
 }
 
-.upload-panel__title {
+.photo-folder__title {
   display: block;
   color: var(--app-text);
   font-size: var(--app-font-size-xl);
   font-weight: var(--app-font-weight-semibold);
 }
 
-.upload-panel__note {
+.photo-folder__note {
   display: block;
   margin-top: var(--app-space-2);
   color: var(--app-text-soft);
@@ -512,7 +704,7 @@ onLoad((query) => {
   line-height: var(--app-line-height-normal);
 }
 
-:deep(.upload-panel__button) {
-  margin-top: var(--app-space-8);
+:deep(.photo-folder__button) {
+  margin-top: var(--app-space-2);
 }
 </style>
