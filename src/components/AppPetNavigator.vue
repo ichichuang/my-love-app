@@ -132,6 +132,7 @@ interface DragState {
 }
 
 type BubblePlacement = "left-top" | "right-top" | "left-bottom" | "right-bottom"
+type BubbleTailEdge = "top" | "right" | "bottom" | "left"
 type HorizontalPlacement = "left" | "right"
 type VerticalPlacement = "top" | "bottom"
 
@@ -152,6 +153,7 @@ const petSize = ref<ElementSize>({ ...zeroSize })
 const bubbleSize = ref<ElementSize>({ ...zeroSize })
 const bubblePosition = ref<Position>({ ...zeroPosition })
 const bubbleTailPosition = ref<Position>({ ...zeroPosition })
+const bubbleTailEdge = ref<BubbleTailEdge>("right")
 const bubblePlacement = ref<BubblePlacement>("left-top")
 const viewport = ref<ViewportMetrics>({
   width: 0,
@@ -203,7 +205,8 @@ const bubbleStyle = computed(() => positionToStyle(bubblePosition.value))
 const bubbleTailStyle = computed(() => positionToStyle(bubbleTailPosition.value))
 const bubbleClass = computed<Record<string, boolean>>(() => ({
   "app-pet-bubble--open": menuOpen.value,
-  [`app-pet-bubble--${bubblePlacement.value}`]: true
+  [`app-pet-bubble--${bubblePlacement.value}`]: true,
+  [`app-pet-bubble--tail-${bubbleTailEdge.value}`]: true
 }))
 
 const getTouchPoint = (event: TouchEvent): Point | null => {
@@ -280,6 +283,14 @@ const resolvePetEdgeGap = (): number => {
 }
 
 const resolveBubbleEdgeGap = (): number => resolvePetEdgeGap() / 2
+
+const resolveBubbleTailInset = (): number => {
+  const petSide = Math.min(petSize.value.width, petSize.value.height)
+  const bubbleSide = Math.min(bubbleSize.value.width, bubbleSize.value.height)
+  const idealInset = petSide > 0 ? petSide / 5 : bubbleSide / 8
+
+  return clamp(idealInset, 0, bubbleSide / 2)
+}
 
 const resolveDragThreshold = (): number => {
   const smallestSide = Math.min(petSize.value.width, petSize.value.height)
@@ -419,6 +430,47 @@ const chooseVerticalPlacement = (centerY: number, requiredSpace: number): Vertic
     : preferred === "top" ? "bottom" : "top"
 }
 
+const resolveBubbleTailLayout = (petCenter: Point): { edge: BubbleTailEdge; position: Position } => {
+  const { width, height } = bubbleSize.value
+
+  if (width <= 0 || height <= 0) {
+    return {
+      edge: "right",
+      position: { ...zeroPosition }
+    }
+  }
+
+  const bubbleCenter = {
+    x: bubblePosition.value.left + width / 2,
+    y: bubblePosition.value.top + height / 2
+  }
+  const deltaX = petCenter.x - bubbleCenter.x
+  const deltaY = petCenter.y - bubbleCenter.y
+  const halfWidth = width / 2
+  const halfHeight = height / 2
+  const verticalEdgeScale = deltaX === 0 ? Number.POSITIVE_INFINITY : halfWidth / Math.abs(deltaX)
+  const horizontalEdgeScale = deltaY === 0 ? Number.POSITIVE_INFINITY : halfHeight / Math.abs(deltaY)
+  const inset = resolveBubbleTailInset()
+
+  if (verticalEdgeScale <= horizontalEdgeScale) {
+    return {
+      edge: deltaX >= 0 ? "right" : "left",
+      position: {
+        left: deltaX >= 0 ? width : 0,
+        top: clamp(halfHeight + deltaY * verticalEdgeScale, inset, height - inset)
+      }
+    }
+  }
+
+  return {
+    edge: deltaY >= 0 ? "bottom" : "top",
+    position: {
+      left: clamp(halfWidth + deltaX * horizontalEdgeScale, inset, width - inset),
+      top: deltaY >= 0 ? height : 0
+    }
+  }
+}
+
 const resolveBubbleLayout = () => {
   const gap = resolveBubbleEdgeGap()
   const centerX = petPosition.value.left + petSize.value.width / 2
@@ -437,10 +489,13 @@ const resolveBubbleLayout = () => {
     left: clamp(idealLeft, gap, viewport.value.width - bubbleSize.value.width - gap),
     top: clamp(idealTop, gap, viewport.value.height - viewport.value.safeBottom - bubbleSize.value.height - gap)
   }
-  bubbleTailPosition.value = {
-    left: horizontal === "left" ? bubbleSize.value.width : 0,
-    top: vertical === "top" ? bubbleSize.value.height : 0
-  }
+
+  const tail = resolveBubbleTailLayout({
+    x: centerX,
+    y: centerY
+  })
+  bubbleTailEdge.value = tail.edge
+  bubbleTailPosition.value = tail.position
 }
 
 const openMenu = async () => {
@@ -685,12 +740,12 @@ onMounted(async () => {
   z-index: 15;
   display: flex;
   flex-direction: column;
-  width: calc(var(--app-space-64) + var(--app-space-24));
+  width: calc(var(--app-space-64) + var(--app-space-20));
   max-width: calc(100vw - var(--app-page-padding-x) - var(--app-page-padding-x));
   gap: var(--app-space-2);
-  padding: var(--app-space-7) var(--app-space-8) var(--app-space-6);
+  padding: var(--app-space-7) var(--app-space-8) var(--app-space-5);
   border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-3xl) var(--app-radius-2xl) var(--app-radius-3xl) var(--app-radius-xl);
+  border-radius: var(--app-radius-3xl) var(--app-radius-xl) var(--app-radius-2xl) var(--app-radius-lg);
   background: var(--app-field);
   box-shadow: var(--app-shadow-button);
   opacity: var(--app-space-0);
@@ -733,67 +788,81 @@ onMounted(async () => {
 }
 
 .app-pet-bubble::before {
-  top: calc(var(--app-space-0) - var(--app-space-4));
-  left: var(--app-space-9);
-  width: var(--app-space-20);
-  height: var(--app-space-10);
+  top: calc(var(--app-space-0) - var(--app-space-5));
+  left: var(--app-space-8);
+  width: var(--app-space-18);
+  height: var(--app-space-11);
   border-bottom: 0;
-  border-radius: var(--app-radius-pill) var(--app-radius-pill) var(--app-space-0) var(--app-space-0);
+  border-radius: var(--app-radius-pill) var(--app-radius-lg) var(--app-space-0) var(--app-space-0);
 }
 
 .app-pet-bubble::after {
-  right: var(--app-space-11);
-  bottom: calc(var(--app-space-0) - var(--app-space-3));
-  width: var(--app-space-16);
-  height: var(--app-space-7);
+  right: var(--app-space-10);
+  bottom: calc(var(--app-space-0) - var(--app-space-4));
+  width: var(--app-space-20);
+  height: var(--app-space-9);
   border-top: 0;
-  border-radius: var(--app-space-0) var(--app-space-0) var(--app-radius-pill) var(--app-radius-pill);
+  border-radius: var(--app-space-0) var(--app-space-0) var(--app-radius-lg) var(--app-radius-pill);
 }
 
 .app-pet-bubble__tail {
   position: absolute;
   z-index: 0;
-  width: var(--app-space-12);
-  height: var(--app-space-12);
+  width: var(--app-space-14);
+  height: var(--app-space-14);
   border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-xs);
+  border-radius: var(--app-radius-sm);
   background: var(--app-field);
+  box-shadow: var(--app-shadow-none);
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
-.app-pet-bubble--left-top .app-pet-bubble__tail {
-  border-top: 0;
-  border-left: 0;
-}
-
-.app-pet-bubble--right-top .app-pet-bubble__tail {
-  border-top: 0;
+.app-pet-bubble--tail-top .app-pet-bubble__tail {
   border-right: 0;
+  border-bottom: 0;
 }
 
-.app-pet-bubble--left-bottom .app-pet-bubble__tail {
+.app-pet-bubble--tail-right .app-pet-bubble__tail {
   border-bottom: 0;
   border-left: 0;
 }
 
-.app-pet-bubble--right-bottom .app-pet-bubble__tail {
+.app-pet-bubble--tail-bottom .app-pet-bubble__tail {
+  border-top: 0;
+  border-left: 0;
+}
+
+.app-pet-bubble--tail-left .app-pet-bubble__tail {
+  border-top: 0;
   border-right: 0;
-  border-bottom: 0;
 }
 
 .app-pet-bubble__paper-corner {
   position: absolute;
-  top: var(--app-space-5);
-  right: var(--app-space-5);
+  top: var(--app-space-3);
+  right: var(--app-space-3);
   z-index: 0;
-  width: var(--app-space-10);
-  height: var(--app-space-10);
+  width: var(--app-space-12);
+  height: var(--app-space-12);
   border-top: var(--app-panel-border-width) solid var(--app-border-muted);
   border-right: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-space-0) var(--app-radius-sm) var(--app-space-0) var(--app-space-0);
+  border-radius: var(--app-space-0) var(--app-radius-md) var(--app-space-0) var(--app-space-0);
+  background: var(--app-surface);
   opacity: var(--app-decor-opacity);
   pointer-events: none;
+}
+
+.app-pet-bubble__paper-corner::after {
+  position: absolute;
+  right: var(--app-space-1);
+  bottom: var(--app-space-1);
+  width: var(--app-space-6);
+  height: var(--app-border-width-hairline);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-border-muted);
+  content: "";
+  transform: rotate(-45deg);
 }
 
 .app-pet-bubble__speech {
@@ -802,14 +871,26 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--app-space-1);
-  padding-bottom: var(--app-space-2);
+  padding-bottom: var(--app-space-3);
 }
 
 .app-pet-bubble__speech::after {
   position: absolute;
   bottom: var(--app-space-0);
   left: var(--app-space-0);
-  width: var(--app-space-24);
+  width: var(--app-space-16);
+  height: var(--app-border-width-hairline);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-primary-soft);
+  content: "";
+  opacity: var(--app-decor-opacity);
+}
+
+.app-pet-bubble__speech::before {
+  position: absolute;
+  top: calc(var(--app-space-0) - var(--app-space-2));
+  left: var(--app-space-28);
+  width: var(--app-space-8);
   height: var(--app-border-width-hairline);
   border-radius: var(--app-radius-pill);
   background: var(--app-border-muted);
@@ -823,7 +904,7 @@ onMounted(async () => {
 }
 
 .app-pet-bubble__subtitle {
-  color: var(--app-text-soft);
+  color: var(--app-text-muted);
   font: var(--app-font-caption);
 }
 
@@ -832,8 +913,8 @@ onMounted(async () => {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--app-space-2);
-  margin-top: var(--app-space-2);
+  gap: var(--app-space-1);
+  margin-top: var(--app-space-1);
 }
 
 .app-pet-bubble__close {
@@ -845,30 +926,44 @@ onMounted(async () => {
 
 :deep(.app-pet-bubble__action-button) {
   justify-content: center;
-  height: var(--app-control-scale-xs);
-  min-height: var(--app-control-scale-xs);
-  padding: var(--app-space-0) var(--app-space-4);
-  border-color: var(--app-border-muted);
-  border-radius: var(--app-radius-md) var(--app-radius-lg) var(--app-radius-md) var(--app-radius-lg);
+  height: var(--app-control-scale-2xs);
+  min-height: var(--app-control-scale-2xs);
+  padding: var(--app-space-0) var(--app-space-3);
+  border-color: var(--app-divider);
+  border-radius: var(--app-radius-sm) var(--app-radius-lg) var(--app-radius-md) var(--app-radius-sm);
   background: var(--app-surface);
   box-shadow: var(--app-shadow-none);
   color: var(--app-text);
   font: var(--app-font-caption);
+  transform: rotate(-1deg);
 }
 
 :deep(.app-pet-bubble__action-button:nth-child(2n)) {
-  border-radius: var(--app-radius-lg) var(--app-radius-md) var(--app-radius-lg) var(--app-radius-md);
+  border-radius: var(--app-radius-lg) var(--app-radius-sm) var(--app-radius-sm) var(--app-radius-md);
   background: var(--app-surface-strong);
+  transform: rotate(1deg);
+}
+
+:deep(.app-pet-bubble__action-button:nth-child(3n)) {
+  background: var(--app-accent-soft);
+}
+
+:deep(.app-pet-bubble__action-button:nth-child(4n)) {
+  background: var(--app-primary-soft);
 }
 
 :deep(.app-pet-bubble__hide-button) {
-  height: var(--app-control-scale-2xs);
-  min-height: var(--app-control-scale-2xs);
-  padding: var(--app-space-0) var(--app-space-3);
+  height: var(--app-space-12);
+  min-height: var(--app-space-12);
+  padding: var(--app-space-0) var(--app-space-2);
   border-color: transparent;
   background: transparent;
   box-shadow: var(--app-shadow-none);
   color: var(--app-text-muted);
   font: var(--app-font-caption);
+  opacity: var(--app-muted-opacity);
+  text-decoration: underline;
+  text-decoration-color: var(--app-divider);
+  text-underline-offset: var(--app-space-1);
 }
 </style>

@@ -78,6 +78,22 @@
 
           <text v-if="song.content" class="song-card__content">{{ song.content }}</text>
           <text v-if="song.sungAtLabel" class="song-card__sung-at">{{ song.sungAtLabel }}唱过</text>
+
+          <view class="song-card__actions" @click.stop>
+            <wd-button
+              v-for="action in getStatusActions(song.songStatus)"
+              :key="action.value"
+              size="small"
+              plain
+              :type="action.type"
+              :loading="isStatusActionLoading(song.id, action.value)"
+              :disabled="isSongStatusUpdating(song.id)"
+              custom-class="song-card__action"
+              @click.stop="changeSongStatus(song.id, action.value)"
+            >
+              {{ action.label }}
+            </wd-button>
+          </view>
         </view>
       </view>
     </view>
@@ -92,6 +108,7 @@ import {
   listSongs,
   songPriorityLabels,
   songStatusLabels,
+  updateSongStatus,
   type SongPriority,
   type SongRecord,
   type SongStatus
@@ -108,10 +125,17 @@ interface SongListItem extends SongRecord {
   sungAtLabel: string
 }
 
+interface SongStatusAction {
+  label: string
+  type: "primary" | "success" | "warning" | "default"
+  value: SongStatus
+}
+
 const songs = shallowRef<SongRecord[]>([])
 const loading = shallowRef(false)
 const hasError = shallowRef(false)
 const activeFilter = shallowRef<FilterValue>("all")
+const statusUpdatingById = shallowRef<Partial<Record<string, SongStatus>>>({})
 
 const filterOptions: Array<{
   label: string
@@ -139,6 +163,40 @@ const statusClassByValue: Record<SongStatus, string> = {
   wanted: "song-card__tag--wanted",
   sung: "song-card__tag--sung",
   paused: "song-card__tag--paused"
+}
+
+const statusActionsByValue: Record<SongStatus, SongStatusAction[]> = {
+  wanted: [
+    {
+      label: "唱过了",
+      type: "success",
+      value: "sung"
+    },
+    {
+      label: "先暂缓",
+      type: "warning",
+      value: "paused"
+    }
+  ],
+  paused: [
+    {
+      label: "重新想听",
+      type: "primary",
+      value: "wanted"
+    },
+    {
+      label: "唱过了",
+      type: "success",
+      value: "sung"
+    }
+  ],
+  sung: [
+    {
+      label: "改回想听",
+      type: "primary",
+      value: "wanted"
+    }
+  ]
 }
 
 const formatSungAt = (timestamp?: number): string => {
@@ -191,6 +249,48 @@ const loadSongs = async () => {
 
 const setActiveFilter = (filter: FilterValue) => {
   activeFilter.value = filter
+}
+
+const getStatusActions = (status: SongStatus): SongStatusAction[] => statusActionsByValue[status]
+
+const isSongStatusUpdating = (id: string): boolean => typeof statusUpdatingById.value[id] !== "undefined"
+
+const isStatusActionLoading = (id: string, status: SongStatus): boolean => statusUpdatingById.value[id] === status
+
+const setSongStatusUpdating = (id: string, status: SongStatus | null) => {
+  const nextState = { ...statusUpdatingById.value }
+
+  if (status === null) {
+    delete nextState[id]
+  } else {
+    nextState[id] = status
+  }
+
+  statusUpdatingById.value = nextState
+}
+
+const replaceSong = (nextSong: SongRecord) => {
+  songs.value = songs.value.map((song) => (song.id === nextSong.id ? nextSong : song))
+}
+
+const changeSongStatus = async (id: string, status: SongStatus) => {
+  if (isSongStatusUpdating(id)) {
+    return
+  }
+
+  setSongStatusUpdating(id, status)
+
+  try {
+    const nextSong = await updateSongStatus(id, status)
+    replaceSong(nextSong)
+  } catch {
+    uni.showToast({
+      title: "这首歌暂时没改好，请稍后再试。",
+      icon: "none"
+    })
+  } finally {
+    setSongStatusUpdating(id, null)
+  }
 }
 
 const goSongEdit = () => {
@@ -313,6 +413,19 @@ onPullDownRefresh(() => {
 
 .song-card__sung-at {
   color: var(--app-success);
+}
+
+.song-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-5);
+}
+
+:deep(.song-card__action) {
+  min-height: var(--app-control-scale-xs);
+  border-radius: var(--app-radius-badge);
+  box-shadow: var(--app-shadow-none);
+  font: var(--app-font-caption);
 }
 
 .song-card__tags {
