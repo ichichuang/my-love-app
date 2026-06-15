@@ -7,12 +7,126 @@
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
   <app-shell :title="pageTitle" :eyebrow="pageEyebrow">
+    <template #actions>
+      <wd-button size="small" plain :disabled="formDisabled" @click="backToTasks">{{ backActionText }}</wd-button>
+    </template>
+
+    <view v-if="loading" class="task-edit-status">
+      <text>正在翻这张小票根…</text>
+    </view>
+
     <empty-state
-      title="这里会记下想一起做的小事"
-      body="先把事项位置留出来，标题、备注和完成标记会在后续一起补上。"
+      v-else-if="hasLoadError"
+      title="这件小事暂时没翻到"
+      body="可能是网络慢了一点，稍后再试一次。"
     >
-      <wd-button custom-class="task-edit-empty__button" @click="backToTasks">返回事项清单</wd-button>
+      <view class="task-edit-error__actions">
+        <wd-button block :loading="loading" @click="loadTask">再试一次</wd-button>
+        <wd-button block plain @click="backToTasks">返回小清单</wd-button>
+      </view>
     </empty-state>
+
+    <view v-else class="task-edit">
+      <view class="task-ticket" :class="{ 'task-ticket--done': taskDone }">
+        <view class="task-ticket__perforation" />
+        <view class="task-ticket__head">
+          <view class="task-ticket__intro">
+            <text class="task-ticket__kicker">小约定票根</text>
+            <text class="task-ticket__question">想一起做什么？</text>
+            <text class="task-ticket__body">先写下来，什么时候完成都不急。</text>
+          </view>
+          <text class="task-ticket__stamp">小计划</text>
+        </view>
+
+        <view class="task-title-slip">
+          <view class="task-title-slip__pin task-title-slip__pin--red" />
+          <view class="task-title-slip__pin task-title-slip__pin--blue" />
+          <wd-input
+            v-model="title"
+            no-border
+            :disabled="formDisabled"
+            placeholder="比如：一起去看一场日落"
+            :placeholder-style="placeholderStyle"
+            :maxlength="48"
+            custom-class="task-title-slip__input-root"
+            custom-input-class="task-title-slip__input-inner"
+          />
+        </view>
+
+        <view class="task-detail-toggle-row">
+          <wd-button
+            size="small"
+            plain
+            :disabled="formDisabled"
+            custom-class="task-detail-toggle"
+            @click="toggleDetails"
+          >
+            {{ detailToggleText }}
+          </wd-button>
+        </view>
+
+        <view v-if="detailsExpanded" class="task-ticket__details">
+          <view class="task-field">
+            <text class="task-field__prompt">想留点什么小备注？</text>
+            <wd-textarea
+              v-model="content"
+              no-border
+              :disabled="formDisabled"
+              placeholder="留一点小备注"
+              :placeholder-style="placeholderStyle"
+              :maxlength="240"
+              custom-class="task-field__textarea-root"
+              custom-textarea-container-class="task-field__textarea-box"
+              custom-textarea-class="task-field__textarea-inner"
+            />
+          </view>
+
+          <view class="task-field">
+            <text class="task-field__prompt">想什么时候去做？</text>
+            <text class="task-field__hint">空着也没关系，写了就用 2026-01-01 这样。</text>
+            <wd-input
+              v-model="taskDueDate"
+              no-border
+              :disabled="formDisabled"
+              placeholder="可以先空着"
+              :placeholder-style="placeholderStyle"
+              :maxlength="10"
+              custom-class="task-field__input-root"
+              custom-input-class="task-field__input-inner"
+            />
+          </view>
+
+          <view class="task-ticket__section">
+            <view class="task-ticket__section-head">
+              <text class="task-ticket__section-title">现在状态</text>
+              <text class="task-ticket__section-note">只在小清单里轻轻标记</text>
+            </view>
+            <app-option-group :columns="2">
+              <app-option-button
+                v-for="option in statusOptions"
+                :key="option.label"
+                :active="taskDone === option.value"
+                :disabled="formDisabled"
+                @click="setTaskDone(option.value)"
+              >
+                <text class="task-choice__label">{{ option.label }}</text>
+              </app-option-button>
+            </app-option-group>
+          </view>
+        </view>
+
+        <view v-if="saved" class="task-saved">
+          <text class="task-saved__title">已经轻轻收好</text>
+          <text class="task-saved__body">这件小事放进清单啦</text>
+        </view>
+
+        <view class="task-edit-actions">
+          <wd-button block size="large" :loading="saving" :disabled="formDisabled" @click="saveTask">
+            {{ saveButtonText }}
+          </wd-button>
+        </view>
+      </view>
+    </view>
   </app-shell>
 </template>
 
@@ -20,12 +134,122 @@
 import { computed, shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import { createTask, getTask, updateTask, type TaskDraft } from "@/services/repositories/tasks"
 
+const saveFeedbackDelayMs = 520
+const placeholderStyle = "color: var(--app-text-muted)"
+const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const theme = useNativeChromeSync()
-const hasTaskId = shallowRef(false)
 
-const pageTitle = computed(() => (hasTaskId.value ? "编辑事项" : "加一件事"))
-const pageEyebrow = computed(() => (hasTaskId.value ? "我们的清单" : "新的计划"))
+const taskId = shallowRef("")
+const loading = shallowRef(false)
+const hasLoadError = shallowRef(false)
+const saving = shallowRef(false)
+const saved = shallowRef(false)
+const detailsExpanded = shallowRef(false)
+
+const title = shallowRef("")
+const content = shallowRef("")
+const taskDueDate = shallowRef("")
+const taskDone = shallowRef(false)
+
+const statusOptions: Array<{
+  label: string
+  value: boolean
+}> = [
+  {
+    label: "未完成",
+    value: false
+  },
+  {
+    label: "已完成",
+    value: true
+  }
+]
+
+const isEditMode = computed(() => taskId.value.length > 0)
+const formDisabled = computed(() => saving.value || saved.value)
+const pageTitle = computed(() => "小约定票根")
+const pageEyebrow = computed(() => (isEditMode.value ? "改一张小计划" : "新的计划"))
+const backActionText = computed(() => (isEditMode.value ? "先不改了" : "先不写了"))
+const detailToggleText = computed(() => (detailsExpanded.value ? "先收起小细节" : "再加一点小细节"))
+const saveButtonText = computed(() => {
+  if (saving.value) {
+    return "正在轻轻收好"
+  }
+
+  if (saved.value) {
+    return "已经轻轻收好"
+  }
+
+  return isEditMode.value ? "收好这张票根" : "收进小清单"
+})
+
+const decodeQueryId = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return ""
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  try {
+    return decodeURIComponent(trimmed)
+  } catch {
+    return trimmed
+  }
+}
+
+const resetForm = () => {
+  title.value = ""
+  content.value = ""
+  taskDueDate.value = ""
+  taskDone.value = false
+  detailsExpanded.value = false
+  saved.value = false
+}
+
+const shouldExpandTaskDetails = (task: TaskDraft): boolean =>
+  task.content.trim().length > 0 || task.taskDueDate.trim().length > 0 || task.taskDone
+
+const toggleDetails = () => {
+  detailsExpanded.value = !detailsExpanded.value
+}
+
+const setTaskDone = (value: boolean) => {
+  taskDone.value = value
+  saved.value = false
+}
+
+const loadTask = async () => {
+  if (!taskId.value) {
+    resetForm()
+    hasLoadError.value = false
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+  hasLoadError.value = false
+
+  try {
+    const task = await getTask(taskId.value)
+    title.value = task.title
+    content.value = task.content
+    taskDueDate.value = task.taskDueDate
+    taskDone.value = task.taskDone
+    detailsExpanded.value = shouldExpandTaskDetails(task)
+    saved.value = false
+  } catch {
+    resetForm()
+    hasLoadError.value = true
+  } finally {
+    loading.value = false
+  }
+}
 
 const backToTasks = () => {
   if (getCurrentPages().length > 1) {
@@ -33,18 +257,384 @@ const backToTasks = () => {
     return
   }
 
-  uni.navigateTo({
+  uni.redirectTo({
     url: "/pages/tasks/tasks"
   })
 }
 
+const buildDraft = (): TaskDraft => ({
+  title: title.value,
+  content: content.value,
+  taskDone: taskDone.value,
+  taskDueDate: taskDueDate.value
+})
+
+const waitForSaveFeedback = (): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, saveFeedbackDelayMs)
+  })
+
+const resolveSaveErrorMessage = (error: unknown): string => {
+  const message = getFriendlyErrorMessage(error)
+  return message.includes("纪念") ? "小约定暂时没收好，请稍后再试。" : message
+}
+
+const saveTask = async () => {
+  if (saving.value) {
+    return
+  }
+
+  if (!title.value.trim()) {
+    uni.showToast({
+      title: "先写下一件小事",
+      icon: "none"
+    })
+    return
+  }
+
+  const trimmedDate = taskDueDate.value.trim()
+  if (trimmedDate && !datePattern.test(trimmedDate)) {
+    uni.showToast({
+      title: "日期先写成 2026-01-01 这样",
+      icon: "none"
+    })
+    return
+  }
+
+  saving.value = true
+  saved.value = false
+  taskDueDate.value = trimmedDate
+
+  try {
+    if (isEditMode.value) {
+      await updateTask(taskId.value, buildDraft())
+    } else {
+      await createTask(buildDraft())
+    }
+
+    saving.value = false
+    saved.value = true
+    uni.showToast({
+      title: "已经轻轻收好",
+      icon: "none"
+    })
+    await waitForSaveFeedback()
+    backToTasks()
+  } catch (error) {
+    uni.showToast({
+      title: resolveSaveErrorMessage(error),
+      icon: "none"
+    })
+  } finally {
+    if (!saved.value) {
+      saving.value = false
+    }
+  }
+}
+
 onLoad((query) => {
-  hasTaskId.value = typeof query?.id === "string" && query.id.trim().length > 0
+  taskId.value = decodeQueryId(query?.id)
+  void loadTask()
 })
 </script>
 
 <style lang="scss" scoped>
-:deep(.task-edit-empty__button) {
+@import "../../styles/mixins.scss";
+
+.task-edit,
+.task-ticket,
+.task-ticket__intro,
+.task-ticket__details,
+.task-ticket__section,
+.task-edit-actions,
+.task-edit-error__actions,
+.task-field,
+.task-saved {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-edit {
+  gap: var(--app-form-gap);
+  padding-bottom: calc(var(--app-card-padding) + env(safe-area-inset-bottom));
+}
+
+.task-edit-status,
+.task-ticket {
+  @include panel;
+  padding: var(--app-card-padding);
+}
+
+.task-edit-status {
+  color: var(--app-text-soft);
+  font: var(--app-font-body);
+  text-align: center;
+}
+
+.task-ticket {
+  position: relative;
+  gap: var(--app-card-gap);
+  overflow: hidden;
+}
+
+.task-ticket::before {
+  position: absolute;
+  top: var(--app-space-0);
+  right: var(--app-space-0);
+  width: var(--app-space-28);
+  height: var(--app-space-28);
+  border-left: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom: var(--app-panel-border-width) solid var(--app-border);
+  border-bottom-left-radius: var(--app-radius-lg);
+  background: var(--app-field);
+  content: "";
+  opacity: var(--app-muted-opacity);
+}
+
+.task-ticket::after {
+  position: absolute;
+  top: var(--app-card-padding);
+  left: var(--app-card-padding);
+  width: var(--app-space-32);
+  height: var(--app-border-width-focus);
+  background: var(--app-color-blue-person);
+  content: "";
+  opacity: var(--app-decor-opacity);
+  transform: rotate(-3deg);
+}
+
+.task-ticket--done {
+  background: var(--app-surface-strong);
+}
+
+.task-ticket__perforation {
+  position: absolute;
+  top: var(--app-space-24);
+  right: var(--app-space-14);
+  bottom: var(--app-space-24);
+  border-left: var(--app-panel-border-width) dashed var(--app-border);
+  opacity: var(--app-decor-opacity);
+}
+
+.task-ticket__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--app-space-8);
+}
+
+.task-ticket__intro {
+  min-width: 0;
+  gap: var(--app-space-3);
+  padding-top: var(--app-space-8);
+}
+
+.task-ticket__kicker {
+  @include label;
+  display: block;
+  color: var(--app-accent);
+}
+
+.task-ticket__question,
+.task-ticket__section-title,
+.task-field__prompt {
+  display: block;
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+.task-ticket__body,
+.task-ticket__section-note,
+.task-field__hint {
+  display: block;
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.task-ticket__stamp {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  padding: var(--app-space-3) var(--app-space-7);
+  border: var(--app-panel-border-width) solid var(--app-accent);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font: var(--app-font-caption);
+  transform: rotate(3deg);
+}
+
+.task-title-slip {
+  position: relative;
+  z-index: 1;
+  padding: var(--app-space-5) var(--app-field-padding-x);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-input);
+  background: var(--app-field);
+}
+
+.task-title-slip::after {
+  position: absolute;
+  right: var(--app-field-padding-x);
+  bottom: var(--app-space-5);
+  left: var(--app-field-padding-x);
+  height: var(--app-panel-border-width);
+  background: var(--app-divider);
+  content: "";
+}
+
+.task-title-slip__pin {
+  position: absolute;
+  top: var(--app-space-6);
+  width: var(--app-space-5);
+  height: var(--app-space-5);
+  border-radius: var(--app-radius-round);
+  opacity: var(--app-decor-opacity);
+}
+
+.task-title-slip__pin--red {
+  left: var(--app-space-6);
+  background: var(--app-color-red-person);
+}
+
+.task-title-slip__pin--blue {
+  right: var(--app-space-6);
+  background: var(--app-color-blue-person);
+}
+
+:deep(.task-title-slip__input-root) {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  padding: var(--app-space-0);
+  background: transparent;
+  color: var(--app-text);
+}
+
+:deep(.task-title-slip__input-root .wd-input__body),
+:deep(.task-title-slip__input-root .wd-input__value) {
+  width: 100%;
+}
+
+:deep(.task-title-slip__input-inner) {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
+}
+
+.task-detail-toggle-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+}
+
+:deep(.task-detail-toggle) {
+  color: var(--app-accent);
+  box-shadow: var(--app-shadow-none);
+}
+
+.task-ticket__details {
+  position: relative;
+  z-index: 1;
+  gap: var(--app-space-7);
+  padding-top: var(--app-card-gap);
+  border-top: var(--app-panel-border-width) dashed var(--app-divider);
+}
+
+.task-ticket__section {
+  gap: var(--app-space-7);
+  padding-top: var(--app-card-gap);
+  border-top: var(--app-panel-border-width) solid var(--app-divider);
+}
+
+.task-ticket__section-head,
+.task-field {
+  gap: var(--app-space-5);
+}
+
+:deep(.task-field__input-root),
+:deep(.task-field__textarea-root) {
+  @include field;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+:deep(.task-field__input-root) {
+  display: flex;
+  align-items: center;
+  padding: var(--app-space-0) var(--app-field-padding-x);
+}
+
+:deep(.task-field__input-root .wd-input__body),
+:deep(.task-field__input-root .wd-input__value),
+:deep(.task-field__textarea-root .wd-textarea__value) {
+  width: 100%;
+}
+
+:deep(.task-field__input-inner) {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
+}
+
+:deep(.task-field__textarea-root) {
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+}
+
+:deep(.task-field__textarea-box),
+:deep(.task-field__textarea-inner) {
+  min-height: var(--app-textarea-min-height);
+}
+
+:deep(.task-field__textarea-inner) {
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-line-height-relaxed);
+}
+
+:deep(.task-field__input-root.is-disabled),
+:deep(.task-field__textarea-root.is-disabled) {
+  opacity: var(--app-disabled-opacity);
+}
+
+.task-choice__label {
+  display: block;
+  width: 100%;
+}
+
+.task-saved {
+  gap: var(--app-space-3);
+  padding: var(--app-space-6) var(--app-space-7);
+  border: var(--app-panel-border-width) solid var(--app-success);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-success-soft);
+  color: var(--app-success);
+  text-align: center;
+  box-shadow: var(--app-shadow-none);
+}
+
+.task-saved__title {
+  font: var(--app-font-section-title);
+}
+
+.task-saved__body {
+  font: var(--app-font-caption);
+}
+
+.task-edit-actions {
+  gap: var(--app-space-6);
+  padding-top: var(--app-space-3);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.task-edit-error__actions {
+  width: 100%;
+  gap: var(--app-space-6);
   margin-top: var(--app-card-padding);
 }
 </style>
