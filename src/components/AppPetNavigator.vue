@@ -74,6 +74,7 @@
 
 <script setup lang="ts">
 import { computed, getCurrentInstance, nextTick, onMounted, ref } from "vue"
+import { readPlatformViewportMetrics } from "@/services/platform/system-info"
 
 interface MenuItem {
   label: string
@@ -107,18 +108,6 @@ interface StoredPetPosition {
 interface RuntimePage {
   route?: string
   __route__?: string
-}
-
-interface SystemInfoSnapshot {
-  windowWidth?: number
-  windowHeight?: number
-  screenHeight?: number
-  safeAreaInsets?: {
-    bottom?: number
-  }
-  safeArea?: {
-    bottom?: number
-  }
 }
 
 interface LayoutRect {
@@ -222,27 +211,12 @@ const getTouchPoint = (event: TouchEvent): Point | null => {
 }
 
 const readViewportMetrics = (): ViewportMetrics => {
-  let info: SystemInfoSnapshot = {}
-
-  try {
-    info = uni.getSystemInfoSync() as SystemInfoSnapshot
-  } catch {
-    info = {}
-  }
-
-  const width = finiteNumber(info.windowWidth)
-  const height = finiteNumber(info.windowHeight)
-  const screenHeight = finiteNumber(info.screenHeight, height)
-  const safeAreaInsetBottom = finiteNumber(info.safeAreaInsets?.bottom, Number.NaN)
-  const safeAreaBottom = finiteNumber(info.safeArea?.bottom, screenHeight)
-  const safeBottom = Number.isFinite(safeAreaInsetBottom)
-    ? safeAreaInsetBottom
-    : Math.max(0, screenHeight - safeAreaBottom)
+  const metrics = readPlatformViewportMetrics()
 
   return {
-    width,
-    height,
-    safeBottom
+    width: metrics.windowWidth,
+    height: metrics.windowHeight,
+    safeBottom: metrics.safeBottom
   }
 }
 

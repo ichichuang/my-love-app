@@ -12,6 +12,7 @@ import {
   resolveThemeProviderKey
 } from "@/design-system/theme-resolver"
 import type { AppCssVars, AppTheme, RomanticPalette, ThemeDensity, ThemeFontScale, ThemeMode } from "@/design-system/types"
+import { readPlatformSystemTheme } from "@/services/platform/system-info"
 import { resolveWotThemeVars } from "@/design-system/wot-theme"
 
 export type { PaletteId }
@@ -39,11 +40,7 @@ const isThemeDensity = (value: unknown): value is ThemeDensity =>
 const isThemeFontScale = (value: unknown): value is ThemeFontScale =>
   value === "normal" || value === "large"
 
-const readSystemTheme = (): AppTheme => {
-  const info = uni.getSystemInfoSync()
-  const theme = isRecord(info) ? info.theme : undefined
-  return theme === "dark" ? "dark" : "light"
-}
+const readSystemTheme = (): AppTheme => readPlatformSystemTheme()
 
 const readSavedThemeState = (): SavedThemeState | null => {
   const raw = uni.getStorageSync(STORAGE_KEY) as unknown
