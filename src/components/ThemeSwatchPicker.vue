@@ -1,27 +1,28 @@
 <template>
-  <app-option-group class="theme-picker" :columns="3">
-    <app-option-button
+  <view class="theme-picker">
+    <view
       v-for="palette in romanticPalettes"
       :key="palette.id"
-      :active="palette.id === paletteId"
+      class="theme-picker__cell"
+      :class="{ 'theme-picker__cell--active': palette.id === paletteId }"
       :style="swatchStyle(palette)"
+      hover-class="theme-picker__cell--pressed"
+      hover-stay-time="80"
       @click="emit('selectPalette', palette.id)"
     >
-      <view class="theme-picker__content">
-        <view class="theme-picker__paper">
-          <view class="theme-picker__swatch">
-            <text class="theme-picker__swatch-block theme-picker__swatch-block--primary"></text>
-            <text class="theme-picker__swatch-block theme-picker__swatch-block--accent"></text>
-          </view>
-          <text v-if="palette.id === paletteId" class="theme-picker__active">已选</text>
+      <view class="theme-picker__paper">
+        <view class="theme-picker__swatch">
+          <view class="theme-picker__swatch-block theme-picker__swatch-block--primary"></view>
+          <view class="theme-picker__swatch-block theme-picker__swatch-block--accent"></view>
         </view>
-        <view class="theme-picker__copy">
-          <text class="theme-picker__name">{{ palette.name }}</text>
-          <text class="theme-picker__description">{{ palette.description }}</text>
-        </view>
+        <view v-if="palette.id === paletteId" class="theme-picker__stamp">已选</view>
       </view>
-    </app-option-button>
-  </app-option-group>
+      <view class="theme-picker__copy">
+        <text class="theme-picker__name">{{ palette.name }}</text>
+        <text class="theme-picker__description">{{ palette.description }}</text>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script setup lang="ts">
@@ -42,35 +43,54 @@ const swatchStyle = (palette: RomanticPalette) =>
 </script>
 
 <style lang="scss" scoped>
-.theme-picker__content {
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--app-option-group-gap);
+}
+
+.theme-picker__cell {
   display: flex;
-  width: 100%;
   min-width: 0;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--app-space-4);
+  gap: var(--app-space-5);
+  padding: var(--app-space-5);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-card);
+  background: var(--app-surface);
   text-align: left;
+}
+
+.theme-picker__cell--active {
+  border-color: var(--app-primary);
+  box-shadow: var(--app-shadow-focus);
+}
+
+.theme-picker__cell--pressed {
+  opacity: var(--app-press-opacity);
+  transform: scale(var(--app-press-scale));
 }
 
 .theme-picker__paper {
   position: relative;
   padding: var(--app-space-3);
+  border: var(--app-panel-border-width) solid var(--app-divider);
   border-radius: var(--app-radius-md);
   background: var(--app-field);
-  transform: rotate(-2deg);
+  transform: rotate(-1.5deg);
+  transform-origin: center;
 }
 
 .theme-picker__swatch {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: var(--app-space-28);
   overflow: hidden;
   border-radius: var(--app-radius-sm);
 }
 
 .theme-picker__swatch-block {
   display: block;
-  min-height: var(--app-space-28);
+  height: var(--app-space-14);
 }
 
 .theme-picker__swatch-block--primary {
@@ -79,6 +99,27 @@ const swatchStyle = (palette: RomanticPalette) =>
 
 .theme-picker__swatch-block--accent {
   background: var(--app-option-swatch-accent);
+}
+
+.theme-picker__stamp {
+  position: absolute;
+  top: calc(var(--app-space-3) * -1);
+  right: calc(var(--app-space-3) * -1);
+  padding: var(--app-space-1) var(--app-space-3);
+  border: var(--app-panel-border-width) solid var(--app-primary);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-surface);
+  color: var(--app-primary);
+  font-size: var(--app-font-size-2xs);
+  line-height: var(--app-line-height-none);
+  transform: rotate(8deg);
+}
+
+.theme-picker__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--app-space-2);
 }
 
 .theme-picker__name {
@@ -92,23 +133,9 @@ const swatchStyle = (palette: RomanticPalette) =>
 
 .theme-picker__description {
   display: block;
-  margin-top: var(--app-space-2);
   color: var(--app-text-soft);
   font-size: var(--app-font-size-2xs);
   line-height: var(--app-line-height-snug);
   overflow-wrap: anywhere;
-}
-
-.theme-picker__active {
-  position: absolute;
-  top: var(--app-space-0);
-  right: var(--app-space-0);
-  padding: var(--app-space-1) var(--app-space-3);
-  border-radius: var(--app-radius-badge);
-  background: var(--app-primary);
-  color: var(--app-text-inverse);
-  font-size: var(--app-font-size-sm);
-  line-height: var(--app-line-height-none);
-  transform: rotate(8deg);
 }
 </style>

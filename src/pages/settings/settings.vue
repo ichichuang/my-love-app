@@ -9,40 +9,36 @@
   <app-shell title="私密偏好" eyebrow="设置">
     <view class="settings">
       <view class="settings-heading">
-        <text class="settings-heading__eyebrow">设置</text>
+        <text class="settings-heading__eyebrow">只影响本机显示</text>
         <text class="settings-heading__title">偏好配置</text>
       </view>
 
-      <view class="stage-card">
-        <view class="stage-card__bar"></view>
-        <view class="stage-card__copy">
-          <text class="stage-card__label">当前阶段</text>
-          <text class="stage-card__value">本人测试</text>
-        </view>
-        <view class="stage-card__mark">
-          <text>试</text>
-        </view>
-        <text class="stage-card__note">当前只开放给拥有者账号，所有偏好只影响本机显示。</text>
-      </view>
-
       <view class="settings-section">
-        <text class="settings-section__title">外观模式</text>
-        <app-option-group class="mode-group" :columns="3">
-          <app-option-button
+        <view class="settings-section__head">
+          <text class="settings-section__title">外观模式</text>
+          <text class="settings-section__hint">跟随系统 / 浅色 / 深色</text>
+        </view>
+        <view class="mode-strip">
+          <view
             v-for="option in modeOptions"
             :key="option.value"
             class="mode-card"
-            :active="theme.mode === option.value"
+            :class="{ 'mode-card--active': theme.mode === option.value }"
+            hover-class="mode-card--pressed"
+            hover-stay-time="80"
             @click="theme.setThemeMode(option.value)"
           >
             <text class="mode-card__icon">{{ option.icon }}</text>
             <text class="mode-card__label">{{ option.label }}</text>
-          </app-option-button>
-        </app-option-group>
+          </view>
+        </view>
       </view>
 
       <view class="settings-section">
-        <text class="settings-section__title">主题颜色</text>
+        <view class="settings-section__head">
+          <text class="settings-section__title">主题颜色</text>
+          <text class="settings-section__hint">六套，像小纸样卡</text>
+        </view>
         <theme-swatch-picker
           class="settings-theme-picker"
           :palette-id="theme.paletteId"
@@ -51,66 +47,78 @@
       </view>
 
       <view class="settings-section">
-        <text class="settings-section__title">界面密度</text>
-        <view class="choice-list">
-          <app-option-group class="choice-list__group" :columns="2">
-            <app-option-button
-              v-for="option in densityOptions"
-              :key="option.value"
-              class="choice-row"
-              :active="theme.density === option.value"
-              @click="theme.setDensity(option.value)"
-            >
-              <view class="choice-row__main">
-                <text class="choice-row__icon">{{ option.icon }}</text>
-                <text class="choice-row__label">{{ option.label }}</text>
-              </view>
-              <text class="choice-row__radio"></text>
-            </app-option-button>
-          </app-option-group>
+        <view class="settings-section__head">
+          <text class="settings-section__title">界面密度</text>
+          <text class="settings-section__hint">舒适 / 紧凑</text>
+        </view>
+        <view class="density-strip">
+          <view
+            v-for="option in densityOptions"
+            :key="option.value"
+            class="density-card"
+            :class="{ 'density-card--active': theme.density === option.value }"
+            hover-class="density-card--pressed"
+            hover-stay-time="80"
+            @click="theme.setDensity(option.value)"
+          >
+            <view class="density-card__top">
+              <text class="density-card__icon">{{ option.icon }}</text>
+              <text class="density-card__label">{{ option.label }}</text>
+            </view>
+            <text class="density-card__note">{{ option.note }}</text>
+          </view>
         </view>
       </view>
 
       <view class="settings-section">
-        <text class="settings-section__title">字号大小</text>
+        <view class="settings-section__head">
+          <text class="settings-section__title">字号大小</text>
+          <text class="settings-section__hint">标准 / 偏大</text>
+        </view>
         <view class="font-card">
-          <app-option-group class="font-card__choices" :columns="2">
-            <app-option-button
+          <view class="font-card__row">
+            <view
               v-for="option in fontScaleOptions"
               :key="option.value"
               class="font-choice"
-              :active="theme.fontScale === option.value"
+              :class="{ 'font-choice--active': theme.fontScale === option.value }"
+              hover-class="font-choice--pressed"
+              hover-stay-time="80"
               @click="theme.setFontScale(option.value)"
             >
-              <text>{{ option.label }}</text>
-            </app-option-button>
-          </app-option-group>
-          <view class="font-card__rail">
+              <text class="font-choice__label">{{ option.label }}</text>
+              <text class="font-choice__hint">{{ option.note }}</text>
+            </view>
+          </view>
+          <view class="font-card__rail" aria-hidden="true">
+            <view class="font-card__rail-fill"></view>
             <view
-              class="font-card__dot"
-              :class="{ 'font-card__dot--large': theme.fontScale === 'large' }"
+              class="font-card__rail-dot"
+              :class="{ 'font-card__rail-dot--large': theme.fontScale === 'large' }"
             ></view>
           </view>
-          <text class="font-card__preview">“这是字号大小预览效果”</text>
+          <text class="font-card__preview">这是字号大小预览效果</text>
         </view>
       </view>
 
-      <view class="settings-section">
-        <text class="settings-section__title">当前版本</text>
-        <view class="info-card">
-          <view class="info-row" @click="openDesignPreview">
-            <view class="info-row__main">
-              <text class="info-row__icon">开发</text>
-              <text class="info-row__label">开发预览</text>
+      <view class="settings-section settings-section--muted">
+        <view class="settings-section__head">
+          <text class="settings-section__title">当前版本</text>
+        </view>
+        <view class="appendix">
+          <view class="appendix-row" hover-class="appendix-row--pressed" @click="openDesignPreview">
+            <view class="appendix-row__main">
+              <text class="appendix-row__icon">开发</text>
+              <text class="appendix-row__label">开发预览</text>
             </view>
-            <text class="info-row__value">2.4.0</text>
+            <text class="appendix-row__value">2.4.0</text>
           </view>
-          <view class="info-row info-row--muted">
-            <view class="info-row__main">
-              <text class="info-row__icon">云</text>
-              <text class="info-row__label">云开发信息</text>
+          <view class="appendix-row appendix-row--quiet">
+            <view class="appendix-row__main">
+              <text class="appendix-row__icon">云</text>
+              <text class="appendix-row__label">云开发信息</text>
             </view>
-            <text class="info-row__value">{{ cloudEnvLabel }}</text>
+            <text class="appendix-row__value">{{ cloudEnvLabel }}</text>
           </view>
         </view>
       </view>
@@ -134,14 +142,23 @@ const modeOptions: Array<{ icon: string; label: string; value: ThemeMode }> = [
   { icon: "☾", label: "深色", value: "dark" }
 ]
 
-const densityOptions: Array<{ icon: string; label: string; value: ThemeDensity }> = [
-  { icon: "▦", label: "舒适", value: "comfortable" },
-  { icon: "☰", label: "紧凑", value: "compact" }
+const densityOptions: Array<{
+  icon: string
+  label: string
+  note: string
+  value: ThemeDensity
+}> = [
+  { icon: "▦", label: "舒适", note: "行间松弛", value: "comfortable" },
+  { icon: "☰", label: "紧凑", note: "更密更近", value: "compact" }
 ]
 
-const fontScaleOptions: Array<{ label: string; value: ThemeFontScale }> = [
-  { label: "标准", value: "normal" },
-  { label: "偏大", value: "large" }
+const fontScaleOptions: Array<{
+  label: string
+  note: string
+  value: ThemeFontScale
+}> = [
+  { label: "标准", note: "日常阅读", value: "normal" },
+  { label: "偏大", note: "更易看清", value: "large" }
 ]
 
 const openDesignPreview = () => {
@@ -162,17 +179,10 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   gap: var(--app-section-gap);
 }
 
-.stage-card,
-.font-card,
-.info-card {
-  @include panel;
-}
-
 .settings-heading {
   display: flex;
   flex-direction: column;
   gap: var(--app-space-2);
-  margin-bottom: calc(var(--app-section-gap) - var(--app-space-8));
 }
 
 .settings-heading__eyebrow {
@@ -187,92 +197,69 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   font: var(--app-font-section-title);
 }
 
-.stage-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: var(--app-space-8);
-  row-gap: var(--app-space-3);
-  padding: var(--app-card-padding);
-  border-color: var(--app-border-muted);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-sm);
-  overflow: hidden;
-}
-
-.stage-card__bar {
-  align-self: stretch;
-  width: var(--app-space-1);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-primary);
-  grid-row: 1 / 3;
-}
-
-.stage-card__copy {
-  min-width: 0;
-}
-
-.stage-card__label {
-  display: block;
-  color: var(--app-text-muted);
-  font: var(--app-font-caption);
-}
-
-.stage-card__value {
-  display: block;
-  margin-top: var(--app-space-2);
-  color: var(--app-primary);
-  font: var(--app-font-card-title);
-}
-
-.stage-card__mark {
-  display: flex;
-  width: var(--app-space-16);
-  height: var(--app-space-16);
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--app-radius-round);
-  color: var(--app-primary);
-  font: var(--app-font-section-title);
-  transform: rotate(8deg);
-}
-
-.stage-card__note {
-  grid-column: 2 / 4;
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-md);
-  line-height: var(--app-line-height-normal);
-}
-
 .settings-section {
   display: flex;
   flex-direction: column;
   gap: var(--app-space-7);
 }
 
+.settings-section--muted {
+  margin-top: var(--app-space-4);
+}
+
+.settings-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--app-space-5);
+}
+
 .settings-section__title {
-  color: var(--app-text-muted);
+  color: var(--app-text-soft);
   font: var(--app-font-caption);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+.settings-section__hint {
+  color: var(--app-text-muted);
+  font-size: var(--app-font-size-2xs);
+  line-height: var(--app-line-height-none);
+}
+
+.mode-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--app-option-group-gap);
 }
 
 .mode-card {
-  min-height: var(--app-space-40);
+  display: flex;
+  min-height: var(--app-space-24);
   flex-direction: column;
-  gap: var(--app-space-5);
-  border-color: var(--app-border-muted);
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-3);
+  padding: var(--app-space-7) var(--app-space-4);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-card);
   background: var(--app-surface);
-  box-shadow: var(--app-shadow-sm);
 }
 
-.mode-card.app-option-button--active {
+.mode-card--active {
+  border-color: var(--app-primary);
   background: var(--app-surface);
   box-shadow: var(--app-shadow-focus);
 }
 
+.mode-card--pressed {
+  opacity: var(--app-press-opacity);
+  transform: scale(var(--app-press-scale));
+}
+
 .mode-card__icon {
   color: var(--app-primary);
-  font: var(--app-font-section-title);
+  font-size: var(--app-font-size-lg);
+  line-height: var(--app-line-height-none);
 }
 
 .mode-card__label {
@@ -280,166 +267,210 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   font: var(--app-font-caption);
 }
 
-.choice-list {
-  @include panel;
-  padding: var(--app-space-0);
-  border-color: var(--app-border-muted);
+.mode-card--active .mode-card__label {
+  color: var(--app-primary);
+}
+
+.settings-theme-picker {
+  display: block;
+}
+
+.density-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--app-option-group-gap);
+}
+
+.density-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-4);
+  padding: var(--app-space-7) var(--app-space-8);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-card);
   background: var(--app-surface);
-  box-shadow: var(--app-shadow-sm);
+}
+
+.density-card--active {
+  border-color: var(--app-primary);
+  box-shadow: var(--app-shadow-focus);
+}
+
+.density-card--pressed {
+  opacity: var(--app-press-opacity);
+  transform: scale(var(--app-press-scale));
+}
+
+.density-card__top {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-5);
+}
+
+.density-card__icon {
+  color: var(--app-primary);
+  font-size: var(--app-font-size-lg);
+  line-height: var(--app-line-height-none);
+}
+
+.density-card__label {
+  color: var(--app-text);
+  font: var(--app-font-button);
+}
+
+.density-card--active .density-card__label {
+  color: var(--app-primary);
+}
+
+.density-card__note {
+  display: block;
+  color: var(--app-text-muted);
+  font-size: var(--app-font-size-2xs);
+  line-height: var(--app-line-height-snug);
+}
+
+.font-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-8);
+  padding: var(--app-card-padding);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-card);
+  background: var(--app-surface);
+}
+
+.font-card__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--app-option-group-gap);
+}
+
+.font-choice {
+  display: flex;
+  min-height: var(--app-space-20);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-2);
+  padding: var(--app-space-5) var(--app-space-4);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+
+.font-choice--active {
+  border-color: var(--app-primary);
+  box-shadow: var(--app-shadow-focus);
+}
+
+.font-choice--pressed {
+  opacity: var(--app-press-opacity);
+  transform: scale(var(--app-press-scale));
+}
+
+.font-choice__label {
+  color: var(--app-text);
+  font: var(--app-font-button);
+}
+
+.font-choice--active .font-choice__label {
+  color: var(--app-primary);
+}
+
+.font-choice__hint {
+  color: var(--app-text-muted);
+  font-size: var(--app-font-size-2xs);
+  line-height: var(--app-line-height-none);
+}
+
+.font-card__rail {
+  position: relative;
+  height: var(--app-border-width-focus);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-divider);
+}
+
+.font-card__rail-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--app-space-20);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-primary);
+}
+
+.font-card__rail-dot {
+  position: absolute;
+  top: calc(var(--app-space-3) * -1);
+  left: var(--app-space-16);
+  width: var(--app-space-8);
+  height: var(--app-space-8);
+  border-radius: var(--app-radius-round);
+  background: var(--app-surface);
+  border: var(--app-border-width-focus) solid var(--app-primary);
+}
+
+.font-card__rail-dot--large {
+  left: calc(100% - var(--app-space-24));
+}
+
+.font-card__preview {
+  text-align: center;
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-md);
+  line-height: var(--app-line-height-normal);
+}
+
+.appendix {
+  display: flex;
+  flex-direction: column;
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-radius-card);
+  background: var(--app-surface);
   overflow: hidden;
 }
 
-.choice-list__group {
-  gap: var(--app-space-0);
-  grid-template-columns: 1fr;
-}
-
-.choice-row {
-  min-height: var(--app-space-36);
+.appendix-row {
+  display: flex;
+  min-height: var(--app-space-18);
+  align-items: center;
   justify-content: space-between;
-  padding: var(--app-space-7) var(--app-space-8);
-  border: 0;
+  gap: var(--app-space-7);
+  padding: var(--app-space-7) var(--app-space-9);
   border-bottom: var(--app-panel-border-width) solid var(--app-divider);
-  border-radius: var(--app-space-0);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-none);
 }
 
-.choice-row:last-child {
+.appendix-row:last-child {
   border-bottom: 0;
 }
 
-.choice-row.app-option-button--active {
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-none);
+.appendix-row--pressed {
+  opacity: var(--app-press-opacity);
 }
 
-.choice-row__main,
-.info-row__main {
+.appendix-row__main {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: var(--app-space-5);
 }
 
-.choice-row__icon,
-.info-row__icon {
+.appendix-row__icon {
   color: var(--app-primary);
   font: var(--app-font-caption);
 }
 
-.choice-row__label,
-.info-row__label {
-  color: var(--app-text);
-  font: var(--app-font-button);
-}
-
-.choice-row__radio {
-  width: var(--app-space-7);
-  height: var(--app-space-7);
-  border: var(--app-panel-border-width) solid var(--app-border-strong);
-  border-radius: var(--app-radius-round);
-}
-
-.choice-row.app-option-button--active .choice-row__radio {
-  border-color: var(--app-primary);
-  background: radial-gradient(circle, var(--app-primary) var(--app-space-2), transparent var(--app-space-3));
-}
-
-.font-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--app-space-7);
-  padding: var(--app-card-padding);
-  border-color: var(--app-border-muted);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-sm);
-}
-
-.font-card__choices {
-  display: contents;
-}
-
-.font-choice {
-  min-height: var(--app-control-height-sm);
-  padding: var(--app-space-2) var(--app-space-4);
-  border: 0;
-  background: transparent;
-  box-shadow: var(--app-shadow-none);
-}
-
-.font-choice.app-option-button--active {
-  color: var(--app-primary);
-  background: transparent;
-  box-shadow: var(--app-shadow-none);
-}
-
-.font-card__rail {
-  position: relative;
-  min-width: var(--app-space-32);
-  height: var(--app-border-width-focus);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-divider);
-}
-
-.font-card__rail::before {
-  position: absolute;
-  inset: var(--app-space-0) auto var(--app-space-0) var(--app-space-0);
-  width: var(--app-space-20);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-primary);
-  content: "";
-}
-
-.font-card__dot {
-  position: absolute;
-  top: calc(var(--app-space-0) - var(--app-space-3));
-  left: var(--app-space-16);
-  width: var(--app-space-8);
-  height: var(--app-space-8);
-  border-radius: var(--app-radius-round);
-  background: var(--app-primary);
-}
-
-.font-card__dot--large {
-  left: var(--app-space-24);
-}
-
-.font-card__preview {
-  grid-column: 1 / 4;
-  justify-self: center;
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-md);
-  line-height: var(--app-line-height-normal);
-}
-
-.info-card {
-  border-color: var(--app-border-muted);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-sm);
-  overflow: hidden;
-}
-
-.info-row {
-  display: flex;
-  min-height: var(--app-space-36);
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--app-space-7);
-  padding: var(--app-space-7) var(--app-space-8);
-  border-bottom: var(--app-panel-border-width) solid var(--app-divider);
-}
-
-.info-row:last-child {
-  border-bottom: 0;
-}
-
-.info-row--muted .info-row__icon {
+.appendix-row--quiet .appendix-row__icon {
   color: var(--app-accent);
 }
 
-.info-row__value {
+.appendix-row__label {
+  color: var(--app-text);
+  font: var(--app-font-caption);
+}
+
+.appendix-row__value {
   flex-shrink: 0;
   max-width: var(--app-cloud-value-width);
   color: var(--app-text-soft);
@@ -449,7 +480,7 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
 }
 
 .settings-signoff {
-  margin-top: var(--app-space-16);
+  margin-top: var(--app-space-12);
   color: var(--app-text-muted);
   font: var(--app-font-caption);
   text-align: center;
