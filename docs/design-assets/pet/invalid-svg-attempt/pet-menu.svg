@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <path id="body-shape" d="M128 38C90 38 66 64 66 101C66 113 71 124 79 133C65 145 56 162 57 178C58 193 68 201 82 199C86 214 97 224 111 224C121 224 126 217 128 207C130 217 135 224 150 224C165 224 176 214 180 199C194 201 204 193 207 178C210 162 199 145 185 133C192 123 196 110 195 97C191 62 165 38 128 38Z"/>
+    <clipPath id="body-clip">
+      <use href="#body-shape" fill="#000000"/>
+    </clipPath>
+    <linearGradient id="outline-gradient" x1="55" y1="131" x2="203" y2="131" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f35f67"/>
+      <stop offset=".48" stop-color="#f78988"/>
+      <stop offset=".55" stop-color="#7fc2ff"/>
+      <stop offset="1" stop-color="#3c99ee"/>
+    </linearGradient>
+    <linearGradient id="red-wash" x1="58" y1="131" x2="142" y2="131" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff6671" stop-opacity=".35"/>
+      <stop offset=".68" stop-color="#ff8d91" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ff8d91" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="blue-wash" x1="198" y1="131" x2="114" y2="131" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5aa9ff" stop-opacity=".34"/>
+      <stop offset=".68" stop-color="#9ed5ff" stop-opacity=".15"/>
+      <stop offset="1" stop-color="#9ed5ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="pet">
+    <g id="body-blend-center" clip-path="url(#body-clip)">
+      <use href="#body-shape" fill="#fff7ef"/>
+      <ellipse cx="128" cy="132" rx="42" ry="91" fill="#fffdf8" opacity=".62"/>
+      <path d="M126 54C139 80 142 169 129 215C119 170 120 87 126 54Z" fill="#fffaf2" opacity=".5"/>
+    </g>
+    <g id="body-left-red" clip-path="url(#body-clip)">
+      <rect x="50" y="32" width="94" height="198" fill="url(#red-wash)"/>
+      <ellipse cx="88" cy="136" rx="34" ry="72" fill="#ff6f76" opacity=".1"/>
+    </g>
+    <g id="body-right-blue" clip-path="url(#body-clip)">
+      <rect x="112" y="32" width="94" height="198" fill="url(#blue-wash)"/>
+      <ellipse cx="170" cy="136" rx="34" ry="72" fill="#5db2ff" opacity=".1"/>
+    </g>
+    <g id="feet">
+      <ellipse cx="103" cy="216" rx="14" ry="7" fill="#fff7ef" opacity=".88"/>
+      <ellipse cx="153" cy="216" rx="14" ry="7" fill="#edf8ff" opacity=".88"/>
+      <path d="M93 216C101 221 114 220 120 211" stroke="#fffdf8" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+      <path d="M136 211C143 220 157 221 164 216" stroke="#e1f2ff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+    </g>
+    <g id="highlight-soft" stroke-linecap="round">
+      <path d="M88 84C94 70 104 61 117 56" stroke="#fffdf8" stroke-width="8" opacity=".72"/>
+      <path d="M76 154C72 163 72 172 75 179" stroke="#fffdf8" stroke-width="5" opacity=".48"/>
+      <path d="M88 181C89 194 95 207 105 214" stroke="#fffdf8" stroke-width="4" opacity=".34"/>
+      <path d="M183 153C187 165 187 181 182 196" stroke="#ffffff" stroke-width="4" opacity=".3"/>
+      <path d="M192 151C197 158 199 166 198 173" stroke="#ffffff" stroke-width="5" opacity=".42"/>
+    </g>
+    <g id="eyes-open">
+      <circle cx="106" cy="101" r="6.4" fill="#071a52"/>
+      <circle cx="150" cy="101" r="6.4" fill="#071a52"/>
+      <circle cx="108" cy="98" r="2" fill="#ffffff" opacity=".46"/>
+      <circle cx="152" cy="98" r="2" fill="#ffffff" opacity=".46"/>
+    </g>
+    <g id="eyes-blink" display="none" stroke="#111111" stroke-width="3" stroke-linecap="round">
+      <path d="M100 101C104 103 109 103 113 101"/>
+      <path d="M144 101C148 103 153 103 157 101"/>
+    </g>
+    <g id="prop-note">
+      <path d="M176 125C177 121 180 119 184 120L218 126C222 127 224 130 224 134L219 179C218 183 215 186 211 185L176 179C172 178 170 175 171 171L176 125Z" fill="#fffaf0" stroke="#e2d5c5" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M211 125L219 127L217 136C216 139 214 140 211 139L203 137Z" fill="#f4ebdd" opacity=".85"/>
+      <path d="M182 142C191 140 201 141 213 144" stroke="#f0e4d6" stroke-width="3" stroke-linecap="round" opacity=".72"/>
+    </g>
+    <g id="pet-outline">
+      <use href="#body-shape" stroke="url(#outline-gradient)" stroke-width="7.5" stroke-linejoin="round"/>
+    </g>
+    <g id="prop-hide-paper" display="none">
+      <path d="M55 113C55 106 60 101 67 101H189C196 101 201 106 201 113V198C201 205 196 210 189 210H67C60 210 55 205 55 198V113Z" fill="#fffaf0" stroke="#dfd4c3" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M72 104C89 111 111 113 128 110C146 107 164 107 184 112" stroke="#f0e6d8" stroke-width="3" stroke-linecap="round" opacity=".72"/>
+      <path d="M68 126C88 121 105 122 122 127" stroke="#eadfce" stroke-width="3" stroke-linecap="round" opacity=".58"/>
+      <path d="M135 126C153 121 170 122 188 127" stroke="#eadfce" stroke-width="3" stroke-linecap="round" opacity=".48"/>
+    </g>
+  </g>
+</svg>

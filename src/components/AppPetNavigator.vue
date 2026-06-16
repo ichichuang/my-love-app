@@ -16,12 +16,11 @@
       @touchcancel.stop="handlePetTouchCancel"
     >
       <view class="app-pet-navigator__paper">
-        <view class="app-pet-navigator__eyes">
-          <view class="app-pet-navigator__eye" />
-          <view class="app-pet-navigator__eye" />
-        </view>
-        <view class="app-pet-navigator__line app-pet-navigator__line--primary" />
-        <view class="app-pet-navigator__line app-pet-navigator__line--accent" />
+        <image
+          class="app-pet-navigator__image"
+          src="/static/pet/pet-idle.png"
+          mode="aspectFit"
+        />
       </view>
     </view>
 
@@ -256,7 +255,13 @@ const resolvePetEdgeGap = (): number => {
   return smallestSide > 0 ? smallestSide / 4 : 0
 }
 
-const resolveBubbleEdgeGap = (): number => resolvePetEdgeGap() / 2
+const resolveBubblePetGap = (): number => {
+  const petSide = Math.min(petSize.value.width, petSize.value.height)
+  // The PNG has transparent breathing room, so the bubble needs to overlap the hitbox.
+  return petSide > 0 ? -petSide / 3 : 0
+}
+
+const resolveBubbleScreenGap = (): number => resolvePetEdgeGap() / 2
 
 const resolveBubbleTailInset = (): number => {
   const petSide = Math.min(petSize.value.width, petSize.value.height)
@@ -445,29 +450,32 @@ const resolveBubbleTailLayout = (petCenter: Point): { edge: BubbleTailEdge; posi
   }
 }
 
+const resolveBubbleTailTarget = (horizontal: HorizontalPlacement, vertical: VerticalPlacement): Point => ({
+  x: petPosition.value.left + petSize.value.width * (horizontal === "left" ? 1 / 3 : 2 / 3),
+  y: petPosition.value.top + petSize.value.height * (vertical === "top" ? 1 / 3 : 2 / 3)
+})
+
 const resolveBubbleLayout = () => {
-  const gap = resolveBubbleEdgeGap()
+  const petGap = resolveBubblePetGap()
+  const screenGap = resolveBubbleScreenGap()
   const centerX = petPosition.value.left + petSize.value.width / 2
   const centerY = petPosition.value.top + petSize.value.height / 2
-  const horizontal = chooseHorizontalPlacement(centerX, bubbleSize.value.width + gap)
-  const vertical = chooseVerticalPlacement(centerY, bubbleSize.value.height + gap)
+  const horizontal = chooseHorizontalPlacement(centerX, bubbleSize.value.width + petGap + screenGap)
+  const vertical = chooseVerticalPlacement(centerY, bubbleSize.value.height + petGap + screenGap)
   const idealLeft = horizontal === "left"
-    ? petPosition.value.left - bubbleSize.value.width - gap
-    : petPosition.value.left + petSize.value.width + gap
+    ? petPosition.value.left - bubbleSize.value.width - petGap
+    : petPosition.value.left + petSize.value.width + petGap
   const idealTop = vertical === "top"
-    ? petPosition.value.top - bubbleSize.value.height - gap
-    : petPosition.value.top + petSize.value.height + gap
+    ? petPosition.value.top - bubbleSize.value.height - petGap
+    : petPosition.value.top + petSize.value.height + petGap
 
   bubblePlacement.value = `${horizontal}-${vertical}` as BubblePlacement
   bubblePosition.value = {
-    left: clamp(idealLeft, gap, viewport.value.width - bubbleSize.value.width - gap),
-    top: clamp(idealTop, gap, viewport.value.height - viewport.value.safeBottom - bubbleSize.value.height - gap)
+    left: clamp(idealLeft, screenGap, viewport.value.width - bubbleSize.value.width - screenGap),
+    top: clamp(idealTop, screenGap, viewport.value.height - viewport.value.safeBottom - bubbleSize.value.height - screenGap)
   }
 
-  const tail = resolveBubbleTailLayout({
-    x: centerX,
-    y: centerY
-  })
+  const tail = resolveBubbleTailLayout(resolveBubbleTailTarget(horizontal, vertical))
   bubbleTailEdge.value = tail.edge
   bubbleTailPosition.value = tail.position
 }
@@ -607,44 +615,17 @@ onMounted(async () => {
   position: fixed;
   top: var(--app-space-0);
   left: var(--app-space-0);
-  z-index: 16;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--app-space-44);
-  height: var(--app-space-40);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-card) var(--app-radius-2xl) var(--app-radius-card) var(--app-radius-2xl);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-floating);
+  width: var(--app-space-48);
+  height: var(--app-space-48);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   pointer-events: none;
   visibility: hidden;
-}
-
-.app-pet-navigator::before {
-  position: absolute;
-  top: var(--app-space-0);
-  right: var(--app-space-0);
-  width: var(--app-space-13);
-  height: var(--app-space-13);
-  border-bottom: var(--app-panel-border-width) solid var(--app-border);
-  border-left: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-space-0) var(--app-radius-card) var(--app-space-0) var(--app-radius-xs);
-  background: var(--app-field);
-  content: "";
-}
-
-.app-pet-navigator::after {
-  position: absolute;
-  right: var(--app-space-8);
-  bottom: calc(var(--app-space-0) - var(--app-space-2));
-  width: var(--app-space-10);
-  height: var(--app-space-5);
-  border-right: var(--app-panel-border-width) solid var(--app-border);
-  border-bottom: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-round);
-  background: var(--app-surface);
-  content: "";
 }
 
 .app-pet-navigator--ready {
@@ -654,10 +635,13 @@ onMounted(async () => {
 
 .app-pet-navigator--pressed,
 .app-pet-navigator--touching,
-.app-pet-navigator--dragging,
-.app-pet-navigator--open {
+.app-pet-navigator--dragging {
   opacity: var(--app-press-opacity);
   transform: scale(var(--app-press-scale));
+}
+
+.app-pet-navigator--open {
+  transform: translateY(calc(var(--app-space-0) - var(--app-space-1)));
 }
 
 .app-pet-navigator__paper {
@@ -665,45 +649,37 @@ onMounted(async () => {
   display: flex;
   width: 100%;
   height: 100%;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--app-space-4);
-  overflow: hidden;
+  overflow: visible;
 }
 
-.app-pet-navigator__eyes {
-  display: flex;
-  gap: var(--app-space-6);
-}
-
-.app-pet-navigator__eye {
-  width: var(--app-space-2);
-  height: var(--app-space-2);
+.app-pet-navigator__paper::after {
+  position: absolute;
+  right: var(--app-space-8);
+  bottom: var(--app-space-2);
+  left: var(--app-space-8);
+  height: var(--app-space-5);
   border-radius: var(--app-radius-round);
-  background: var(--app-text);
+  background:
+    linear-gradient(90deg, var(--app-primary-muted), var(--app-accent-soft));
+  content: "";
+  opacity: var(--app-muted-opacity);
 }
 
-.app-pet-navigator__line {
-  height: var(--app-border-width-focus);
-  border-radius: var(--app-radius-pill);
-  opacity: var(--app-decor-opacity);
-}
-
-.app-pet-navigator__line--primary {
-  width: var(--app-space-18);
-  background: var(--app-color-red-person);
-}
-
-.app-pet-navigator__line--accent {
-  width: var(--app-space-24);
-  background: var(--app-color-blue-person);
+.app-pet-navigator__image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: calc(100% + var(--app-space-8));
+  height: calc(100% + var(--app-space-8));
+  max-width: none;
 }
 
 .app-pet-backdrop {
   position: fixed;
   inset: var(--app-space-0);
-  z-index: 14;
+  z-index: 48;
 }
 
 .app-pet-bubble {
@@ -711,17 +687,20 @@ onMounted(async () => {
   position: fixed;
   top: var(--app-space-0);
   left: var(--app-space-0);
-  z-index: 15;
+  z-index: 49;
   display: flex;
   flex-direction: column;
   width: calc(var(--app-space-64) + var(--app-space-20));
   max-width: calc(100vw - var(--app-page-padding-x) - var(--app-page-padding-x));
-  gap: var(--app-space-2);
-  padding: var(--app-space-7) var(--app-space-8) var(--app-space-5);
+  gap: var(--app-space-3);
+  padding: var(--app-space-8) var(--app-space-8) var(--app-space-6) var(--app-space-9);
   border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-3xl) var(--app-radius-xl) var(--app-radius-2xl) var(--app-radius-lg);
-  background: var(--app-field);
-  box-shadow: var(--app-shadow-button);
+  border-radius: var(--app-radius-3xl) var(--app-radius-3xl) var(--app-radius-2xl) var(--app-radius-3xl);
+  background:
+    radial-gradient(circle at 18% 12%, var(--app-surface), transparent 54%),
+    radial-gradient(circle at 86% 20%, var(--app-surface-strong), transparent 48%),
+    linear-gradient(180deg, var(--app-field), var(--app-surface));
+  box-shadow: var(--app-shadow-md);
   opacity: var(--app-space-0);
   pointer-events: none;
   transform: translateY(var(--app-fade-offset-y)) scale(var(--app-press-scale));
@@ -729,7 +708,7 @@ onMounted(async () => {
 }
 
 .app-pet-bubble--open {
-  opacity: initial;
+  opacity: var(--app-line-height-none);
   pointer-events: auto;
   transform: none;
   visibility: visible;
@@ -762,34 +741,59 @@ onMounted(async () => {
 }
 
 .app-pet-bubble::before {
-  top: calc(var(--app-space-0) - var(--app-space-5));
-  left: var(--app-space-8);
-  width: var(--app-space-18);
-  height: var(--app-space-11);
+  top: calc(var(--app-space-0) - var(--app-space-7));
+  left: var(--app-space-10);
+  width: var(--app-space-28);
+  height: var(--app-space-16);
   border-bottom: 0;
-  border-radius: var(--app-radius-pill) var(--app-radius-lg) var(--app-space-0) var(--app-space-0);
+  border-radius: var(--app-radius-pill) var(--app-radius-pill) var(--app-space-0) var(--app-space-0);
 }
 
 .app-pet-bubble::after {
-  right: var(--app-space-10);
-  bottom: calc(var(--app-space-0) - var(--app-space-4));
+  top: calc(var(--app-space-0) - var(--app-space-5));
+  right: var(--app-space-11);
   width: var(--app-space-20);
-  height: var(--app-space-9);
-  border-top: 0;
-  border-radius: var(--app-space-0) var(--app-space-0) var(--app-radius-lg) var(--app-radius-pill);
+  height: var(--app-space-13);
+  border-bottom: 0;
+  border-radius: var(--app-radius-pill) var(--app-radius-pill) var(--app-space-0) var(--app-space-0);
+  background: var(--app-surface);
 }
 
 .app-pet-bubble__tail {
   position: absolute;
   z-index: 0;
-  width: var(--app-space-14);
-  height: var(--app-space-14);
+  width: var(--app-space-13);
+  height: var(--app-space-13);
   border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-sm);
-  background: var(--app-field);
+  border-radius: var(--app-radius-3xl) var(--app-radius-md) var(--app-radius-3xl) var(--app-radius-lg);
+  background:
+    linear-gradient(135deg, var(--app-field), var(--app-surface));
   box-shadow: var(--app-shadow-none);
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.app-pet-bubble__tail::before,
+.app-pet-bubble__tail::after {
+  position: absolute;
+  border-radius: var(--app-radius-round);
+  background: var(--app-field);
+  content: "";
+}
+
+.app-pet-bubble__tail::before {
+  top: var(--app-space-1);
+  left: var(--app-space-1);
+  width: var(--app-space-7);
+  height: var(--app-space-7);
+}
+
+.app-pet-bubble__tail::after {
+  right: var(--app-space-1);
+  bottom: var(--app-space-1);
+  width: var(--app-space-5);
+  height: var(--app-space-5);
+  background: var(--app-surface);
 }
 
 .app-pet-bubble--tail-top .app-pet-bubble__tail {
@@ -814,15 +818,15 @@ onMounted(async () => {
 
 .app-pet-bubble__paper-corner {
   position: absolute;
-  top: var(--app-space-3);
-  right: var(--app-space-3);
+  top: var(--app-space-5);
+  right: var(--app-space-6);
   z-index: 0;
-  width: var(--app-space-12);
-  height: var(--app-space-12);
+  width: var(--app-space-8);
+  height: var(--app-space-8);
   border-top: var(--app-panel-border-width) solid var(--app-border-muted);
   border-right: var(--app-panel-border-width) solid var(--app-border-muted);
   border-radius: var(--app-space-0) var(--app-radius-md) var(--app-space-0) var(--app-space-0);
-  background: var(--app-surface);
+  background: var(--app-field);
   opacity: var(--app-decor-opacity);
   pointer-events: none;
 }
@@ -844,18 +848,19 @@ onMounted(async () => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--app-space-1);
-  padding-bottom: var(--app-space-3);
+  gap: var(--app-space-2);
+  padding-right: var(--app-space-7);
+  padding-bottom: var(--app-space-4);
 }
 
 .app-pet-bubble__speech::after {
   position: absolute;
   bottom: var(--app-space-0);
   left: var(--app-space-0);
-  width: var(--app-space-16);
+  width: var(--app-space-20);
   height: var(--app-border-width-hairline);
   border-radius: var(--app-radius-pill);
-  background: var(--app-primary-soft);
+  background: var(--app-accent-soft);
   content: "";
   opacity: var(--app-decor-opacity);
 }
@@ -863,8 +868,8 @@ onMounted(async () => {
 .app-pet-bubble__speech::before {
   position: absolute;
   top: calc(var(--app-space-0) - var(--app-space-2));
-  left: var(--app-space-28);
-  width: var(--app-space-8);
+  left: var(--app-space-32);
+  width: var(--app-space-10);
   height: var(--app-border-width-hairline);
   border-radius: var(--app-radius-pill);
   background: var(--app-border-muted);
@@ -873,12 +878,15 @@ onMounted(async () => {
 }
 
 .app-pet-bubble__title {
-  color: var(--app-text);
-  font: var(--app-font-card-title);
+  color: var(--app-primary);
+  font-family: var(--app-font-family-display);
+  font-size: var(--app-font-size-3xl);
+  font-weight: var(--app-font-weight-semibold);
+  line-height: var(--app-line-height-tight);
 }
 
 .app-pet-bubble__subtitle {
-  color: var(--app-text-muted);
+  color: var(--app-text-soft);
   font: var(--app-font-caption);
 }
 
@@ -887,7 +895,7 @@ onMounted(async () => {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--app-space-1);
+  gap: var(--app-space-3);
   margin-top: var(--app-space-1);
 }
 
@@ -896,16 +904,17 @@ onMounted(async () => {
   z-index: 1;
   display: flex;
   justify-content: flex-end;
+  margin-top: var(--app-space-1);
 }
 
 :deep(.app-pet-bubble__action-button) {
   justify-content: center;
-  height: var(--app-control-scale-2xs);
-  min-height: var(--app-control-scale-2xs);
-  padding: var(--app-space-0) var(--app-space-3);
-  border-color: var(--app-divider);
-  border-radius: var(--app-radius-sm) var(--app-radius-lg) var(--app-radius-md) var(--app-radius-sm);
-  background: var(--app-surface);
+  height: var(--app-control-scale-xs);
+  min-height: var(--app-control-scale-xs);
+  padding: var(--app-space-0) var(--app-space-4);
+  border-color: var(--app-border-muted);
+  border-radius: var(--app-radius-pill) var(--app-radius-lg) var(--app-radius-pill) var(--app-radius-md);
+  background: var(--app-field);
   box-shadow: var(--app-shadow-none);
   color: var(--app-text);
   font: var(--app-font-caption);
@@ -913,7 +922,7 @@ onMounted(async () => {
 }
 
 :deep(.app-pet-bubble__action-button:nth-child(2n)) {
-  border-radius: var(--app-radius-lg) var(--app-radius-sm) var(--app-radius-sm) var(--app-radius-md);
+  border-radius: var(--app-radius-lg) var(--app-radius-pill) var(--app-radius-md) var(--app-radius-pill);
   background: var(--app-surface-strong);
   transform: rotate(1deg);
 }
@@ -927,17 +936,15 @@ onMounted(async () => {
 }
 
 :deep(.app-pet-bubble__hide-button) {
-  height: var(--app-space-12);
-  min-height: var(--app-space-12);
-  padding: var(--app-space-0) var(--app-space-2);
-  border-color: transparent;
-  background: transparent;
+  height: var(--app-space-14);
+  min-height: var(--app-space-14);
+  padding: var(--app-space-0) var(--app-space-4);
+  border-color: var(--app-border-muted);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-surface);
   box-shadow: var(--app-shadow-none);
   color: var(--app-text-muted);
   font: var(--app-font-caption);
   opacity: var(--app-muted-opacity);
-  text-decoration: underline;
-  text-decoration-color: var(--app-divider);
-  text-underline-offset: var(--app-space-1);
 }
 </style>

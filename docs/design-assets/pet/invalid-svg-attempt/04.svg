@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <path id="body-shape-04" d="M123 52C86 55 68 82 74 117C76 126 82 135 91 142C78 150 69 168 73 182C77 195 87 201 100 198C105 213 116 222 128 219C137 217 140 209 142 201C151 199 164 198 172 200C180 210 197 211 207 199C216 190 214 176 206 165C219 162 225 152 220 139C215 128 204 119 190 114C195 84 171 50 123 52Z"/>
+    <clipPath id="body-clip-04">
+      <use href="#body-shape-04" fill="#000000"/>
+    </clipPath>
+    <linearGradient id="outline-gradient-04" x1="67" y1="137" x2="220" y2="137" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff575f"/>
+      <stop offset=".47" stop-color="#ff6b70"/>
+      <stop offset=".57" stop-color="#61a9ff"/>
+      <stop offset="1" stop-color="#3499f4"/>
+    </linearGradient>
+    <linearGradient id="red-fade-04" x1="70" y1="137" x2="141" y2="137" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff6b70" stop-opacity=".34"/>
+      <stop offset=".72" stop-color="#ff8e91" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#ff8e91" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="blue-fade-04" x1="218" y1="137" x2="121" y2="137" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#69bbff" stop-opacity=".34"/>
+      <stop offset=".72" stop-color="#a8d8ff" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#a8d8ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="body-blend-center" clip-path="url(#body-clip-04)">
+    <use href="#body-shape-04" fill="#fff7ef"/>
+    <ellipse cx="141" cy="136" rx="45" ry="80" fill="#fffdf8" opacity=".72"/>
+  </g>
+  <g id="body-left-red" clip-path="url(#body-clip-04)">
+    <rect x="64" y="46" width="86" height="180" fill="url(#red-fade-04)"/>
+  </g>
+  <g id="body-right-blue" clip-path="url(#body-clip-04)">
+    <rect x="118" y="46" width="105" height="180" fill="url(#blue-fade-04)"/>
+  </g>
+  <g id="highlight-soft" stroke-linecap="round">
+    <path d="M95 92C102 78 112 70 125 66" stroke="#fffdf8" stroke-width="8" opacity=".76"/>
+    <path d="M79 161C77 169 77 176 80 182" stroke="#fffdf8" stroke-width="5" opacity=".55"/>
+    <path d="M91 179C96 195 106 206 119 212" stroke="#fffdf8" stroke-width="4" opacity=".4"/>
+    <path d="M203 132C209 139 211 146 210 153" stroke="#ffffff" stroke-width="5" opacity=".48"/>
+    <path d="M194 167C199 176 199 185 193 194" stroke="#ffffff" stroke-width="4" opacity=".3"/>
+  </g>
+  <g id="feet" stroke-linecap="round">
+    <path d="M108 209C119 219 136 216 141 202" stroke="#fffdf8" stroke-width="3" opacity=".42"/>
+    <path d="M170 202C181 211 197 207 205 197" stroke="#dff0ff" stroke-width="3" opacity=".42"/>
+  </g>
+  <g id="eyes-open">
+    <circle cx="111" cy="103" r="6.2" fill="#071a52"/>
+    <circle cx="148" cy="98" r="6.2" fill="#071a52"/>
+    <circle cx="113" cy="100" r="2" fill="#ffffff" opacity=".45"/>
+    <circle cx="150" cy="95" r="2" fill="#ffffff" opacity=".45"/>
+  </g>
+  <g id="eyes-blink" display="none" stroke="#111111" stroke-width="3" stroke-linecap="round">
+    <path d="M105 103H117"/>
+    <path d="M142 98H154"/>
+  </g>
+  <g id="pet-outline">
+    <use href="#body-shape-04" stroke="url(#outline-gradient-04)" stroke-width="8" stroke-linejoin="round"/>
+  </g>
+</svg>
