@@ -82,7 +82,7 @@
       </view>
 
       <view v-if="loading" class="home-loading">
-        <text>正在读取私密回忆...</text>
+        <text>正在慢慢读取…</text>
       </view>
 
       <empty-state

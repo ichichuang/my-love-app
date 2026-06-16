@@ -57,7 +57,7 @@ const taskMood = (done: boolean): string => (done ? "已完成" : "未完成")
 const validDueDate = (value: string): string => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "")
 
 const taskUnavailableError = (): CloudBaseUserError =>
-  new CloudBaseUserError("事项记录暂时打不开，请检查这件事是否仍然存在。")
+  new CloudBaseUserError("这张小票根暂时打不开，请稍后再试一次。")
 
 const normalizeTask = (document: StoredTaskDocument): TaskRecord | null => {
   const id = asString(document._id)

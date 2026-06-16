@@ -6,7 +6,7 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell title="设计系统预览" eyebrow="开发校验">
+  <app-shell title="设计系统小样本" eyebrow="开发校验">
     <view class="preview">
       <view class="preview-panel preview-panel--diagnostics">
         <view class="preview-panel__head">

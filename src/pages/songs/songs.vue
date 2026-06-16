@@ -72,7 +72,7 @@
 
             <view class="song-card__tags">
               <text class="song-card__tag" :class="song.statusClass">{{ song.statusLabel }}</text>
-              <text class="song-card__tag song-card__tag--priority">心愿：{{ song.priorityLabel }}</text>
+              <text class="song-card__tag song-card__tag--priority">小愿望：{{ song.priorityLabel }}</text>
             </view>
           </view>
 

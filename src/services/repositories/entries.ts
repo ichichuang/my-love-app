@@ -54,7 +54,7 @@ const normalizeKind = (value: unknown): LoveEntryKind =>
   value === "memory" || value === "song" || value === "task" ? value : "memory"
 
 const entryUnavailableError = (): CloudBaseUserError =>
-  new CloudBaseUserError("回忆暂时打不开，请检查这条记录是否仍然存在。")
+  new CloudBaseUserError("这张小纸条暂时打不开，可能是云开发慢了一点，请稍后再试。")
 
 const stripTemporaryUrl = (file: CloudFile): StoredCloudFile => ({
   fileID: file.fileID,

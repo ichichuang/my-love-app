@@ -96,7 +96,7 @@ const formatDate = (timestamp: number): string => {
 }
 
 const songUnavailableError = (): CloudBaseUserError =>
-  new CloudBaseUserError("点歌记录暂时打不开，请检查这首歌是否仍然存在。")
+  new CloudBaseUserError("这首歌暂时打不开，请稍后再试一次。")
 
 const normalizeSong = (document: StoredSongDocument): SongRecord | null => {
   const id = asString(document._id)

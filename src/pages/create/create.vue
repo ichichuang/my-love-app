@@ -10,9 +10,9 @@
     <view class="create-page">
       <view class="create-hero">
         <view class="create-hero__copy">
-          <text class="create-hero__kicker">回忆收纳夹</text>
-          <text class="create-hero__title">把今天的一点小事夹进来</text>
-          <text class="create-hero__body">像写一张小日记纸页，文字和照片都会留在私密回忆里。</text>
+          <text class="create-hero__kicker">把小事夹进来</text>
+          <text class="create-hero__title">写一张小日记纸页</text>
+          <text class="create-hero__body">像贴一张手写小纸条，文字和照片都安静收进回忆里。</text>
         </view>
         <view class="create-hero__marks">
           <view class="create-hero__mark create-hero__mark--red" />
@@ -25,7 +25,7 @@
         <view class="memory-paper__header">
           <view>
             <text class="memory-paper__eyebrow">小日记纸页</text>
-            <text class="memory-paper__title">新的回忆</text>
+            <text class="memory-paper__title">新的小回忆</text>
           </view>
           <text class="memory-paper__stamp">私密</text>
         </view>
@@ -92,8 +92,8 @@
           <view class="photo-folder__body">
             <view class="photo-folder__head">
               <view>
-                <text class="photo-folder__title">放几张照片在这里</text>
-                <text class="photo-folder__note">可以放小票、风景、合照，最多 9 张。</text>
+                <text class="photo-folder__title">把小照片放进来</text>
+                <text class="photo-folder__note">小票、风景、合照都行，最多放 9 张。</text>
               </view>
               <text class="photo-folder__count">{{ files.length }}/9</text>
             </view>
@@ -107,7 +107,7 @@
               custom-class="photo-folder__button"
               @click="chooseAndUploadImages"
             >
-              放几张照片进去
+              轻轻放进一张
             </wd-button>
           </view>
         </view>

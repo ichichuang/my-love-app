@@ -6,19 +6,19 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :title="editing ? '编辑回忆' : '回忆详情'" :eyebrow="editing ? '重新整理这张纸页' : '收好的小事'">
+  <app-shell :title="editing ? '重新整理这一页' : '回忆详情'" :eyebrow="editing ? '改一张小纸条' : '收好的小事'">
     <template #actions>
       <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
     </template>
 
     <view v-if="loading" class="status-panel">
-      <text>正在读取回忆...</text>
+      <text>正在翻这张小纸条…</text>
     </view>
 
     <empty-state
       v-else-if="!entry"
-      title="回忆暂时打不开"
-      body="请检查云开发环境和访问权限。"
+      title="这张小纸条暂时打不开"
+      body="可能是云开发慢了一点，请稍后再试。"
     />
 
     <view v-else-if="!editing" class="detail-page">
@@ -33,7 +33,7 @@
         </view>
 
         <view class="memory-sheet__title-block">
-          <text class="memory-sheet__kicker">保存好的纸质记忆</text>
+          <text class="memory-sheet__kicker">收好的小纸页</text>
           <text class="memory-sheet__title">{{ entry.title }}</text>
         </view>
 
@@ -78,8 +78,8 @@
         <view class="edit-sheet__fold" />
         <view class="edit-sheet__header">
           <view>
-            <text class="edit-sheet__eyebrow">正在整理这张回忆纸页</text>
-            <text class="edit-sheet__title">把纸页重新夹好</text>
+            <text class="edit-sheet__eyebrow">正在整理这一页</text>
+            <text class="edit-sheet__title">把小纸条重新夹好</text>
           </view>
           <text class="edit-sheet__stamp">私密</text>
         </view>
@@ -146,8 +146,8 @@
           <view class="photo-folder__body">
             <view class="photo-folder__head">
               <view>
-                <text class="photo-folder__title">照片贴纸放这里</text>
-                <text class="photo-folder__note">移除照片后，保存成功会清理对应云端文件。</text>
+                <text class="photo-folder__title">换一张或删一张</text>
+                <text class="photo-folder__note">移除的照片，确认保存后才会从云端一起清理。</text>
               </view>
               <text class="photo-folder__count">{{ files.length }}/9</text>
             </view>
@@ -161,7 +161,7 @@
               custom-class="photo-folder__button"
               @click="chooseAndUploadImages"
             >
-              添加照片
+              再加一张
             </wd-button>
           </view>
         </view>

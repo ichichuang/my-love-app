@@ -103,7 +103,7 @@
 
       <view class="settings-section settings-section--muted">
         <view class="settings-section__head">
-          <text class="settings-section__title">当前版本</text>
+          <text class="settings-section__title">小角落信息</text>
         </view>
         <view class="appendix">
           <view class="appendix-row" hover-class="appendix-row--pressed" @click="openDesignPreview">
@@ -111,7 +111,7 @@
               <text class="appendix-row__icon">开发</text>
               <text class="appendix-row__label">开发预览</text>
             </view>
-            <text class="appendix-row__value">2.4.0</text>
+            <text class="appendix-row__value">设计系统小样本</text>
           </view>
           <view class="appendix-row appendix-row--quiet">
             <view class="appendix-row__main">
@@ -123,7 +123,7 @@
         </view>
       </view>
 
-      <text class="settings-signoff">每一笔，都是心跳的痕迹</text>
+      <text class="settings-signoff">小纸页轻轻收好，每一笔都是慢慢留下的痕迹</text>
     </view>
   </app-shell>
 </template>

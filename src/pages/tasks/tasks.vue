@@ -209,7 +209,7 @@ const decoratedTasks = computed<TaskListItem[]>(() =>
       statusClass: task.taskDone ? "task-card__status--done" : "task-card__status--undone",
       statusLabel: task.taskDone ? "已经勾上" : "还在等我们",
       taskCompletedAtLabel: completedAtText ? `${completedAtText}轻轻勾上` : "",
-      taskDueDateLabel: dueDateText ? `期待 ${dueDateText}` : ""
+      taskDueDateLabel: dueDateText ? `想 ${dueDateText} 完成` : ""
     }
   })
 )

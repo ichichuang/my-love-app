@@ -40,7 +40,7 @@
       <view class="app-pet-bubble__paper-corner" />
       <view class="app-pet-bubble__speech">
         <text class="app-pet-bubble__title">想去哪儿呀？</text>
-        <text class="app-pet-bubble__subtitle">我悄悄带你过去。</text>
+        <text class="app-pet-bubble__subtitle">我悄悄带你过去，慢慢逛。</text>
       </view>
 
       <view class="app-pet-bubble__actions">

@@ -35,7 +35,7 @@
             <text class="task-ticket__question">想一起做什么？</text>
             <text class="task-ticket__body">先写下来，什么时候完成都不急。</text>
           </view>
-          <text class="task-ticket__stamp">小计划</text>
+          <text class="task-ticket__stamp">小票根</text>
         </view>
 
         <view class="task-title-slip">
@@ -297,7 +297,7 @@ const waitForSaveFeedback = (): Promise<void> =>
 
 const resolveSaveErrorMessage = (error: unknown): string => {
   const message = getFriendlyErrorMessage(error)
-  return message.includes("纪念") ? "小约定暂时没收好，请稍后再试。" : message
+  return message.includes("纪念") ? "小约定暂时没改好，请稍后再试。" : message
 }
 
 const saveTask = async () => {
