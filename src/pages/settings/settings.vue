@@ -8,136 +8,114 @@
   />
   <app-shell title="私密偏好" eyebrow="设置">
     <view class="settings">
-      <view class="settings-cover">
-        <view class="settings-cover__stamp">
-          <text>当前阶段</text>
-          <text>本人测试</text>
+      <view class="settings-heading">
+        <text class="settings-heading__eyebrow">设置</text>
+        <text class="settings-heading__title">偏好配置</text>
+      </view>
+
+      <view class="stage-card">
+        <view class="stage-card__bar"></view>
+        <view class="stage-card__copy">
+          <text class="stage-card__label">当前阶段</text>
+          <text class="stage-card__value">本人测试</text>
         </view>
-        <view class="settings-cover__copy">
-          <text class="settings-cover__title">私密偏好</text>
-          <text class="settings-cover__body">当前只开放给拥有者账号，所有偏好只影响本机显示。</text>
-          <view class="settings-cover__tags">
-            <text class="settings-cover__tag">只影响本机</text>
-            <text class="settings-cover__tag">安静保存</text>
-          </view>
+        <view class="stage-card__mark">
+          <text>试</text>
+        </view>
+        <text class="stage-card__note">当前只开放给拥有者账号，所有偏好只影响本机显示。</text>
+      </view>
+
+      <view class="settings-section">
+        <text class="settings-section__title">外观模式</text>
+        <app-option-group class="mode-group" :columns="3">
+          <app-option-button
+            v-for="option in modeOptions"
+            :key="option.value"
+            class="mode-card"
+            :active="theme.mode === option.value"
+            @click="theme.setThemeMode(option.value)"
+          >
+            <text class="mode-card__icon">{{ option.icon }}</text>
+            <text class="mode-card__label">{{ option.label }}</text>
+          </app-option-button>
+        </app-option-group>
+      </view>
+
+      <view class="settings-section">
+        <text class="settings-section__title">主题颜色</text>
+        <theme-swatch-picker
+          class="settings-theme-picker"
+          :palette-id="theme.paletteId"
+          @select-palette="theme.setPalette"
+        />
+      </view>
+
+      <view class="settings-section">
+        <text class="settings-section__title">界面密度</text>
+        <view class="choice-list">
+          <app-option-group class="choice-list__group" :columns="2">
+            <app-option-button
+              v-for="option in densityOptions"
+              :key="option.value"
+              class="choice-row"
+              :active="theme.density === option.value"
+              @click="theme.setDensity(option.value)"
+            >
+              <view class="choice-row__main">
+                <text class="choice-row__icon">{{ option.icon }}</text>
+                <text class="choice-row__label">{{ option.label }}</text>
+              </view>
+              <text class="choice-row__radio"></text>
+            </app-option-button>
+          </app-option-group>
         </view>
       </view>
 
-      <view class="paper-book">
-        <view class="paper-book__rings">
-          <view class="paper-book__ring"></view>
-          <view class="paper-book__ring"></view>
-          <view class="paper-book__ring"></view>
-        </view>
-        <view class="paper-book__head">
-          <text class="paper-book__kicker">小纸样选择册</text>
-          <text class="paper-book__title">换换小程序样子</text>
-          <text class="paper-book__note">一点颜色、一点间距，都可以慢慢调成顺眼的样子。</text>
-          <view class="paper-book__tabs">
-            <text class="paper-book__tab">模式</text>
-            <text class="paper-book__tab paper-book__tab--palette">色卡</text>
-            <text class="paper-book__tab paper-book__tab--feel">手感</text>
-          </view>
-        </view>
-
-        <view class="settings-panel settings-panel--pinned">
-          <view class="settings-panel__head">
-            <text class="settings-panel__title">外观模式</text>
-            <text class="settings-panel__note">白天、夜里，或者交给系统自己看着办。</text>
-          </view>
-          <app-option-group :columns="3">
+      <view class="settings-section">
+        <text class="settings-section__title">字号大小</text>
+        <view class="font-card">
+          <app-option-group class="font-card__choices" :columns="2">
             <app-option-button
-              v-for="option in modeOptions"
+              v-for="option in fontScaleOptions"
               :key="option.value"
-              :active="theme.mode === option.value"
-              @click="theme.setThemeMode(option.value)"
+              class="font-choice"
+              :active="theme.fontScale === option.value"
+              @click="theme.setFontScale(option.value)"
             >
               <text>{{ option.label }}</text>
             </app-option-button>
           </app-option-group>
-        </view>
-
-        <view class="settings-panel settings-panel--sample">
-          <view class="settings-panel__head">
-            <text class="settings-panel__title">主题颜色</text>
-            <text class="settings-panel__note">挑一张今天的小纸样。</text>
+          <view class="font-card__rail">
+            <view
+              class="font-card__dot"
+              :class="{ 'font-card__dot--large': theme.fontScale === 'large' }"
+            ></view>
           </view>
-          <theme-swatch-picker
-            class="settings-theme-picker"
-            :palette-id="theme.paletteId"
-            @select-palette="theme.setPalette"
-          />
+          <text class="font-card__preview">“这是字号大小预览效果”</text>
         </view>
+      </view>
 
-        <view class="settings-grid">
-          <view class="settings-panel settings-panel--small">
-            <view class="settings-panel__head">
-              <text class="settings-panel__title">界面密度</text>
-              <text class="settings-panel__note">小纸条之间要松一点，还是贴近一点。</text>
+      <view class="settings-section">
+        <text class="settings-section__title">当前版本</text>
+        <view class="info-card">
+          <view class="info-row" @click="openDesignPreview">
+            <view class="info-row__main">
+              <text class="info-row__icon">开发</text>
+              <text class="info-row__label">开发预览</text>
             </view>
-            <app-option-group :columns="2">
-              <app-option-button
-                v-for="option in densityOptions"
-                :key="option.value"
-                :active="theme.density === option.value"
-                @click="theme.setDensity(option.value)"
-              >
-                <text>{{ option.label }}</text>
-              </app-option-button>
-            </app-option-group>
+            <text class="info-row__value">2.4.0</text>
           </view>
-
-          <view class="settings-panel settings-panel--small">
-            <view class="settings-panel__head">
-              <text class="settings-panel__title">字号大小</text>
-              <text class="settings-panel__note">看小字顺眼，或者让字再大一点。</text>
+          <view class="info-row info-row--muted">
+            <view class="info-row__main">
+              <text class="info-row__icon">云</text>
+              <text class="info-row__label">云开发信息</text>
             </view>
-            <app-option-group :columns="2">
-              <app-option-button
-                v-for="option in fontScaleOptions"
-                :key="option.value"
-                :active="theme.fontScale === option.value"
-                @click="theme.setFontScale(option.value)"
-              >
-                <text>{{ option.label }}</text>
-              </app-option-button>
-            </app-option-group>
+            <text class="info-row__value">{{ cloudEnvLabel }}</text>
           </view>
         </view>
       </view>
 
-      <view class="settings-footer">
-        <view class="settings-panel settings-panel--quiet">
-          <view class="settings-panel__head">
-            <text class="settings-panel__title">开发预览</text>
-            <text class="settings-panel__note">查看设计系统预览。</text>
-          </view>
-          <wd-button block plain @click="openDesignPreview">查看设计系统预览</wd-button>
-        </view>
-
-        <view class="settings-panel settings-panel--quiet">
-          <view class="settings-panel__head">
-            <text class="settings-panel__title">云开发信息</text>
-            <text class="settings-panel__note">只展示当前运行需要的公开配置。</text>
-          </view>
-          <view class="cloud-row">
-            <text class="cloud-row__label">当前阶段</text>
-            <text class="cloud-row__value">本人测试</text>
-          </view>
-          <view class="cloud-row">
-            <text class="cloud-row__label">环境</text>
-            <text class="cloud-row__value">{{ cloudEnvLabel }}</text>
-          </view>
-          <view class="cloud-row">
-            <text class="cloud-row__label">数据集合</text>
-            <text class="cloud-row__value">{{ appConfig.entriesCollection }}</text>
-          </view>
-          <view class="cloud-row">
-            <text class="cloud-row__label">云存储</text>
-            <text class="cloud-row__value">{{ appConfig.storageEntriesPath }}</text>
-          </view>
-        </view>
-      </view>
+      <text class="settings-signoff">每一笔，都是心跳的痕迹</text>
     </view>
   </app-shell>
 </template>
@@ -150,15 +128,15 @@ import type { ThemeDensity, ThemeFontScale, ThemeMode } from "@/stores/theme"
 
 const theme = useNativeChromeSync()
 
-const modeOptions: Array<{ label: string; value: ThemeMode }> = [
-  { label: "跟随系统", value: "system" },
-  { label: "浅色", value: "light" },
-  { label: "深色", value: "dark" }
+const modeOptions: Array<{ icon: string; label: string; value: ThemeMode }> = [
+  { icon: "▣", label: "跟随系统", value: "system" },
+  { icon: "☼", label: "浅色", value: "light" },
+  { icon: "☾", label: "深色", value: "dark" }
 ]
 
-const densityOptions: Array<{ label: string; value: ThemeDensity }> = [
-  { label: "舒适", value: "comfortable" },
-  { label: "紧凑", value: "compact" }
+const densityOptions: Array<{ icon: string; label: string; value: ThemeDensity }> = [
+  { icon: "▦", label: "舒适", value: "comfortable" },
+  { icon: "☰", label: "紧凑", value: "compact" }
 ]
 
 const fontScaleOptions: Array<{ label: string; value: ThemeFontScale }> = [
@@ -172,7 +150,7 @@ const openDesignPreview = () => {
   })
 }
 
-const cloudEnvLabel = computed(() => appConfig.cloudbaseEnvId || "云开发环境暂未配置，请检查本地环境变量。")
+const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "待配置"))
 </script>
 
 <style lang="scss" scoped>
@@ -184,338 +162,296 @@ const cloudEnvLabel = computed(() => appConfig.cloudbaseEnvId || "云开发环�
   gap: var(--app-section-gap);
 }
 
-.settings-cover,
-.paper-book,
-.settings-panel {
+.stage-card,
+.font-card,
+.info-card {
   @include panel;
 }
 
-.settings-cover {
-  position: relative;
+.settings-heading {
   display: flex;
-  align-items: stretch;
-  gap: var(--app-space-9);
-  padding: var(--app-card-padding);
-  background:
-    linear-gradient(135deg, var(--app-surface), var(--app-surface-strong));
-  overflow: hidden;
-}
-
-.settings-cover::before {
-  position: absolute;
-  top: calc(var(--app-space-0) - var(--app-space-16));
-  right: calc(var(--app-space-0) - var(--app-space-20));
-  width: var(--app-space-64);
-  height: var(--app-space-64);
-  border-radius: var(--app-radius-round);
-  background: var(--app-primary-muted);
-  content: "";
-  opacity: var(--app-decor-opacity);
-}
-
-.settings-cover::after {
-  position: absolute;
-  right: var(--app-card-padding);
-  bottom: var(--app-space-5);
-  width: var(--app-space-36);
-  height: var(--app-space-10);
-  border-top: var(--app-panel-border-width) dashed var(--app-divider);
-  border-bottom: var(--app-panel-border-width) dashed var(--app-divider);
-  content: "";
-  opacity: var(--app-decor-opacity);
-  transform: rotate(-6deg);
-}
-
-.settings-cover__stamp {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  min-width: var(--app-entry-date-width);
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: var(--app-space-2);
-  padding: var(--app-space-6);
-  border: var(--app-panel-border-width) solid var(--app-primary);
-  border-radius: var(--app-radius-badge);
-  background: var(--app-primary-soft);
-  color: var(--app-primary);
-  font: var(--app-font-caption);
-  text-align: center;
-  transform: rotate(-3deg);
+  margin-bottom: calc(var(--app-section-gap) - var(--app-space-8));
 }
 
-.settings-cover__copy {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-  flex: 1;
-}
-
-.settings-cover__title {
+.settings-heading__eyebrow {
   display: block;
-  color: var(--app-primary);
-  font-family: var(--app-font-family-display);
-  font-size: var(--app-font-size-5xl);
-  font-weight: var(--app-font-weight-semibold);
-  line-height: var(--app-line-height-tight);
-}
-
-.settings-cover__body {
-  display: block;
-  margin-top: var(--app-space-4);
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-body);
-  line-height: var(--app-line-height-relaxed);
-}
-
-.settings-cover__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--app-space-3);
-  margin-top: var(--app-space-7);
-}
-
-.settings-cover__tag {
-  padding: var(--app-space-2) var(--app-space-5);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-field);
   color: var(--app-text-muted);
   font: var(--app-font-caption);
 }
 
-.paper-book {
+.settings-heading__title {
+  display: block;
+  color: var(--app-text);
+  font: var(--app-font-section-title);
+}
+
+.stage-card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-form-gap);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: var(--app-space-8);
+  row-gap: var(--app-space-3);
   padding: var(--app-card-padding);
-  background:
-    linear-gradient(180deg, var(--app-surface), var(--app-field));
-  overflow: hidden;
-}
-
-.paper-book::before {
-  position: absolute;
-  top: var(--app-card-padding);
-  bottom: var(--app-card-padding);
-  left: var(--app-space-7);
-  width: var(--app-space-1);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-primary-soft);
-  content: "";
-  opacity: var(--app-decor-opacity);
-}
-
-.paper-book__rings {
-  position: absolute;
-  top: var(--app-space-16);
-  left: var(--app-space-4);
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-space-16);
-}
-
-.paper-book__ring {
-  width: var(--app-space-7);
-  height: var(--app-space-7);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-round);
-  background: var(--app-surface);
-}
-
-.paper-book__head {
-  position: relative;
-  z-index: 1;
-  padding: var(--app-space-2) var(--app-space-0) var(--app-space-8) var(--app-space-12);
-  border-bottom: var(--app-panel-border-width) dashed var(--app-border);
-}
-
-.paper-book__kicker {
-  display: block;
-  color: var(--app-accent);
-  font: var(--app-font-caption);
-}
-
-.paper-book__title {
-  display: block;
-  margin-top: var(--app-space-2);
-  color: var(--app-text);
-  font: var(--app-font-section-title);
-}
-
-.paper-book__note {
-  display: block;
-  margin-top: var(--app-space-3);
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-md);
-  line-height: var(--app-line-height-relaxed);
-}
-
-.paper-book__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--app-space-3);
-  margin-top: var(--app-space-7);
-}
-
-.paper-book__tab {
-  padding: var(--app-space-2) var(--app-space-5);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-field);
-  color: var(--app-text-muted);
-  font: var(--app-font-caption);
-  transform: rotate(-2deg);
-}
-
-.paper-book__tab--palette {
-  background: var(--app-primary-muted);
-  color: var(--app-primary);
-  transform: rotate(2deg);
-}
-
-.paper-book__tab--feel {
-  background: var(--app-accent-soft);
-  color: var(--app-accent);
-  transform: rotate(-1deg);
-}
-
-.settings-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-form-gap);
-}
-
-.settings-footer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-form-gap);
-}
-
-.settings-panel {
-  position: relative;
-  z-index: 1;
-  padding: var(--app-space-10);
   border-color: var(--app-border-muted);
-  background: var(--app-field);
-  box-shadow: var(--app-shadow-none);
-  overflow: hidden;
-}
-
-.settings-panel::before {
-  position: absolute;
-  top: var(--app-space-0);
-  left: var(--app-space-10);
-  width: var(--app-space-24);
-  height: var(--app-border-width-focus);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-primary-soft);
-  content: "";
-  opacity: var(--app-decor-opacity);
-}
-
-.settings-panel--pinned {
-  border-color: var(--app-primary-muted);
-  background:
-    linear-gradient(135deg, var(--app-surface), var(--app-primary-muted));
-}
-
-.settings-panel--sample {
-  border-color: var(--app-accent-soft);
-  background:
-    linear-gradient(180deg, var(--app-surface), var(--app-surface-strong));
-}
-
-.settings-panel--small {
   background: var(--app-surface);
-}
-
-.settings-panel--quiet {
-  border-style: dashed;
-  background: var(--app-surface);
-}
-
-.settings-panel__head {
-  margin-bottom: var(--app-space-8);
-}
-
-.settings-panel__title {
-  display: block;
-  color: var(--app-text);
-  font: var(--app-font-section-title);
-}
-
-.settings-panel__note {
-  display: block;
-  margin-top: var(--app-space-2);
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-md);
-  line-height: var(--app-line-height-normal);
-}
-
-.settings-theme-picker {
-  gap: var(--app-space-3);
-}
-
-:deep(.settings-theme-picker .app-option-button--swatch) {
-  position: relative;
-  min-height: calc(var(--app-swatch-height) + var(--app-space-10));
-  height: auto;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: var(--app-space-3);
-  padding: var(--app-space-8);
-  border-radius: var(--app-radius-xl) var(--app-radius-lg) var(--app-radius-2xl) var(--app-radius-md);
   box-shadow: var(--app-shadow-sm);
   overflow: hidden;
 }
 
-:deep(.settings-theme-picker .app-option-button--swatch.app-option-button--active) {
-  box-shadow: var(--app-shadow-focus);
-  transform: translateY(calc(var(--app-space-0) - var(--app-space-1)));
+.stage-card__bar {
+  align-self: stretch;
+  width: var(--app-space-1);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-primary);
+  grid-row: 1 / 3;
 }
 
-:deep(.settings-theme-picker .theme-picker__name) {
+.stage-card__copy {
+  min-width: 0;
+}
+
+.stage-card__label {
+  display: block;
+  color: var(--app-text-muted);
+  font: var(--app-font-caption);
+}
+
+.stage-card__value {
+  display: block;
+  margin-top: var(--app-space-2);
+  color: var(--app-primary);
   font: var(--app-font-card-title);
 }
 
-:deep(.settings-theme-picker .theme-picker__description) {
-  color: var(--app-option-swatch-foreground);
-  opacity: var(--app-muted-opacity);
-}
-
-:deep(.settings-theme-picker .theme-picker__active) {
-  align-self: flex-end;
-  border: var(--app-panel-border-width) solid var(--app-color-swatch-active-border);
-}
-
-.cloud-row {
+.stage-card__mark {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--app-space-9);
-  padding: var(--app-space-7) var(--app-space-0) var(--app-space-6);
-  border-bottom: var(--app-panel-border-width) dashed var(--app-divider);
+  width: var(--app-space-16);
+  height: var(--app-space-16);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--app-radius-round);
+  color: var(--app-primary);
+  font: var(--app-font-section-title);
+  transform: rotate(8deg);
 }
 
-.cloud-row:last-child {
+.stage-card__note {
+  grid-column: 2 / 4;
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-md);
+  line-height: var(--app-line-height-normal);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-7);
+}
+
+.settings-section__title {
+  color: var(--app-text-muted);
+  font: var(--app-font-caption);
+}
+
+.mode-card {
+  min-height: var(--app-space-40);
+  flex-direction: column;
+  gap: var(--app-space-5);
+  border-color: var(--app-border-muted);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.mode-card.app-option-button--active {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-focus);
+}
+
+.mode-card__icon {
+  color: var(--app-primary);
+  font: var(--app-font-section-title);
+}
+
+.mode-card__label {
+  color: var(--app-text);
+  font: var(--app-font-caption);
+}
+
+.choice-list {
+  @include panel;
+  padding: var(--app-space-0);
+  border-color: var(--app-border-muted);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-sm);
+  overflow: hidden;
+}
+
+.choice-list__group {
+  gap: var(--app-space-0);
+  grid-template-columns: 1fr;
+}
+
+.choice-row {
+  min-height: var(--app-space-36);
+  justify-content: space-between;
+  padding: var(--app-space-7) var(--app-space-8);
+  border: 0;
+  border-bottom: var(--app-panel-border-width) solid var(--app-divider);
+  border-radius: var(--app-space-0);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-none);
+}
+
+.choice-row:last-child {
   border-bottom: 0;
 }
 
-.cloud-row__label {
-  color: var(--app-text-soft);
-  font-size: var(--app-font-size-base);
+.choice-row.app-option-button--active {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-none);
 }
 
-.cloud-row__value {
-  max-width: var(--app-cloud-value-width);
+.choice-row__main,
+.info-row__main {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--app-space-5);
+}
+
+.choice-row__icon,
+.info-row__icon {
+  color: var(--app-primary);
+  font: var(--app-font-caption);
+}
+
+.choice-row__label,
+.info-row__label {
   color: var(--app-text);
-  font-size: var(--app-font-size-base);
+  font: var(--app-font-button);
+}
+
+.choice-row__radio {
+  width: var(--app-space-7);
+  height: var(--app-space-7);
+  border: var(--app-panel-border-width) solid var(--app-border-strong);
+  border-radius: var(--app-radius-round);
+}
+
+.choice-row.app-option-button--active .choice-row__radio {
+  border-color: var(--app-primary);
+  background: radial-gradient(circle, var(--app-primary) var(--app-space-2), transparent var(--app-space-3));
+}
+
+.font-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--app-space-7);
+  padding: var(--app-card-padding);
+  border-color: var(--app-border-muted);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.font-card__choices {
+  display: contents;
+}
+
+.font-choice {
+  min-height: var(--app-control-height-sm);
+  padding: var(--app-space-2) var(--app-space-4);
+  border: 0;
+  background: transparent;
+  box-shadow: var(--app-shadow-none);
+}
+
+.font-choice.app-option-button--active {
+  color: var(--app-primary);
+  background: transparent;
+  box-shadow: var(--app-shadow-none);
+}
+
+.font-card__rail {
+  position: relative;
+  min-width: var(--app-space-32);
+  height: var(--app-border-width-focus);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-divider);
+}
+
+.font-card__rail::before {
+  position: absolute;
+  inset: var(--app-space-0) auto var(--app-space-0) var(--app-space-0);
+  width: var(--app-space-20);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-primary);
+  content: "";
+}
+
+.font-card__dot {
+  position: absolute;
+  top: calc(var(--app-space-0) - var(--app-space-3));
+  left: var(--app-space-16);
+  width: var(--app-space-8);
+  height: var(--app-space-8);
+  border-radius: var(--app-radius-round);
+  background: var(--app-primary);
+}
+
+.font-card__dot--large {
+  left: var(--app-space-24);
+}
+
+.font-card__preview {
+  grid-column: 1 / 4;
+  justify-self: center;
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-md);
+  line-height: var(--app-line-height-normal);
+}
+
+.info-card {
+  border-color: var(--app-border-muted);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-sm);
+  overflow: hidden;
+}
+
+.info-row {
+  display: flex;
+  min-height: var(--app-space-36);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-space-7);
+  padding: var(--app-space-7) var(--app-space-8);
+  border-bottom: var(--app-panel-border-width) solid var(--app-divider);
+}
+
+.info-row:last-child {
+  border-bottom: 0;
+}
+
+.info-row--muted .info-row__icon {
+  color: var(--app-accent);
+}
+
+.info-row__value {
+  flex-shrink: 0;
+  max-width: var(--app-cloud-value-width);
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-sm);
   line-height: var(--app-line-height-normal);
   text-align: right;
-  word-break: break-all;
+}
+
+.settings-signoff {
+  margin-top: var(--app-space-16);
+  color: var(--app-text-muted);
+  font: var(--app-font-caption);
+  text-align: center;
 }
 </style>
