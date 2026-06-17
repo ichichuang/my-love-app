@@ -1,6 +1,6 @@
 <template>
   <view class="app-custom-nav" :style="navStyle">
-    <view class="app-custom-nav__status-bar" :style="{ height: `${metrics.statusBarHeight}px` }" />
+    <view class="app-custom-nav__status-bar" :style="statusStyle" />
 
     <view class="app-custom-nav__bar" :style="barStyle">
       <view class="app-custom-nav__leading">
@@ -13,8 +13,10 @@
           aria-label="返回"
           @click="handleBack"
         >
-          <view class="app-custom-nav__icon app-custom-nav__icon--back" aria-hidden="true">
-            <view class="app-custom-nav__icon-tail" />
+          <view class="app-custom-nav__arrow" aria-hidden="true">
+            <view class="app-custom-nav__arrow-line" />
+            <view class="app-custom-nav__arrow-wing app-custom-nav__arrow-wing--top" />
+            <view class="app-custom-nav__arrow-wing app-custom-nav__arrow-wing--bottom" />
           </view>
         </view>
         <view
@@ -29,16 +31,12 @@
         </view>
       </view>
 
-      <view class="app-custom-nav__title" :style="titleStyle">
+      <view class="app-custom-nav__title">
         <text v-if="title" class="app-custom-nav__title-text">{{ title }}</text>
         <text v-else-if="$slots.title" class="app-custom-nav__title-text">
           <slot name="title" />
         </text>
         <text v-if="eyebrow" class="app-custom-nav__eyebrow">{{ eyebrow }}</text>
-      </view>
-
-      <view class="app-custom-nav__trailing" :style="trailingStyle">
-        <slot name="actions" />
       </view>
     </view>
   </view>
@@ -76,49 +74,32 @@ onMounted(() => {
 })
 
 const navStyle = computed(() => ({
-  paddingTop: `${metrics.value.statusBarHeight}px`,
+  height: `${metrics.value.customNavHeight}px`,
   background: "transparent"
 }))
 
-const barStyle = computed(() => {
-  const topGap = Math.max(0, metrics.value.capsuleGap)
-  const height = metrics.value.contentHeight + topGap * 2
-  const leftPad = Math.max(0, metrics.value.menuButtonLeft)
-  const rightPad = metrics.value.capsuleRight
-  return {
-    height: `${height}px`,
-    paddingLeft: `${leftPad}px`,
-    paddingRight: `${rightPad}px`
-  }
-})
+const statusStyle = computed(() => ({
+  height: `${metrics.value.statusBarHeight}px`
+}))
 
-const titleStyle = computed(() => {
-  const left = Math.max(0, metrics.value.menuButtonLeft)
-  const right = metrics.value.capsuleRight
-  const width = Math.max(0, metrics.value.windowWidth - left - right)
-  return {
-    marginLeft: `${left}px`,
-    marginRight: `${right}px`,
-    width: `${width}px`
-  }
-})
-
-const trailingStyle = computed(() => {
-  const gap = Math.max(0, metrics.value.capsuleGap)
-  return {
-    marginRight: `${gap}px`
-  }
-})
+const barStyle = computed(() => ({
+  height: `${metrics.value.navBarHeight}px`,
+  paddingLeft: `${metrics.value.navSideGap}px`,
+  paddingRight: `${metrics.value.navRightReserve}px`
+}))
 
 const resolveBack = (): void => {
   const pages = typeof getCurrentPages === "function" ? getCurrentPages() : []
   if (Array.isArray(pages) && pages.length > 1) {
-    uni.navigateBack({ delta: 1, fail: () => {
-      uni.reLaunch({ url: "/pages/index/index" })
-    } })
+    uni.navigateBack({
+      delta: 1,
+      fail: () => {
+        uni.redirectTo({ url: "/pages/index/index" })
+      }
+    })
     return
   }
-  uni.reLaunch({ url: "/pages/index/index" })
+  uni.redirectTo({ url: "/pages/index/index" })
 }
 
 const handleBack = () => {
@@ -144,17 +125,15 @@ const handleBack = () => {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--app-space-6);
   width: 100%;
 }
 
-.app-custom-nav__leading,
-.app-custom-nav__trailing {
+.app-custom-nav__leading {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: var(--app-space-5);
 }
 
 .app-custom-nav__title {
@@ -224,17 +203,39 @@ const handleBack = () => {
   color: var(--app-text);
 }
 
-.app-custom-nav__icon--back {
-  transform: rotate(-12deg);
+.app-custom-nav__arrow {
+  position: relative;
+  width: var(--app-space-12);
+  height: var(--app-space-10);
+  color: var(--app-text);
+  transform: rotate(-8deg);
 }
 
-.app-custom-nav__icon-tail {
-  width: 0;
-  height: 0;
-  border-top: var(--app-space-5) solid transparent;
-  border-bottom: var(--app-space-5) solid transparent;
-  border-right: var(--app-space-8) solid currentColor;
-  border-radius: var(--app-radius-xs);
+.app-custom-nav__arrow-line,
+.app-custom-nav__arrow-wing {
+  position: absolute;
+  left: var(--app-space-2);
+  top: 50%;
+  height: var(--app-border-width-focus);
+  border-radius: var(--app-radius-pill);
+  background: currentColor;
+  transform-origin: left center;
+}
+
+.app-custom-nav__arrow-line {
+  width: var(--app-space-10);
+}
+
+.app-custom-nav__arrow-wing {
+  width: var(--app-space-6);
+}
+
+.app-custom-nav__arrow-wing--top {
+  transform: rotate(-42deg);
+}
+
+.app-custom-nav__arrow-wing--bottom {
+  transform: rotate(42deg);
 }
 
 .app-custom-nav__icon--home {

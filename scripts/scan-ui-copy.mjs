@@ -50,6 +50,11 @@ const shouldIgnoreValue = (value) => {
   return /^#[0-9a-fA-F]{6}$/.test(value) || /^[A-Z][A-Za-z0-9]+Error$/.test(value)
 }
 
+const isDynamicVueAttribute = (line, matchIndex) => {
+  const attributeStart = Math.max(line.lastIndexOf(" ", matchIndex), line.lastIndexOf("\t", matchIndex), line.lastIndexOf("<", matchIndex)) + 1
+  return line.slice(attributeStart, matchIndex).includes(":")
+}
+
 for (const filePath of collectFiles(sourceRoot)) {
   const relativePath = filePath.slice(process.cwd().length + 1)
   const lines = readFileSync(filePath, "utf8").split(/\r?\n/)
@@ -66,7 +71,8 @@ for (const filePath of collectFiles(sourceRoot)) {
       while (match) {
         const matchedValue = match[1].trim()
         const charBeforeMatch = line[Math.max(0, match.index - 1)]
-        if (charBeforeMatch !== ":" && !shouldIgnoreValue(matchedValue)) {
+        const isDynamicAttribute = check.label === "template attribute" && isDynamicVueAttribute(line, match.index)
+        if (charBeforeMatch !== ":" && !isDynamicAttribute && !shouldIgnoreValue(matchedValue)) {
           findings.push({
             file: relativePath,
             line: index + 1,

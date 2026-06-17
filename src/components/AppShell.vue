@@ -9,25 +9,28 @@
         :variant="navVariant"
         @back="emit('back')"
       >
-        <template v-if="$slots['nav-actions']" #actions>
-          <slot name="nav-actions" />
-        </template>
         <template v-if="$slots['nav-title']" #title>
           <slot name="nav-title" />
         </template>
       </app-custom-nav>
 
-      <view v-if="showLegacyHeader" class="app-shell__header">
-        <view>
-          <text v-if="eyebrow" class="app-shell__eyebrow">{{ eyebrow }}</text>
-          <text v-if="title" class="app-shell__title">{{ title }}</text>
-        </view>
-        <view v-if="$slots.actions" class="app-shell__actions">
-          <slot name="actions" />
-        </view>
+      <view v-if="navVisible && $slots['nav-actions']" class="app-shell__nav-actions">
+        <slot name="nav-actions" />
       </view>
 
-      <slot />
+      <view class="app-shell__body" :class="{ 'app-shell__body--with-nav-actions': navVisible && $slots['nav-actions'] }">
+        <view v-if="showLegacyHeader" class="app-shell__header">
+          <view>
+            <text v-if="eyebrow" class="app-shell__eyebrow">{{ eyebrow }}</text>
+            <text v-if="title" class="app-shell__title">{{ title }}</text>
+          </view>
+          <view v-if="$slots.actions" class="app-shell__actions">
+            <slot name="actions" />
+          </view>
+        </view>
+
+        <slot />
+      </view>
     </view>
   </wd-config-provider>
 </template>
@@ -82,6 +85,23 @@ const showLegacyHeader = computed(() => !navVisible.value && (!!props.title || !
 
 .app-shell {
   @include page-shell;
+  padding: 0 0 calc(#{$app-page-y} + env(safe-area-inset-bottom));
+}
+
+.app-shell__body {
+  padding: $app-page-y $app-page-x 0;
+}
+
+.app-shell__body--with-nav-actions {
+  padding-top: var(--app-space-6);
+}
+
+.app-shell__nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--app-space-5);
+  padding: var(--app-space-5) $app-page-x 0;
 }
 
 .app-shell__header {
