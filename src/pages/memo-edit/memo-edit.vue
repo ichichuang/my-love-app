@@ -6,86 +6,370 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell nav-title="写小线索" nav-eyebrow="小纸条" nav-show-back nav-variant="page">
-    <view class="memo-edit">
-      <view class="memo-note">
+  <app-shell :nav-title="pageTitle" :nav-eyebrow="pageEyebrow" nav-show-back nav-variant="page">
+    <view v-if="loading" class="memo-edit-status">
+      <text>正在翻这张小线索…</text>
+    </view>
+
+    <empty-state
+      v-else-if="hasLoadError"
+      title="这张小线索暂时没翻到"
+      body="可能是网络慢了一点，稍后再试一次。"
+    >
+      <view class="memo-edit-error__actions">
+        <wd-button block :loading="loading" @click="loadMemo">再试一次</wd-button>
+        <wd-button block plain @click="backToMemos">返回小档案</wd-button>
+      </view>
+    </empty-state>
+
+    <view v-else class="memo-edit">
+      <view class="memo-note" :class="{ 'memo-note--pinned': memoPinned }">
         <view class="memo-note__paper-corner" />
         <view class="memo-note__head">
           <view class="memo-note__intro">
-            <text class="memo-note__kicker">写一张小线索</text>
+            <text class="memo-note__kicker">{{ introKicker }}</text>
             <text class="memo-note__question">想记住什么？</text>
-            <text class="memo-note__body">比如：她喜欢的花。</text>
+            <text class="memo-note__body">写成一张小纸条，以后翻起来会更快一点。</text>
           </view>
-          <text class="memo-note__stamp">小纸条</text>
+          <text class="memo-note__stamp">{{ noteStampText }}</text>
         </view>
 
-        <view class="memo-slip">
-          <text class="memo-slip__label">这一格以后会放标题</text>
-          <text class="memo-slip__value">先把“她喜欢什么、想避开什么”留成一张小占位。</text>
+        <view class="memo-title-slip">
+          <text class="memo-field__prompt">想记住什么？</text>
+          <wd-input
+            v-model="title"
+            no-border
+            :disabled="formDisabled"
+            placeholder="比如：她喜欢的花"
+            :placeholder-style="placeholderStyle"
+            :maxlength="48"
+            custom-class="memo-title-slip__input-root"
+            custom-input-class="memo-title-slip__input-inner"
+          />
         </view>
 
         <view class="memo-note__section">
           <view class="memo-note__section-head">
             <text class="memo-note__section-title">多写一句？</text>
-            <text class="memo-note__section-body">留到下一步再慢慢补。</text>
+            <text class="memo-note__section-note">空着也没关系，先把标题收好就行。</text>
           </view>
 
-          <view class="memo-draft-placeholder">
-            <text class="memo-draft-placeholder__line">这里以后会放下更完整的小描述。</text>
-            <text class="memo-draft-placeholder__line">这轮先把小纸条的位置留出来。</text>
+          <view class="memo-field">
+            <wd-textarea
+              v-model="content"
+              no-border
+              :disabled="formDisabled"
+              placeholder="比如：小雏菊，比玫瑰更喜欢一点。"
+              :placeholder-style="placeholderStyle"
+              :maxlength="240"
+              custom-class="memo-field__textarea-root"
+              custom-textarea-container-class="memo-field__textarea-box"
+              custom-textarea-class="memo-field__textarea-inner"
+            />
           </view>
         </view>
 
         <view class="memo-note__section">
           <view class="memo-note__section-head">
             <text class="memo-note__section-title">贴个小标签</text>
-            <text class="memo-note__section-body">喜欢 / 小档案 / 避雷 / 礼物 / 日子 / 随手</text>
+            <text class="memo-note__section-note">分进小抽屉里，以后翻起来更快一点。</text>
           </view>
 
           <app-option-group :columns="3">
             <app-option-button
-              v-for="option in tagOptions"
-              :key="option"
-              class="memo-tag-button"
-              :active="option === '喜欢'"
-              @click="showTagHint"
+              v-for="option in categoryOptions"
+              :key="option.value"
+              :active="memoCategory === option.value"
+              :disabled="formDisabled"
+              @click="setMemoCategory(option.value)"
             >
-              <text>{{ option }}</text>
+              <text class="memo-choice__label">{{ option.label }}</text>
             </app-option-button>
           </app-option-group>
         </view>
 
-        <view class="memo-note__footer">
-          <text class="memo-note__footer-title">轻轻收好</text>
-          <text class="memo-note__footer-body">这一步只把纸条样子摆好，真正写内容留到下一步。</text>
+        <view class="memo-note__section">
+          <view class="memo-note__section-head">
+            <text class="memo-note__section-title">要不要放到上面？</text>
+            <text class="memo-note__section-note">常翻的小线索，就先贴在最上面。</text>
+          </view>
+
+          <app-option-group :columns="2">
+            <app-option-button
+              v-for="option in pinnedOptions"
+              :key="option.label"
+              :active="memoPinned === option.value"
+              :disabled="formDisabled"
+              @click="setMemoPinned(option.value)"
+            >
+              <text class="memo-choice__label">{{ option.label }}</text>
+            </app-option-button>
+          </app-option-group>
         </view>
 
-        <wd-button block size="large" @click="showNextStepToast">轻轻收好</wd-button>
+        <view v-if="saved" class="memo-saved">
+          <text class="memo-saved__title">已经轻轻收好</text>
+          <text class="memo-saved__body">这张小线索已经放回小线索本里了。</text>
+        </view>
+
+        <view class="memo-note__footer">
+          <text class="memo-note__footer-title">轻轻收好</text>
+          <text class="memo-note__footer-body">{{ footerBody }}</text>
+        </view>
+
+        <view class="memo-edit-actions">
+          <wd-button block size="large" :loading="saving" :disabled="formDisabled" @click="saveMemo">
+            {{ saveButtonText }}
+          </wd-button>
+        </view>
       </view>
     </view>
   </app-shell>
 </template>
 
 <script setup lang="ts">
+import { computed, shallowRef, watch } from "vue"
+import { onLoad } from "@dcloudio/uni-app"
+import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import { dataCacheKeys } from "@/services/data-cache"
+import {
+  createMemo,
+  getMemo,
+  isMemoUnavailableError,
+  memoCategoryLabels,
+  updateMemo,
+  type MemoCategory,
+  type MemoDraft,
+  type MemoRecord
+} from "@/services/repositories/memos"
 
+const saveFeedbackDelayMs = 520
+const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 
-const tagOptions = ["喜欢", "小档案", "避雷", "礼物", "日子", "随手"] as const
+const memoCategoryOrder: MemoCategory[] = ["favorite", "profile", "avoid", "gift", "date", "note"]
 
-const showTagHint = () => {
-  uni.showToast({
-    title: "小标签下一步再慢慢补。",
-    icon: "none"
+const memoId = shallowRef("")
+const hasLoadError = shallowRef(false)
+const saving = shallowRef(false)
+const saved = shallowRef(false)
+const draftDirty = shallowRef(false)
+const hydratingDraft = shallowRef(false)
+const {
+  loading,
+  reload: reloadMemo
+} = useCachedRecord<MemoRecord>({
+  cacheKey: () => dataCacheKeys.memoDetail(memoId.value),
+  isUnavailableError: isMemoUnavailableError,
+  loader: () => getMemo(memoId.value)
+})
+
+const title = shallowRef("")
+const content = shallowRef("")
+const memoCategory = shallowRef<MemoCategory>("note")
+const memoPinned = shallowRef(false)
+
+const categoryOptions = memoCategoryOrder.map((value) => ({
+  label: memoCategoryLabels[value],
+  value
+}))
+
+const pinnedOptions = [
+  {
+    label: "先放着",
+    value: false
+  },
+  {
+    label: "常看",
+    value: true
+  }
+]
+
+const isEditMode = computed(() => memoId.value.length > 0)
+const formDisabled = computed(() => saving.value || saved.value)
+const pageTitle = computed(() => (isEditMode.value ? "改小线索" : "写小线索"))
+const pageEyebrow = computed(() => (isEditMode.value ? "重新整理" : "小纸条"))
+const introKicker = computed(() => (isEditMode.value ? "把这张小线索理一理" : "写一张小线索"))
+const noteStampText = computed(() => (memoPinned.value ? "常看" : memoCategoryLabels[memoCategory.value]))
+const footerBody = computed(() =>
+  isEditMode.value ? "改完就轻轻放回原来的位置。" : "只写标题也能先收好，剩下的以后再慢慢补。"
+)
+const saveButtonText = computed(() => {
+  if (saving.value) {
+    return "正在轻轻收好"
+  }
+
+  if (saved.value) {
+    return "已经轻轻收好"
+  }
+
+  return isEditMode.value ? "收好这张小线索" : "轻轻收好"
+})
+
+const decodeQueryId = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return ""
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  try {
+    return decodeURIComponent(trimmed)
+  } catch {
+    return trimmed
+  }
+}
+
+const updateDraftWithoutTracking = (update: () => void) => {
+  hydratingDraft.value = true
+  update()
+  hydratingDraft.value = false
+  draftDirty.value = false
+}
+
+const resetForm = () => {
+  updateDraftWithoutTracking(() => {
+    title.value = ""
+    content.value = ""
+    memoCategory.value = "note"
+    memoPinned.value = false
+    saved.value = false
   })
 }
 
-const showNextStepToast = () => {
-  uni.showToast({
-    title: "小线索纸条下一步就能写啦",
-    icon: "none"
+const hydrateMemo = (memo: MemoRecord) => {
+  updateDraftWithoutTracking(() => {
+    title.value = memo.title
+    content.value = memo.content
+    memoCategory.value = memo.memoCategory
+    memoPinned.value = memo.memoPinned
+    saved.value = false
   })
 }
+
+const loadMemo = async () => {
+  if (!memoId.value) {
+    resetForm()
+    hasLoadError.value = false
+    return
+  }
+
+  hasLoadError.value = false
+
+  try {
+    await reloadMemo({
+      applyCached: hydrateMemo,
+      applyFresh: hydrateMemo,
+      canApplyFresh: () => !draftDirty.value && !formDisabled.value
+    })
+  } catch {
+    resetForm()
+    hasLoadError.value = true
+  }
+}
+
+watch(
+  [title, content, memoCategory, memoPinned],
+  () => {
+    if (!hydratingDraft.value && !formDisabled.value) {
+      draftDirty.value = true
+      saved.value = false
+    }
+  },
+  {
+    flush: "sync"
+  }
+)
+
+const setMemoCategory = (value: MemoCategory) => {
+  memoCategory.value = value
+}
+
+const setMemoPinned = (value: boolean) => {
+  memoPinned.value = value
+}
+
+const backToMemos = () => {
+  if (getCurrentPages().length > 1) {
+    uni.navigateBack()
+    return
+  }
+
+  uni.redirectTo({
+    url: "/pages/memos/memos"
+  })
+}
+
+const buildDraft = (): MemoDraft => ({
+  title: title.value,
+  content: content.value,
+  memoCategory: memoCategory.value,
+  memoPinned: memoPinned.value
+})
+
+const waitForSaveFeedback = (): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, saveFeedbackDelayMs)
+  })
+
+const resolveSaveErrorMessage = (error: unknown): string => {
+  const message = getFriendlyErrorMessage(error)
+  return message.includes("纪念") ? "小线索暂时没收好，请稍后再试。" : message
+}
+
+const saveMemo = async () => {
+  if (saving.value) {
+    return
+  }
+
+  if (!title.value.trim()) {
+    uni.showToast({
+      title: "先写下一条小线索",
+      icon: "none"
+    })
+    return
+  }
+
+  saving.value = true
+  saved.value = false
+
+  try {
+    if (isEditMode.value) {
+      await updateMemo(memoId.value, buildDraft())
+    } else {
+      await createMemo(buildDraft())
+    }
+
+    saving.value = false
+    saved.value = true
+    draftDirty.value = false
+    uni.showToast({
+      title: "小线索已经收好",
+      icon: "none"
+    })
+    await waitForSaveFeedback()
+    backToMemos()
+  } catch (error) {
+    uni.showToast({
+      title: resolveSaveErrorMessage(error),
+      icon: "none"
+    })
+  } finally {
+    if (!saved.value) {
+      saving.value = false
+    }
+  }
+}
+
+onLoad((query) => {
+  memoId.value = decodeQueryId(query?.id)
+  void loadMemo()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -96,9 +380,11 @@ const showNextStepToast = () => {
 .memo-note__intro,
 .memo-note__section,
 .memo-note__section-head,
-.memo-slip,
-.memo-draft-placeholder,
-.memo-note__footer {
+.memo-edit-actions,
+.memo-edit-error__actions,
+.memo-field,
+.memo-note__footer,
+.memo-saved {
   display: flex;
   flex-direction: column;
 }
@@ -108,11 +394,27 @@ const showNextStepToast = () => {
   padding-bottom: calc(var(--app-card-padding) + env(safe-area-inset-bottom));
 }
 
+.memo-edit-status,
 .memo-note {
   @include panel;
+  padding: var(--app-card-padding);
+}
+
+.memo-edit-status {
+  color: var(--app-text-soft);
+  font: var(--app-font-body);
+  text-align: center;
+}
+
+.memo-edit-error__actions {
+  gap: var(--app-space-5);
+  width: 100%;
+  margin-top: var(--app-card-gap);
+}
+
+.memo-note {
   position: relative;
   gap: var(--app-card-gap);
-  padding: var(--app-card-padding);
   overflow: hidden;
 }
 
@@ -126,6 +428,10 @@ const showNextStepToast = () => {
   content: "";
   opacity: var(--app-decor-opacity);
   transform: rotate(-3deg);
+}
+
+.memo-note--pinned::before {
+  background: var(--app-primary);
 }
 
 .memo-note__paper-corner {
@@ -164,6 +470,8 @@ const showNextStepToast = () => {
 
 .memo-note__question,
 .memo-note__section-title,
+.memo-field__prompt,
+.memo-saved__title,
 .memo-note__footer-title {
   display: block;
   color: var(--app-text);
@@ -171,10 +479,9 @@ const showNextStepToast = () => {
 }
 
 .memo-note__body,
-.memo-note__section-body,
-.memo-note__footer-body,
-.memo-slip__label,
-.memo-draft-placeholder__line {
+.memo-note__section-note,
+.memo-saved__body,
+.memo-note__footer-body {
   display: block;
   color: var(--app-text-soft);
   font: var(--app-font-caption);
@@ -193,25 +500,41 @@ const showNextStepToast = () => {
   transform: rotate(3deg);
 }
 
-.memo-slip,
-.memo-draft-placeholder,
-.memo-note__footer {
+.memo-title-slip,
+.memo-note__footer,
+.memo-saved {
   position: relative;
   z-index: 1;
 }
 
-.memo-slip,
-.memo-draft-placeholder {
-  gap: var(--app-space-4);
-  padding: var(--app-space-6) var(--app-field-padding-x);
+.memo-title-slip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-5);
+  padding: var(--app-space-7) var(--app-field-padding-x);
   border: var(--app-panel-border-width) solid var(--app-border);
   border-radius: var(--app-radius-input);
   background: var(--app-field);
 }
 
-.memo-slip__value {
+:deep(.memo-title-slip__input-root) {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  padding: var(--app-space-0);
   color: var(--app-text);
-  font: var(--app-font-body);
+}
+
+:deep(.memo-title-slip__input-root .wd-input__body),
+:deep(.memo-title-slip__input-root .wd-input__value) {
+  width: 100%;
+}
+
+:deep(.memo-title-slip__input-inner) {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
 }
 
 .memo-note__section {
@@ -223,18 +546,65 @@ const showNextStepToast = () => {
 }
 
 .memo-note__section-head,
-.memo-note__footer {
-  gap: var(--app-space-3);
+.memo-field,
+.memo-note__footer,
+.memo-saved {
+  gap: var(--app-space-5);
 }
 
-.memo-tag-button {
-  min-height: var(--app-control-height-sm);
+:deep(.memo-field__textarea-root) {
+  @include field;
+  box-sizing: border-box;
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+  overflow: hidden;
+}
+
+:deep(.memo-field__textarea-root .wd-textarea__value) {
+  width: 100%;
+}
+
+:deep(.memo-field__textarea-box),
+:deep(.memo-field__textarea-inner) {
+  min-height: var(--app-textarea-min-height);
+}
+
+:deep(.memo-field__textarea-inner) {
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-line-height-relaxed);
+}
+
+:deep(.memo-title-slip__input-root.is-disabled),
+:deep(.memo-field__textarea-root.is-disabled) {
+  opacity: var(--app-disabled-opacity);
+}
+
+.memo-choice__label {
+  display: block;
+  width: 100%;
+}
+
+.memo-saved {
+  padding: var(--app-space-6) var(--app-space-7);
+  border: var(--app-panel-border-width) solid var(--app-success);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-success-soft);
+  color: var(--app-success);
+  box-shadow: var(--app-shadow-none);
 }
 
 .memo-note__footer {
   padding: var(--app-space-6) var(--app-space-7);
-  border: var(--app-panel-border-width) solid var(--app-accent);
+  border: var(--app-panel-border-width) solid var(--app-divider);
   border-radius: var(--app-radius-badge);
-  background: var(--app-accent-soft);
+  background: var(--app-surface-strong);
+  box-shadow: var(--app-shadow-none);
+}
+
+.memo-edit-actions {
+  gap: var(--app-space-6);
+  padding-top: var(--app-space-3);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 </style>
