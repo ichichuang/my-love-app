@@ -5,6 +5,7 @@
     "autoscan": true,
     "custom": {
       "^app-shell$": "@/components/AppShell.vue",
+      "^app-custom-nav$": "@/components/AppCustomNav.vue",
       "^app-option-button$": "@/components/AppOptionButton.vue",
       "^app-option-group$": "@/components/AppOptionGroup.vue",
       "^empty-state$": "@/components/EmptyState.vue",
@@ -18,62 +19,72 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "珊瑚行动",
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小珊的树洞",
         "enablePullDownRefresh": true
       }
     },
     {
       "path": "pages/detail/detail",
       "style": {
-        "navigationBarTitleText": "记忆详情"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "翻这张小纸页"
       }
     },
     {
       "path": "pages/create/create",
       "style": {
-        "navigationBarTitleText": "写下此刻"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "写进小本本"
       }
     },
     {
       "path": "pages/songs/songs",
       "style": {
-        "navigationBarTitleText": "点歌清单"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小歌单"
       }
     },
     {
       "path": "pages/song-edit/song-edit",
       "style": {
-        "navigationBarTitleText": "加一首歌"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "点歌便签"
       }
     },
     {
       "path": "pages/tasks/tasks",
       "style": {
-        "navigationBarTitleText": "必做事项"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小约定"
       }
     },
     {
       "path": "pages/task-edit/task-edit",
       "style": {
-        "navigationBarTitleText": "加一件事"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小约定票根"
       }
     },
     {
       "path": "pages/settings/settings",
       "style": {
-        "navigationBarTitleText": "私密偏好"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小纸样本"
       }
     },
     {
       "path": "pages/design-preview/design-preview",
       "style": {
-        "navigationBarTitleText": "设计系统预览"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小样本预览"
       }
     }
   ],
   "globalStyle": {
+    "navigationStyle": "custom",
     "navigationBarTextStyle": "@navTxtStyle",
-    "navigationBarTitleText": "珊瑚行动",
+    "navigationBarTitleText": "小珊的树洞",
     "navigationBarBackgroundColor": "@navBgColor",
     "backgroundColor": "@pageBgColor",
     "backgroundColorTop": "@pageBgTopColor",

@@ -6,10 +6,7 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell title="珊瑚行动" eyebrow="私密停靠处">
-    <template #actions>
-      <wd-button size="small" plain @click="goSettings">设置</wd-button>
-    </template>
+  <app-shell nav-title="小珊的树洞" nav-eyebrow="悄悄停靠处" :nav-show-back="false" nav-variant="home">
 
     <view class="home-hero">
       <view class="home-hero__top">
@@ -139,12 +136,6 @@ const loadEntries = async () => {
 const goCreate = () => {
   uni.navigateTo({
     url: "/pages/create/create"
-  })
-}
-
-const goSettings = () => {
-  uni.navigateTo({
-    url: "/pages/settings/settings"
   })
 }
 

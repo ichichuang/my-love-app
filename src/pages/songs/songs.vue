@@ -6,8 +6,8 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell title="点歌清单" eyebrow="小小歌单">
-    <template #actions>
+  <app-shell nav-title="小歌单" nav-eyebrow="小小歌单" nav-show-back nav-variant="page">
+    <template #nav-actions>
       <wd-button size="small" plain @click="goSongEdit">加一首歌</wd-button>
     </template>
 

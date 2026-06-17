@@ -6,8 +6,8 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :title="editing ? '重新整理这一页' : '回忆详情'" :eyebrow="editing ? '改一张小纸条' : '收好的小事'">
-    <template #actions>
+  <app-shell nav-title="翻这张小纸页" :nav-eyebrow="editing ? '改一张小纸条' : '收好的小事'" nav-show-back nav-variant="page">
+    <template #nav-actions>
       <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
     </template>
 

@@ -1,5 +1,5 @@
 const manifest = {
-  name: "珊瑚行动",
+  name: "小珊的树洞",
   appid: "wx04b0ef4f0de5c5c5",
   description: "只给两个人使用的私密回忆微信小程序。",
   versionName: "1.0.0",

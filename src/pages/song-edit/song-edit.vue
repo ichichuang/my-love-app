@@ -6,8 +6,8 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :title="pageTitle" :eyebrow="pageEyebrow">
-    <template #actions>
+  <app-shell :nav-title="pageTitle" :nav-eyebrow="pageEyebrow" nav-show-back nav-variant="page">
+    <template #nav-actions>
       <wd-button size="small" plain :disabled="formDisabled" @click="backToSongs">{{ backActionText }}</wd-button>
     </template>
 

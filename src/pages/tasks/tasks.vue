@@ -6,8 +6,8 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell title="必做事项" eyebrow="我们的清单">
-    <template #actions>
+  <app-shell nav-title="小约定" nav-eyebrow="我们的清单" nav-show-back nav-variant="page">
+    <template #nav-actions>
       <wd-button size="small" plain @click="goTaskEdit">加一件事</wd-button>
     </template>
 

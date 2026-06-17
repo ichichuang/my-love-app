@@ -3,8 +3,8 @@ const coupleId = "main"
 const storageBasePath = "love-entries"
 
 export const appConfig = {
-  name: "珊瑚行动",
-  subtitle: "只给我们两个人的记忆花园",
+  name: "小珊的树洞",
+  subtitle: "只给我们两个人的小树洞",
   cloudbaseEnvId: publicEnvValue(import.meta.env.VITE_CLOUDBASE_ENV_ID),
   wechatAppId: publicEnvValue(import.meta.env.VITE_WECHAT_APPID),
   coupleId,

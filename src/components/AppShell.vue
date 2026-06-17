@@ -1,7 +1,23 @@
 <template>
   <wd-config-provider :key="theme.providerKey" :theme="theme.wotTheme" :theme-vars="theme.wotThemeVars">
     <view class="app-shell theme-transition" :class="theme.themeClasses" :style="theme.appStyle">
-      <view v-if="title || $slots.actions" class="app-shell__header">
+      <app-custom-nav
+        v-if="navVisible"
+        :title="navTitleText"
+        :eyebrow="navEyebrowText"
+        :show-back="navShowBack"
+        :variant="navVariant"
+        @back="emit('back')"
+      >
+        <template v-if="$slots['nav-actions']" #actions>
+          <slot name="nav-actions" />
+        </template>
+        <template v-if="$slots['nav-title']" #title>
+          <slot name="nav-title" />
+        </template>
+      </app-custom-nav>
+
+      <view v-if="showLegacyHeader" class="app-shell__header">
         <view>
           <text v-if="eyebrow" class="app-shell__eyebrow">{{ eyebrow }}</text>
           <text v-if="title" class="app-shell__title">{{ title }}</text>
@@ -17,14 +33,48 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { useThemeStore } from "@/stores/theme"
 
-defineProps<{
-  title?: string
-  eyebrow?: string
+type NavVariant = "auto" | "home" | "page"
+
+const props = withDefaults(
+  defineProps<{
+    title?: string
+    eyebrow?: string
+    navTitle?: string
+    navEyebrow?: string
+    navShowBack?: boolean
+    navVariant?: NavVariant
+    useCustomNav?: boolean
+  }>(),
+  {
+    title: "",
+    eyebrow: "",
+    navTitle: "",
+    navEyebrow: "",
+    navShowBack: false,
+    navVariant: "auto",
+    useCustomNav: true
+  }
+)
+
+const emit = defineEmits<{
+  back: []
 }>()
 
 const theme = useThemeStore()
+
+const navTitleText = computed(() => props.navTitle || props.title || "")
+const navEyebrowText = computed(() => props.navEyebrow || props.eyebrow || "")
+const navVisible = computed(() => props.useCustomNav && navTitleText.value.length > 0)
+const navVariant = computed<NavVariant>(() => {
+  if (props.navVariant !== "auto") {
+    return props.navVariant
+  }
+  return props.navShowBack ? "page" : "home"
+})
+const showLegacyHeader = computed(() => !navVisible.value && (!!props.title || !!props.eyebrow))
 </script>
 
 <style lang="scss" scoped>

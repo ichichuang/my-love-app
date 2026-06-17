@@ -6,7 +6,7 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell title="写下此刻" eyebrow="新的回忆">
+  <app-shell nav-title="写进小本本" nav-eyebrow="新的回忆" nav-show-back nav-variant="page">
     <view class="create-page">
       <view class="create-hero">
         <view class="create-hero__copy">

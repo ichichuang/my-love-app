@@ -6,16 +6,16 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell title="私密偏好" eyebrow="设置">
+  <app-shell nav-title="小纸样本" nav-eyebrow="悄悄设置" nav-show-back :nav-variant="'page'">
     <view class="settings">
       <view class="settings-heading">
-        <text class="settings-heading__eyebrow">只影响本机显示</text>
-        <text class="settings-heading__title">偏好配置</text>
+        <text class="settings-heading__eyebrow">只在这台手机悄悄生效</text>
+        <text class="settings-heading__title">今天的小纸样</text>
       </view>
 
       <view class="settings-section">
         <view class="settings-section__head">
-          <text class="settings-section__title">外观模式</text>
+          <text class="settings-section__title">白天夜里的样子</text>
           <text class="settings-section__hint">跟随系统 / 浅色 / 深色</text>
         </view>
         <view class="mode-strip">
@@ -36,7 +36,7 @@
 
       <view class="settings-section">
         <view class="settings-section__head">
-          <text class="settings-section__title">主题颜色</text>
+          <text class="settings-section__title">小纸样颜色</text>
           <text class="settings-section__hint">六套，像小纸样卡</text>
         </view>
         <theme-swatch-picker
@@ -48,7 +48,7 @@
 
       <view class="settings-section">
         <view class="settings-section__head">
-          <text class="settings-section__title">界面密度</text>
+          <text class="settings-section__title">小纸条间距</text>
           <text class="settings-section__hint">舒适 / 紧凑</text>
         </view>
         <view class="density-strip">
@@ -72,7 +72,7 @@
 
       <view class="settings-section">
         <view class="settings-section__head">
-          <text class="settings-section__title">字号大小</text>
+          <text class="settings-section__title">字要多大</text>
           <text class="settings-section__hint">标准 / 偏大</text>
         </view>
         <view class="font-card">
@@ -103,20 +103,20 @@
 
       <view class="settings-section settings-section--muted">
         <view class="settings-section__head">
-          <text class="settings-section__title">小角落信息</text>
+          <text class="settings-section__title">小角落</text>
         </view>
         <view class="appendix">
           <view class="appendix-row" hover-class="appendix-row--pressed" @click="openDesignPreview">
             <view class="appendix-row__main">
               <text class="appendix-row__icon">开发</text>
-              <text class="appendix-row__label">开发预览</text>
+              <text class="appendix-row__label">看看小样本</text>
             </view>
             <text class="appendix-row__value">设计系统小样本</text>
           </view>
           <view class="appendix-row appendix-row--quiet">
             <view class="appendix-row__main">
               <text class="appendix-row__icon">云</text>
-              <text class="appendix-row__label">云开发信息</text>
+              <text class="appendix-row__label">云端小仓库</text>
             </view>
             <text class="appendix-row__value">{{ cloudEnvLabel }}</text>
           </view>
