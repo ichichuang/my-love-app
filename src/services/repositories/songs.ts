@@ -7,6 +7,13 @@ import {
   removeDocument,
   updateDocument
 } from "@/services/cloudbase"
+import {
+  dataCacheKeys,
+  removeCachedListItem,
+  removeDataCache,
+  upsertCachedListItem,
+  writeDataCache
+} from "@/services/data-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
 
 export type SongStatus = "wanted" | "sung" | "paused"
@@ -75,6 +82,9 @@ const asString = (value: unknown, fallback = ""): string => (typeof value === "s
 
 const asNumber = (value: unknown, fallback = 0): number => (typeof value === "number" ? value : fallback)
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
 const asPositiveNumber = (value: unknown): number | undefined =>
   typeof value === "number" && value > 0 ? value : undefined
 
@@ -95,8 +105,12 @@ const formatDate = (timestamp: number): string => {
   return `${year}-${month}-${day}`
 }
 
-const songUnavailableError = (): CloudBaseUserError =>
-  new CloudBaseUserError("这首歌暂时打不开，请稍后再试一次。")
+const SONG_UNAVAILABLE_MESSAGE = "这首歌暂时打不开，请稍后再试一次。"
+
+const songUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(SONG_UNAVAILABLE_MESSAGE)
+
+export const isSongUnavailableError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === SONG_UNAVAILABLE_MESSAGE
 
 const normalizeSong = (document: StoredSongDocument): SongRecord | null => {
   const id = asString(document._id)
@@ -181,6 +195,19 @@ const toStoredSong = (
   }
 }
 
+const writeSongCache = (song: SongRecord, insertIfMissing = true): void => {
+  writeDataCache(dataCacheKeys.songDetail(song.id), song)
+  upsertCachedListItem(dataCacheKeys.songList(), song, {
+    insertIfMissing,
+    sort: compareSongs
+  })
+}
+
+const removeSongCache = (id: string): void => {
+  removeDataCache(dataCacheKeys.songDetail(id))
+  removeCachedListItem(dataCacheKeys.songList(), id)
+}
+
 export const listSongs = async (): Promise<SongRecord[]> => {
   const documents = await listDocuments<StoredSongDocument>(appConfig.entriesCollection, {
     where: {
@@ -193,34 +220,48 @@ export const listSongs = async (): Promise<SongRecord[]> => {
     limit: 100
   })
 
-  return documents.map(normalizeSong).filter((song): song is SongRecord => song !== null).sort(compareSongs)
+  const songs = documents.map(normalizeSong).filter((song): song is SongRecord => song !== null).sort(compareSongs)
+  writeDataCache(dataCacheKeys.songList(), songs)
+  return songs
 }
 
 export const getSong = async (id: string): Promise<SongRecord> => {
-  const document = await getDocument<StoredSongDocument>(appConfig.entriesCollection, id)
-  const song = normalizeSong({
-    ...document,
-    _id: id
-  })
+  try {
+    const document = await getDocument<StoredSongDocument>(appConfig.entriesCollection, id)
+    const song = normalizeSong({
+      ...(isRecord(document) ? document : {}),
+      _id: id
+    } as StoredSongDocument)
 
-  if (!song) {
-    throw songUnavailableError()
+    if (!song) {
+      throw songUnavailableError()
+    }
+
+    writeSongCache(song, false)
+    return song
+  } catch (error) {
+    if (isSongUnavailableError(error)) {
+      removeDataCache(dataCacheKeys.songDetail(id))
+    }
+    throw error
   }
-
-  return song
 }
 
 export const createSong = async (draft: SongDraft): Promise<SongRecord> => {
   const now = Date.now()
   const id = await addDocument(appConfig.entriesCollection, toStoredSong(draft, now))
-  return getSong(id)
+  const song = await getSong(id)
+  writeSongCache(song)
+  return song
 }
 
 export const updateSong = async (id: string, draft: SongDraft): Promise<SongRecord> => {
   const existing = await getSong(id)
   const now = Date.now()
   await updateDocument<StoredSongDocument>(appConfig.entriesCollection, id, toStoredSong(draft, now, existing))
-  return getSong(id)
+  const song = await getSong(id)
+  writeSongCache(song)
+  return song
 }
 
 export const updateSongStatus = async (id: string, status: SongStatus): Promise<SongRecord> => {
@@ -240,10 +281,13 @@ export const updateSongStatus = async (id: string, status: SongStatus): Promise<
     updatedAt: now
   })
 
-  return getSong(id)
+  const song = await getSong(id)
+  writeSongCache(song)
+  return song
 }
 
 export const deleteSong = async (id: string): Promise<void> => {
   await getSong(id)
   await removeDocument(appConfig.entriesCollection, id)
+  removeSongCache(id)
 }

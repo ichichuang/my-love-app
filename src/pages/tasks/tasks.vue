@@ -120,7 +120,9 @@
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { dataCacheKeys } from "@/services/data-cache"
 import { listTasks, toggleTaskDone, type TaskRecord } from "@/services/repositories/tasks"
 
 const theme = useNativeChromeSync()
@@ -137,9 +139,10 @@ interface TaskListItem extends TaskRecord {
   taskDueDateLabel: string
 }
 
-const tasks = shallowRef<TaskRecord[]>([])
-const loading = shallowRef(false)
-const hasError = shallowRef(false)
+const { items: tasks, loading, errorMessage, reload } = useCachedList<TaskRecord>({
+  cacheKey: dataCacheKeys.taskList,
+  loader: listTasks
+})
 const activeFilter = shallowRef<FilterValue>("all")
 const togglingById = shallowRef<Partial<Record<string, boolean>>>({})
 
@@ -226,17 +229,20 @@ const filteredTasks = computed(() => {
   return decoratedTasks.value
 })
 
-const loadTasks = async () => {
-  loading.value = true
-  hasError.value = false
+const hasError = computed(() => errorMessage.value.length > 0 && tasks.value.length === 0)
 
+const loadTasks = async (notifyCachedFailure = false) => {
   try {
-    tasks.value = await listTasks()
+    const result = await reload()
+    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
+      uni.showToast({
+        title: "小纸条暂时没更新好，请稍后再试。",
+        icon: "none"
+      })
+    }
   } catch {
-    tasks.value = []
-    hasError.value = true
+    return
   } finally {
-    loading.value = false
     uni.stopPullDownRefresh()
   }
 }
@@ -305,7 +311,7 @@ onShow(() => {
 })
 
 onPullDownRefresh(() => {
-  void loadTasks()
+  void loadTasks(true)
 })
 </script>
 

@@ -109,20 +109,30 @@
 import { computed } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import AppPetNavigator from "@/components/AppPetNavigator.vue"
-import { useCrud } from "@/composables/useCrud"
+import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import { dataCacheKeys } from "@/services/data-cache"
 import { listEntries } from "@/services/repositories/entries"
 
 const theme = useNativeChromeSync()
-const { items, loading, reload } = useCrud(listEntries)
+const { items, loading, reload } = useCachedList({
+  cacheKey: dataCacheKeys.memoryList,
+  loader: listEntries
+})
 const hour = new Date().getHours()
 const todayGreeting = hour < 12 ? "早安，今天也慢慢收藏" : hour < 18 ? "午后，把小事轻轻放好" : "晚上好，给今天留一盏小灯"
 const memoryCountText = computed(() => (items.value.length > 0 ? `已收好 ${items.value.length} 条回忆` : "等第一颗小记忆"))
 
-const loadEntries = async () => {
+const loadEntries = async (notifyCachedFailure = false) => {
   try {
-    await reload()
+    const result = await reload()
+    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
+      uni.showToast({
+        title: "小纸条暂时没更新好，请稍后再试。",
+        icon: "none"
+      })
+    }
   } catch (error) {
     uni.showToast({
       title: getFriendlyErrorMessage(error),
@@ -157,8 +167,12 @@ const openEntry = (id: string) => {
   })
 }
 
-onShow(loadEntries)
-onPullDownRefresh(loadEntries)
+onShow(() => {
+  void loadEntries()
+})
+onPullDownRefresh(() => {
+  void loadEntries(true)
+})
 </script>
 
 <style lang="scss" scoped>

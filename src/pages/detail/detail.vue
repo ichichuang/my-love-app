@@ -181,13 +181,16 @@
 import { shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
+import { dataCacheKeys } from "@/services/data-cache"
 import {
   deleteEntry,
   deleteEntryFiles,
   getEntry,
+  isEntryUnavailableError,
   updateEntry,
   type EntryRecord
 } from "@/services/repositories/entries"
@@ -198,12 +201,19 @@ const placeholderStyle = "color: var(--app-text-muted);"
 const entryId = shallowRef("")
 const theme = useNativeChromeSync()
 const message = useMessage()
-const entry = shallowRef<EntryRecord | null>(null)
-const loading = shallowRef(false)
 const editing = shallowRef(false)
 const saving = shallowRef(false)
 const deleting = shallowRef(false)
 const removedFiles = shallowRef<CloudFile[]>([])
+const {
+  record: entry,
+  loading,
+  reload: reloadEntry
+} = useCachedRecord<EntryRecord>({
+  cacheKey: () => dataCacheKeys.memoryDetail(entryId.value),
+  isUnavailableError: isEntryUnavailableError,
+  loader: () => getEntry(entryId.value)
+})
 
 const title = shallowRef("")
 const content = shallowRef("")
@@ -243,18 +253,25 @@ const loadEntry = async () => {
     return
   }
 
-  loading.value = true
   try {
-    const nextEntry = await getEntry(entryId.value)
-    entry.value = nextEntry
-    hydrateForm(nextEntry)
+    await reloadEntry({
+      applyCached: (nextEntry) => {
+        if (!editing.value) {
+          hydrateForm(nextEntry)
+        }
+      },
+      applyFresh: (nextEntry) => {
+        if (!editing.value) {
+          hydrateForm(nextEntry)
+        }
+      },
+      canApplyFresh: () => !editing.value
+    })
   } catch (error) {
     uni.showToast({
       title: getFriendlyErrorMessage(error),
       icon: "none"
     })
-  } finally {
-    loading.value = false
   }
 }
 

@@ -142,12 +142,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
-import { createTask, deleteTask, getTask, updateTask, type TaskDraft } from "@/services/repositories/tasks"
+import { dataCacheKeys } from "@/services/data-cache"
+import {
+  createTask,
+  deleteTask,
+  getTask,
+  isTaskUnavailableError,
+  updateTask,
+  type TaskDraft,
+  type TaskRecord
+} from "@/services/repositories/tasks"
 
 const saveFeedbackDelayMs = 520
 const placeholderStyle = "color: var(--app-text-muted)"
@@ -156,13 +166,22 @@ const theme = useNativeChromeSync()
 const message = useMessage()
 
 const taskId = shallowRef("")
-const loading = shallowRef(false)
 const hasLoadError = shallowRef(false)
 const saving = shallowRef(false)
 const saved = shallowRef(false)
 const deleting = shallowRef(false)
 const taskLoaded = shallowRef(false)
 const detailsExpanded = shallowRef(false)
+const draftDirty = shallowRef(false)
+const hydratingDraft = shallowRef(false)
+const {
+  loading,
+  reload: reloadTask
+} = useCachedRecord<TaskRecord>({
+  cacheKey: () => dataCacheKeys.taskDetail(taskId.value),
+  isUnavailableError: isTaskUnavailableError,
+  loader: () => getTask(taskId.value)
+})
 
 const title = shallowRef("")
 const content = shallowRef("")
@@ -221,14 +240,23 @@ const decodeQueryId = (value: unknown): string => {
   }
 }
 
+const updateDraftWithoutTracking = (update: () => void) => {
+  hydratingDraft.value = true
+  update()
+  hydratingDraft.value = false
+  draftDirty.value = false
+}
+
 const resetForm = () => {
-  title.value = ""
-  content.value = ""
-  taskDueDate.value = ""
-  taskDone.value = false
-  detailsExpanded.value = false
-  saved.value = false
-  taskLoaded.value = false
+  updateDraftWithoutTracking(() => {
+    title.value = ""
+    content.value = ""
+    taskDueDate.value = ""
+    taskDone.value = false
+    detailsExpanded.value = false
+    saved.value = false
+    taskLoaded.value = false
+  })
 }
 
 const shouldExpandTaskDetails = (task: TaskDraft): boolean =>
@@ -236,6 +264,7 @@ const shouldExpandTaskDetails = (task: TaskDraft): boolean =>
 
 const toggleDetails = () => {
   detailsExpanded.value = !detailsExpanded.value
+  draftDirty.value = true
 }
 
 const setTaskDone = (value: boolean) => {
@@ -243,20 +272,8 @@ const setTaskDone = (value: boolean) => {
   saved.value = false
 }
 
-const loadTask = async () => {
-  if (!taskId.value) {
-    resetForm()
-    hasLoadError.value = false
-    loading.value = false
-    return
-  }
-
-  loading.value = true
-  hasLoadError.value = false
-  taskLoaded.value = false
-
-  try {
-    const task = await getTask(taskId.value)
+const hydrateTask = (task: TaskRecord) => {
+  updateDraftWithoutTracking(() => {
     title.value = task.title
     content.value = task.content
     taskDueDate.value = task.taskDueDate
@@ -264,13 +281,43 @@ const loadTask = async () => {
     detailsExpanded.value = shouldExpandTaskDetails(task)
     saved.value = false
     taskLoaded.value = true
+  })
+}
+
+const loadTask = async () => {
+  if (!taskId.value) {
+    resetForm()
+    hasLoadError.value = false
+    return
+  }
+
+  hasLoadError.value = false
+  taskLoaded.value = false
+
+  try {
+    await reloadTask({
+      applyCached: hydrateTask,
+      applyFresh: hydrateTask,
+      canApplyFresh: () => !draftDirty.value && !formDisabled.value
+    })
   } catch {
     resetForm()
     hasLoadError.value = true
-  } finally {
-    loading.value = false
   }
 }
+
+watch(
+  [title, content, taskDueDate, taskDone],
+  () => {
+    if (!hydratingDraft.value && !formDisabled.value) {
+      draftDirty.value = true
+      saved.value = false
+    }
+  },
+  {
+    flush: "sync"
+  }
+)
 
 const backToTasks = () => {
   if (getCurrentPages().length > 1) {

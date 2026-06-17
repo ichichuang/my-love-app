@@ -10,6 +10,13 @@ import {
   updateDocument,
   type CloudFile
 } from "@/services/cloudbase"
+import {
+  dataCacheKeys,
+  removeCachedListItem,
+  removeDataCache,
+  upsertCachedListItem,
+  writeDataCache
+} from "@/services/data-cache"
 
 export type LoveEntryKind = "memory" | "song" | "task"
 
@@ -53,8 +60,13 @@ const asNumber = (value: unknown, fallback = 0): number => (typeof value === "nu
 const normalizeKind = (value: unknown): LoveEntryKind =>
   value === "memory" || value === "song" || value === "task" ? value : "memory"
 
+const ENTRY_UNAVAILABLE_MESSAGE = "这张小纸条暂时打不开，可能是云开发慢了一点，请稍后再试。"
+
 const entryUnavailableError = (): CloudBaseUserError =>
-  new CloudBaseUserError("这张小纸条暂时打不开，可能是云开发慢了一点，请稍后再试。")
+  new CloudBaseUserError(ENTRY_UNAVAILABLE_MESSAGE)
+
+export const isEntryUnavailableError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === ENTRY_UNAVAILABLE_MESSAGE
 
 const stripTemporaryUrl = (file: CloudFile): StoredCloudFile => ({
   fileID: file.fileID,
@@ -92,7 +104,7 @@ const normalizeStoredFile = (value: unknown): StoredCloudFile | null => {
 
 const normalizeEntry = (document: StoredEntryDocument): EntryRecord | null => {
   const id = asString(document._id)
-  if (!id) {
+  if (!id || document.coupleId !== appConfig.coupleId) {
     return null
   }
 
@@ -142,6 +154,18 @@ const toStoredDraft = (draft: EntryDraft, timestamp: number): Omit<StoredEntryDo
   updatedAt: timestamp
 })
 
+const writeEntryCache = (entry: EntryRecord, insertIfMissing = true): void => {
+  writeDataCache(dataCacheKeys.memoryDetail(entry.id), entry)
+  upsertCachedListItem(dataCacheKeys.memoryList(), entry, {
+    insertIfMissing
+  })
+}
+
+const removeEntryCache = (id: string): void => {
+  removeDataCache(dataCacheKeys.memoryDetail(id))
+  removeCachedListItem(dataCacheKeys.memoryList(), id)
+}
+
 export const listEntries = async (): Promise<EntryRecord[]> => {
   const documents = await listDocuments<StoredEntryDocument>(appConfig.entriesCollection, {
     where: {
@@ -155,15 +179,17 @@ export const listEntries = async (): Promise<EntryRecord[]> => {
   })
 
   const entries = documents.map(normalizeEntry).filter((entry): entry is EntryRecord => entry !== null)
-  return attachTemporaryUrls(entries)
+  const entriesWithTemporaryUrls = await attachTemporaryUrls(entries)
+  writeDataCache(dataCacheKeys.memoryList(), entriesWithTemporaryUrls)
+  return entriesWithTemporaryUrls
 }
 
 const getNormalizedEntry = async (id: string): Promise<EntryRecord> => {
   const document = await getDocument<StoredEntryDocument>(appConfig.entriesCollection, id)
   const normalized = normalizeEntry({
-    ...document,
+    ...(isRecord(document) ? document : {}),
     _id: id
-  })
+  } as StoredEntryDocument)
 
   if (!normalized) {
     throw entryUnavailableError()
@@ -173,15 +199,25 @@ const getNormalizedEntry = async (id: string): Promise<EntryRecord> => {
 }
 
 export const getEntry = async (id: string): Promise<EntryRecord> => {
-  const normalized = await getNormalizedEntry(id)
-  const [entry] = await attachTemporaryUrls([normalized])
-  return entry
+  try {
+    const normalized = await getNormalizedEntry(id)
+    const [entry] = await attachTemporaryUrls([normalized])
+    writeEntryCache(entry, false)
+    return entry
+  } catch (error) {
+    if (isEntryUnavailableError(error)) {
+      removeDataCache(dataCacheKeys.memoryDetail(id))
+    }
+    throw error
+  }
 }
 
 export const createEntry = async (draft: EntryDraft): Promise<EntryRecord> => {
   const now = Date.now()
   const id = await addDocument(appConfig.entriesCollection, toStoredDraft(draft, now))
-  return getEntry(id)
+  const entry = await getEntry(id)
+  writeEntryCache(entry)
+  return entry
 }
 
 export const updateEntry = async (id: string, draft: EntryDraft): Promise<EntryRecord> => {
@@ -199,13 +235,16 @@ export const updateEntry = async (id: string, draft: EntryDraft): Promise<EntryR
     updatedAt: now
   })
 
-  return getEntry(id)
+  const entry = await getEntry(id)
+  writeEntryCache(entry)
+  return entry
 }
 
 export const deleteEntry = async (id: string): Promise<void> => {
   const entry = await getEntry(id)
   await deleteCloudFiles(entry.files.map((file) => file.fileID))
   await removeDocument(appConfig.entriesCollection, id)
+  removeEntryCache(id)
 }
 
 export const deleteEntryFiles = async (files: CloudFile[]): Promise<void> => {

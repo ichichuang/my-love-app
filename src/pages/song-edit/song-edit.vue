@@ -161,20 +161,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import { dataCacheKeys } from "@/services/data-cache"
 import {
   createSong,
   deleteSong,
   getSong,
+  isSongUnavailableError,
   songPriorityLabels,
   songStatusLabels,
   updateSong,
   type SongDraft,
   type SongPriority,
+  type SongRecord,
   type SongStatus
 } from "@/services/repositories/songs"
 
@@ -184,13 +188,22 @@ const theme = useNativeChromeSync()
 const message = useMessage()
 
 const songId = shallowRef("")
-const loading = shallowRef(false)
 const hasLoadError = shallowRef(false)
 const saving = shallowRef(false)
 const saved = shallowRef(false)
 const deleting = shallowRef(false)
 const songLoaded = shallowRef(false)
 const detailsExpanded = shallowRef(false)
+const draftDirty = shallowRef(false)
+const hydratingDraft = shallowRef(false)
+const {
+  loading,
+  reload: reloadSong
+} = useCachedRecord<SongRecord>({
+  cacheKey: () => dataCacheKeys.songDetail(songId.value),
+  isUnavailableError: isSongUnavailableError,
+  loader: () => getSong(songId.value)
+})
 
 const title = shallowRef("")
 const artist = shallowRef("")
@@ -270,15 +283,24 @@ const decodeQueryId = (value: unknown): string => {
   }
 }
 
+const updateDraftWithoutTracking = (update: () => void) => {
+  hydratingDraft.value = true
+  update()
+  hydratingDraft.value = false
+  draftDirty.value = false
+}
+
 const resetForm = () => {
-  title.value = ""
-  artist.value = ""
-  content.value = ""
-  songPriority.value = "normal"
-  songStatus.value = "wanted"
-  saved.value = false
-  songLoaded.value = false
-  detailsExpanded.value = false
+  updateDraftWithoutTracking(() => {
+    title.value = ""
+    artist.value = ""
+    content.value = ""
+    songPriority.value = "normal"
+    songStatus.value = "wanted"
+    saved.value = false
+    songLoaded.value = false
+    detailsExpanded.value = false
+  })
 }
 
 const setSongPriority = (value: SongPriority) => {
@@ -299,6 +321,20 @@ const shouldExpandSongDetails = (song: SongDraft): boolean =>
 
 const toggleDetails = () => {
   detailsExpanded.value = !detailsExpanded.value
+  draftDirty.value = true
+}
+
+const hydrateSong = (song: SongRecord) => {
+  updateDraftWithoutTracking(() => {
+    title.value = song.title
+    artist.value = song.artist
+    content.value = song.content
+    songPriority.value = song.songPriority
+    songStatus.value = song.songStatus
+    detailsExpanded.value = shouldExpandSongDetails(song)
+    saved.value = false
+    songLoaded.value = true
+  })
 }
 
 const loadSong = async () => {
@@ -308,27 +344,33 @@ const loadSong = async () => {
     return
   }
 
-  loading.value = true
   hasLoadError.value = false
   songLoaded.value = false
 
   try {
-    const song = await getSong(songId.value)
-    title.value = song.title
-    artist.value = song.artist
-    content.value = song.content
-    songPriority.value = song.songPriority
-    songStatus.value = song.songStatus
-    detailsExpanded.value = shouldExpandSongDetails(song)
-    saved.value = false
-    songLoaded.value = true
+    await reloadSong({
+      applyCached: hydrateSong,
+      applyFresh: hydrateSong,
+      canApplyFresh: () => !draftDirty.value && !formDisabled.value
+    })
   } catch {
     resetForm()
     hasLoadError.value = true
-  } finally {
-    loading.value = false
   }
 }
+
+watch(
+  [title, artist, content, songPriority, songStatus],
+  () => {
+    if (!hydratingDraft.value && !formDisabled.value) {
+      draftDirty.value = true
+      saved.value = false
+    }
+  },
+  {
+    flush: "sync"
+  }
+)
 
 const backToSongs = () => {
   if (getCurrentPages().length > 1) {

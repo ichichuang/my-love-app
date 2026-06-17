@@ -7,6 +7,13 @@ import {
   removeDocument,
   updateDocument
 } from "@/services/cloudbase"
+import {
+  dataCacheKeys,
+  removeCachedListItem,
+  removeDataCache,
+  upsertCachedListItem,
+  writeDataCache
+} from "@/services/data-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
 
 export interface TaskDraft {
@@ -46,6 +53,9 @@ const asString = (value: unknown, fallback = ""): string => (typeof value === "s
 
 const asNumber = (value: unknown, fallback = 0): number => (typeof value === "number" ? value : fallback)
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
 const asPositiveNumber = (value: unknown): number | undefined =>
   typeof value === "number" && value > 0 ? value : undefined
 
@@ -56,8 +66,12 @@ const taskMood = (done: boolean): string => (done ? "已完成" : "未完成")
 
 const validDueDate = (value: string): string => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "")
 
-const taskUnavailableError = (): CloudBaseUserError =>
-  new CloudBaseUserError("这张小票根暂时打不开，请稍后再试一次。")
+const TASK_UNAVAILABLE_MESSAGE = "这张小票根暂时打不开，请稍后再试一次。"
+
+const taskUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(TASK_UNAVAILABLE_MESSAGE)
+
+export const isTaskUnavailableError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === TASK_UNAVAILABLE_MESSAGE
 
 const normalizeTask = (document: StoredTaskDocument): TaskRecord | null => {
   const id = asString(document._id)
@@ -157,6 +171,19 @@ const toStoredTask = (
   }
 }
 
+const writeTaskCache = (task: TaskRecord, insertIfMissing = true): void => {
+  writeDataCache(dataCacheKeys.taskDetail(task.id), task)
+  upsertCachedListItem(dataCacheKeys.taskList(), task, {
+    insertIfMissing,
+    sort: compareTasks
+  })
+}
+
+const removeTaskCache = (id: string): void => {
+  removeDataCache(dataCacheKeys.taskDetail(id))
+  removeCachedListItem(dataCacheKeys.taskList(), id)
+}
+
 export const listTasks = async (): Promise<TaskRecord[]> => {
   const documents = await listDocuments<StoredTaskDocument>(appConfig.entriesCollection, {
     where: {
@@ -169,34 +196,48 @@ export const listTasks = async (): Promise<TaskRecord[]> => {
     limit: 100
   })
 
-  return documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null).sort(compareTasks)
+  const tasks = documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null).sort(compareTasks)
+  writeDataCache(dataCacheKeys.taskList(), tasks)
+  return tasks
 }
 
 export const getTask = async (id: string): Promise<TaskRecord> => {
-  const document = await getDocument<StoredTaskDocument>(appConfig.entriesCollection, id)
-  const task = normalizeTask({
-    ...document,
-    _id: id
-  })
+  try {
+    const document = await getDocument<StoredTaskDocument>(appConfig.entriesCollection, id)
+    const task = normalizeTask({
+      ...(isRecord(document) ? document : {}),
+      _id: id
+    } as StoredTaskDocument)
 
-  if (!task) {
-    throw taskUnavailableError()
+    if (!task) {
+      throw taskUnavailableError()
+    }
+
+    writeTaskCache(task, false)
+    return task
+  } catch (error) {
+    if (isTaskUnavailableError(error)) {
+      removeDataCache(dataCacheKeys.taskDetail(id))
+    }
+    throw error
   }
-
-  return task
 }
 
 export const createTask = async (draft: TaskDraft): Promise<TaskRecord> => {
   const now = Date.now()
   const id = await addDocument(appConfig.entriesCollection, toStoredTask(draft, now))
-  return getTask(id)
+  const task = await getTask(id)
+  writeTaskCache(task)
+  return task
 }
 
 export const updateTask = async (id: string, draft: TaskDraft): Promise<TaskRecord> => {
   const existing = await getTask(id)
   const now = Date.now()
   await updateDocument<StoredTaskDocument>(appConfig.entriesCollection, id, toStoredTask(draft, now, existing))
-  return getTask(id)
+  const task = await getTask(id)
+  writeTaskCache(task)
+  return task
 }
 
 export const toggleTaskDone = async (id: string, done: boolean): Promise<TaskRecord> => {
@@ -216,10 +257,13 @@ export const toggleTaskDone = async (id: string, done: boolean): Promise<TaskRec
     updatedAt: now
   })
 
-  return getTask(id)
+  const task = await getTask(id)
+  writeTaskCache(task)
+  return task
 }
 
 export const deleteTask = async (id: string): Promise<void> => {
   await getTask(id)
   await removeDocument(appConfig.entriesCollection, id)
+  removeTaskCache(id)
 }

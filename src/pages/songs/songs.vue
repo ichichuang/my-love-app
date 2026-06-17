@@ -103,7 +103,9 @@
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { dataCacheKeys } from "@/services/data-cache"
 import {
   listSongs,
   songPriorityLabels,
@@ -131,9 +133,10 @@ interface SongStatusAction {
   value: SongStatus
 }
 
-const songs = shallowRef<SongRecord[]>([])
-const loading = shallowRef(false)
-const hasError = shallowRef(false)
+const { items: songs, loading, errorMessage, reload } = useCachedList<SongRecord>({
+  cacheKey: dataCacheKeys.songList,
+  loader: listSongs
+})
 const activeFilter = shallowRef<FilterValue>("all")
 const statusUpdatingById = shallowRef<Partial<Record<string, SongStatus>>>({})
 
@@ -232,17 +235,20 @@ const filteredSongs = computed(() => {
   return decoratedSongs.value.filter((song) => song.songStatus === activeFilter.value)
 })
 
-const loadSongs = async () => {
-  loading.value = true
-  hasError.value = false
+const hasError = computed(() => errorMessage.value.length > 0 && songs.value.length === 0)
 
+const loadSongs = async (notifyCachedFailure = false) => {
   try {
-    songs.value = await listSongs()
+    const result = await reload()
+    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
+      uni.showToast({
+        title: "小纸条暂时没更新好，请稍后再试。",
+        icon: "none"
+      })
+    }
   } catch {
-    songs.value = []
-    hasError.value = true
+    return
   } finally {
-    loading.value = false
     uni.stopPullDownRefresh()
   }
 }
@@ -310,7 +316,7 @@ onShow(() => {
 })
 
 onPullDownRefresh(() => {
-  void loadSongs()
+  void loadSongs(true)
 })
 </script>
 
