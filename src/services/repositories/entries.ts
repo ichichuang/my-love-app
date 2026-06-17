@@ -18,7 +18,7 @@ import {
   writeDataCache
 } from "@/services/data-cache"
 
-export type LoveEntryKind = "memory" | "song" | "task"
+export type LoveEntryKind = "memory" | "song" | "task" | "memo"
 
 export interface EntryDraft {
   title: string
@@ -58,7 +58,7 @@ const asString = (value: unknown, fallback = ""): string => (typeof value === "s
 const asNumber = (value: unknown, fallback = 0): number => (typeof value === "number" ? value : fallback)
 
 const normalizeKind = (value: unknown): LoveEntryKind =>
-  value === "memory" || value === "song" || value === "task" ? value : "memory"
+  value === "memory" || value === "song" || value === "task" || value === "memo" ? value : "memory"
 
 const ENTRY_UNAVAILABLE_MESSAGE = "这张小纸条暂时打不开，可能是云开发慢了一点，请稍后再试。"
 

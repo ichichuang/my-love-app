@@ -60,7 +60,7 @@ const asPositiveNumber = (value: unknown): number | undefined =>
   typeof value === "number" && value > 0 ? value : undefined
 
 const normalizeKind = (value: unknown): LoveEntryKind =>
-  value === "memory" || value === "song" || value === "task" ? value : "memory"
+  value === "memory" || value === "song" || value === "task" || value === "memo" ? value : "memory"
 
 const taskMood = (done: boolean): string => (done ? "已完成" : "未完成")
 

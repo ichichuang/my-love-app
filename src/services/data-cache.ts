@@ -6,7 +6,7 @@ export interface DataCacheEnvelope<T> {
   data: T
 }
 
-type DataCacheKind = "memory" | "song" | "task"
+type DataCacheKind = "memory" | "song" | "task" | "memo"
 type SemanticData = boolean | number | string | null | SemanticData[] | { [key: string]: SemanticData }
 type StableListKey = number | string
 
@@ -42,7 +42,9 @@ export const dataCacheKeys = {
   songList: (): string => makeDataCacheKey("song", "list"),
   songDetail: (id: string): string => makeDataCacheKey("song", "detail", id),
   taskList: (): string => makeDataCacheKey("task", "list"),
-  taskDetail: (id: string): string => makeDataCacheKey("task", "detail", id)
+  taskDetail: (id: string): string => makeDataCacheKey("task", "detail", id),
+  memoList: (): string => makeDataCacheKey("memo", "list"),
+  memoDetail: (id: string): string => makeDataCacheKey("memo", "detail", id)
 }
 
 const isCacheEnvelope = <T>(value: unknown): value is DataCacheEnvelope<T> => {

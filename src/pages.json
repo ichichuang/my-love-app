@@ -79,6 +79,20 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "小样本预览"
       }
+    },
+    {
+      "path": "pages/memos/memos",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "她的小档案"
+      }
+    },
+    {
+      "path": "pages/memo-edit/memo-edit",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "写小线索"
+      }
     }
   ],
   "globalStyle": {

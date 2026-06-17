@@ -89,7 +89,7 @@ const asPositiveNumber = (value: unknown): number | undefined =>
   typeof value === "number" && value > 0 ? value : undefined
 
 const normalizeKind = (value: unknown): LoveEntryKind =>
-  value === "memory" || value === "song" || value === "task" ? value : "memory"
+  value === "memory" || value === "song" || value === "task" || value === "memo" ? value : "memory"
 
 const normalizeSongStatus = (value: unknown): SongStatus =>
   value === "sung" || value === "paused" || value === "wanted" ? value : "wanted"
