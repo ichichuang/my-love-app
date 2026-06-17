@@ -228,11 +228,6 @@ const requiredThemeContractSnippets = [
     file: "src/pages.json",
     label: "design preview route",
     snippet: "pages/design-preview/design-preview"
-  },
-  {
-    file: "src/pages/settings/settings.vue",
-    label: "design preview settings entry",
-    snippet: "openDesignPreview"
   }
 ]
 
