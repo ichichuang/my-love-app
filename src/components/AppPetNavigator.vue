@@ -163,6 +163,10 @@ const menuItems: MenuItem[] = [
     path: "/pages/tasks/tasks"
   },
   {
+    label: "小档案",
+    path: "/pages/memos/memos"
+  },
+  {
     label: "换样子",
     path: "/pages/settings/settings"
   }

@@ -69,6 +69,24 @@
             去小约定
           </wd-button>
         </view>
+
+        <view class="home-note home-note--memo" hover-class="home-note--pressed" @click="goMemos">
+          <view class="home-note__mark home-note__mark--memo">
+            <text>档</text>
+          </view>
+          <view class="home-note__copy">
+            <text class="home-note__title">小档案</text>
+            <text class="home-note__body">她的小线索先记着</text>
+          </view>
+          <wd-button
+            size="small"
+            plain
+            custom-class="home-note__button"
+            @click.stop="goMemos"
+          >
+            去小档案
+          </wd-button>
+        </view>
       </view>
     </view>
 
@@ -158,6 +176,12 @@ const goSongs = () => {
 const goTasks = () => {
   uni.navigateTo({
     url: "/pages/tasks/tasks"
+  })
+}
+
+const goMemos = () => {
+  uni.navigateTo({
+    url: "/pages/memos/memos"
   })
 }
 
@@ -360,6 +384,10 @@ onPullDownRefresh(() => {
   background: var(--app-color-blue-person);
 }
 
+.home-note--memo::after {
+  background: var(--app-primary-muted);
+}
+
 .home-note--pressed {
   opacity: var(--app-press-opacity);
   transform: scale(var(--app-press-scale));
@@ -391,6 +419,12 @@ onPullDownRefresh(() => {
   background: var(--app-accent-soft);
   color: var(--app-accent);
   transform: rotate(4deg);
+}
+
+.home-note__mark--memo {
+  background: var(--app-surface-strong);
+  color: var(--app-primary);
+  transform: rotate(-2deg);
 }
 
 .home-note__copy {

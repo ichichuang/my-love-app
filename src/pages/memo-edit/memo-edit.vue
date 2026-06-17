@@ -121,21 +121,34 @@
           <wd-button block size="large" :loading="saving" :disabled="formDisabled" @click="saveMemo">
             {{ saveButtonText }}
           </wd-button>
+          <wd-button
+            v-if="canDeleteMemo"
+            block
+            type="text"
+            custom-class="memo-delete-button"
+            @click="confirmDeleteMemo"
+          >
+            删除这条小线索
+          </wd-button>
         </view>
       </view>
     </view>
+
+    <wd-message-box />
   </app-shell>
 </template>
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
+import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
   createMemo,
+  deleteMemo,
   getMemo,
   isMemoUnavailableError,
   memoCategoryLabels,
@@ -148,6 +161,7 @@ import {
 const saveFeedbackDelayMs = 520
 const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
+const message = useMessage()
 
 const memoCategoryOrder: MemoCategory[] = ["favorite", "profile", "avoid", "gift", "date", "note"]
 
@@ -155,6 +169,8 @@ const memoId = shallowRef("")
 const hasLoadError = shallowRef(false)
 const saving = shallowRef(false)
 const saved = shallowRef(false)
+const deleting = shallowRef(false)
+const memoLoaded = shallowRef(false)
 const draftDirty = shallowRef(false)
 const hydratingDraft = shallowRef(false)
 const {
@@ -188,7 +204,17 @@ const pinnedOptions = [
 ]
 
 const isEditMode = computed(() => memoId.value.length > 0)
-const formDisabled = computed(() => saving.value || saved.value)
+const canDeleteMemo = computed(
+  () =>
+    isEditMode.value &&
+    memoLoaded.value &&
+    !loading.value &&
+    !hasLoadError.value &&
+    !saving.value &&
+    !deleting.value &&
+    !saved.value
+)
+const formDisabled = computed(() => saving.value || saved.value || deleting.value)
 const pageTitle = computed(() => (isEditMode.value ? "改小线索" : "写小线索"))
 const pageEyebrow = computed(() => (isEditMode.value ? "重新整理" : "小纸条"))
 const introKicker = computed(() => (isEditMode.value ? "把这张小线索理一理" : "写一张小线索"))
@@ -239,6 +265,7 @@ const resetForm = () => {
     memoCategory.value = "note"
     memoPinned.value = false
     saved.value = false
+    memoLoaded.value = false
   })
 }
 
@@ -249,6 +276,7 @@ const hydrateMemo = (memo: MemoRecord) => {
     memoCategory.value = memo.memoCategory
     memoPinned.value = memo.memoPinned
     saved.value = false
+    memoLoaded.value = true
   })
 }
 
@@ -260,6 +288,7 @@ const loadMemo = async () => {
   }
 
   hasLoadError.value = false
+  memoLoaded.value = false
 
   try {
     await reloadMemo({
@@ -363,6 +392,56 @@ const saveMemo = async () => {
     if (!saved.value) {
       saving.value = false
     }
+  }
+}
+
+const deleteCurrentMemo = async () => {
+  if (!canDeleteMemo.value || deleting.value) {
+    return
+  }
+
+  deleting.value = true
+
+  try {
+    await deleteMemo(memoId.value)
+    uni.showToast({
+      title: "已经从小档案移走",
+      icon: "none"
+    })
+    backToMemos()
+  } catch {
+    uni.showToast({
+      title: "这条小线索暂时没删掉，请稍后再试。",
+      icon: "none"
+    })
+  } finally {
+    deleting.value = false
+  }
+}
+
+const confirmDeleteMemo = async () => {
+  if (!canDeleteMemo.value || deleting.value) {
+    return
+  }
+
+  try {
+    await message.confirm({
+      title: "删除这条小线索",
+      msg: "这会删除这条记录。",
+      cancelButtonText: "取消",
+      confirmButtonText: "删除",
+      confirmButtonProps: {
+        plain: true,
+        type: "error"
+      },
+      cancelButtonProps: {
+        plain: true,
+        type: "info"
+      }
+    })
+    await deleteCurrentMemo()
+  } catch {
+    return
   }
 }
 
@@ -606,5 +685,10 @@ onLoad((query) => {
   gap: var(--app-space-6);
   padding-top: var(--app-space-3);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+:deep(.memo-delete-button) {
+  color: var(--app-danger);
+  box-shadow: var(--app-shadow-none);
 }
 </style>
