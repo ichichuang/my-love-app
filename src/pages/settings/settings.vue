@@ -106,13 +106,6 @@
           <text class="settings-section__title">小角落</text>
         </view>
         <view class="appendix">
-          <view class="appendix-row" hover-class="appendix-row--pressed" @click="openDesignPreview">
-            <view class="appendix-row__main">
-              <text class="appendix-row__icon">开发</text>
-              <text class="appendix-row__label">看看小样本</text>
-            </view>
-            <text class="appendix-row__value">设计系统小样本</text>
-          </view>
           <view class="appendix-row appendix-row--quiet">
             <view class="appendix-row__main">
               <text class="appendix-row__icon">云</text>
@@ -160,12 +153,6 @@ const fontScaleOptions: Array<{
   { label: "标准", note: "日常阅读", value: "normal" },
   { label: "偏大", note: "更易看清", value: "large" }
 ]
-
-const openDesignPreview = () => {
-  uni.navigateTo({
-    url: "/pages/design-preview/design-preview"
-  })
-}
 
 const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "待配置"))
 </script>

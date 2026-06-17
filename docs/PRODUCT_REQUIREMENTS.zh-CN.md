@@ -78,9 +78,10 @@ Stage 1 只允许一个固定微信用户访问：
 小宠物是 Stage 1 owner-only 阶段的小小引导员，用于引导拥有者进入：
 
 - 写回忆
-- 点歌清单
-- 必做事项
-- 设置
+- 小歌单
+- 小约定
+- 小档案
+- 小纸样本
 
 小宠物必须遵守以下边界：
 
@@ -97,7 +98,7 @@ Stage 1 只允许一个固定微信用户访问：
 src/components/AppPetNavigator.vue
 ```
 
-第一版优先在首页、点歌页、事项页、设置页手动挂载，不要第一版就强行改 `AppShell`。如后续确认需要全页面常驻，再评估 `AppShell` 内置可选插槽或可选组件。
+Stage 1 小宠物只在首页挂载。其他页面不挂载 `AppPetNavigator`，避免页面栈叠加和返回体验异常。小宠物菜单负责从首页进入写回忆、小歌单、小约定、小档案和小纸样本；不要第一版就强行改 `AppShell`。如后续确认需要全页面常驻，再评估 `AppShell` 内置可选插槽或可选组件。
 
 AppPetNavigator 的菜单项必须使用中文文案，菜单动作优先使用 Wot UI `wd-button`，菜单弹层优先使用 Wot UI `wd-popup` 或现有 Wot UI 组件。不得使用原生 `button`、`input`、`textarea`、`picker`、`checkbox`、`form` 作为主要业务控件；不得直接调用 `wx.cloud`；不得新增 store，除非后续实现确实需要并单独说明。
 
