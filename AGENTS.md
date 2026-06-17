@@ -5,6 +5,9 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 ## AI Coding Guidelines
 
 - Future AI/Codex edits must read and follow `docs/AI_CODING_GUIDELINES.md` before changing project files.
+- Future AI/Codex edits must also read and follow `docs/AI_FEATURE_STYLE_GUIDELINES.zh-CN.md` before adding or modifying user-facing features, pages, components, cards, containers, copy, states, or interactions.
+- The feature style guide applies automatically to every future request. The user does not need to repeat the style direction each time.
+- New UI must match the current `小珊的树洞` direction: playful, cute, restrained, hand-drawn, paper-note-like, private, and intimate.
 - Follow the architecture frozen after `miniapp-architecture-freeze-v1`; do not redesign the base architecture, design-system foundation, CloudBase architecture, routing model, or product boundary unless explicitly requested.
 - Use Wot UI first for polished business UI. Do not introduce native `button`, `input`, `textarea`, `checkbox`, `radio`, `switch`, `picker`, `slider`, `form`, or other raw interactive controls in new pages or business components.
 - Use `wd-button` for explicit actions and Wot UI form/dialog/popup/cell/tab/tag/badge/loading/empty/error components whenever available. If Wot UI does not fit, create or reuse a small app-level component that follows the design-token system.
@@ -46,7 +49,7 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 
 ## Product Rules
 
-- This is a two-person private app only for the owner and girlfriend.
+- This is a private owner-only Stage 1 Mini Program.
 - Do not add public social features, discovery feeds, public comments, public profiles, or public sharing.
 - Do not add username/password registration or a Web-style login system.
 - Keep product requirements in `docs/PRODUCT_REQUIREMENTS.zh-CN.md` aligned with implementation changes.
