@@ -18,20 +18,19 @@
           <text class="settings-section__title">白天夜里的样子</text>
           <text class="settings-section__hint">跟随系统 / 浅色 / 深色</text>
         </view>
-        <view class="mode-strip">
-          <view
+        <app-option-group :columns="3">
+          <app-option-button
             v-for="option in modeOptions"
             :key="option.value"
-            class="mode-card"
-            :class="{ 'mode-card--active': theme.mode === option.value }"
-            hover-class="mode-card--pressed"
-            hover-stay-time="80"
+            :active="theme.mode === option.value"
             @click="theme.setThemeMode(option.value)"
           >
-            <text class="mode-card__icon">{{ option.icon }}</text>
-            <text class="mode-card__label">{{ option.label }}</text>
-          </view>
-        </view>
+            <view class="settings-option settings-option--center">
+              <text class="settings-option__icon">{{ option.icon }}</text>
+              <text class="settings-option__label">{{ option.label }}</text>
+            </view>
+          </app-option-button>
+        </app-option-group>
       </view>
 
       <view class="settings-section">
@@ -51,23 +50,22 @@
           <text class="settings-section__title">小纸条间距</text>
           <text class="settings-section__hint">舒适 / 紧凑</text>
         </view>
-        <view class="density-strip">
-          <view
+        <app-option-group :columns="2">
+          <app-option-button
             v-for="option in densityOptions"
             :key="option.value"
-            class="density-card"
-            :class="{ 'density-card--active': theme.density === option.value }"
-            hover-class="density-card--pressed"
-            hover-stay-time="80"
+            :active="theme.density === option.value"
             @click="theme.setDensity(option.value)"
           >
-            <view class="density-card__top">
-              <text class="density-card__icon">{{ option.icon }}</text>
-              <text class="density-card__label">{{ option.label }}</text>
+            <view class="settings-option">
+              <view class="settings-option__top">
+                <text class="settings-option__icon">{{ option.icon }}</text>
+                <text class="settings-option__label">{{ option.label }}</text>
+              </view>
+              <text class="settings-option__note">{{ option.note }}</text>
             </view>
-            <text class="density-card__note">{{ option.note }}</text>
-          </view>
-        </view>
+          </app-option-button>
+        </app-option-group>
       </view>
 
       <view class="settings-section">
@@ -76,20 +74,19 @@
           <text class="settings-section__hint">标准 / 偏大</text>
         </view>
         <view class="font-card">
-          <view class="font-card__row">
-            <view
+          <app-option-group :columns="2">
+            <app-option-button
               v-for="option in fontScaleOptions"
               :key="option.value"
-              class="font-choice"
-              :class="{ 'font-choice--active': theme.fontScale === option.value }"
-              hover-class="font-choice--pressed"
-              hover-stay-time="80"
+              :active="theme.fontScale === option.value"
               @click="theme.setFontScale(option.value)"
             >
-              <text class="font-choice__label">{{ option.label }}</text>
-              <text class="font-choice__hint">{{ option.note }}</text>
-            </view>
-          </view>
+              <view class="settings-option settings-option--center">
+                <text class="settings-option__label">{{ option.label }}</text>
+                <text class="settings-option__note">{{ option.note }}</text>
+              </view>
+            </app-option-button>
+          </app-option-group>
           <view class="font-card__rail" aria-hidden="true">
             <view class="font-card__rail-fill"></view>
             <view
@@ -213,103 +210,41 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   line-height: var(--app-line-height-none);
 }
 
-.mode-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--app-option-group-gap);
-}
-
-.mode-card {
-  display: flex;
-  min-height: var(--app-space-24);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--app-space-3);
-  padding: var(--app-space-7) var(--app-space-4);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-card);
-  background: var(--app-surface);
-}
-
-.mode-card--active {
-  border-color: var(--app-primary);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-focus);
-}
-
-.mode-card--pressed {
-  opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
-}
-
-.mode-card__icon {
-  color: var(--app-primary);
-  font-size: var(--app-font-size-lg);
-  line-height: var(--app-line-height-none);
-}
-
-.mode-card__label {
-  color: var(--app-text);
-  font: var(--app-font-caption);
-}
-
-.mode-card--active .mode-card__label {
-  color: var(--app-primary);
-}
-
 .settings-theme-picker {
   display: block;
 }
 
-.density-strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--app-option-group-gap);
-}
-
-.density-card {
+.settings-option {
   display: flex;
+  width: 100%;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--app-space-4);
-  padding: var(--app-space-7) var(--app-space-8);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-card);
-  background: var(--app-surface);
 }
 
-.density-card--active {
-  border-color: var(--app-primary);
-  box-shadow: var(--app-shadow-focus);
+.settings-option--center {
+  align-items: center;
+  text-align: center;
 }
 
-.density-card--pressed {
-  opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
-}
-
-.density-card__top {
+.settings-option__top {
   display: flex;
   align-items: center;
   gap: var(--app-space-5);
 }
 
-.density-card__icon {
+.settings-option__icon {
   color: var(--app-primary);
   font-size: var(--app-font-size-lg);
   line-height: var(--app-line-height-none);
 }
 
-.density-card__label {
+.settings-option__label {
   color: var(--app-text);
   font: var(--app-font-button);
 }
 
-.density-card--active .density-card__label {
-  color: var(--app-primary);
-}
-
-.density-card__note {
+.settings-option__note {
   display: block;
   color: var(--app-text-muted);
   font-size: var(--app-font-size-2xs);
@@ -324,50 +259,6 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   border: var(--app-panel-border-width) solid var(--app-border-muted);
   border-radius: var(--app-radius-card);
   background: var(--app-surface);
-}
-
-.font-card__row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--app-option-group-gap);
-}
-
-.font-choice {
-  display: flex;
-  min-height: var(--app-space-20);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--app-space-2);
-  padding: var(--app-space-5) var(--app-space-4);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-md);
-  background: var(--app-surface);
-}
-
-.font-choice--active {
-  border-color: var(--app-primary);
-  box-shadow: var(--app-shadow-focus);
-}
-
-.font-choice--pressed {
-  opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
-}
-
-.font-choice__label {
-  color: var(--app-text);
-  font: var(--app-font-button);
-}
-
-.font-choice--active .font-choice__label {
-  color: var(--app-primary);
-}
-
-.font-choice__hint {
-  color: var(--app-text-muted);
-  font-size: var(--app-font-size-2xs);
-  line-height: var(--app-line-height-none);
 }
 
 .font-card__rail {

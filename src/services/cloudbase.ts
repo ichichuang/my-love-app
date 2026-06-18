@@ -101,14 +101,14 @@ export const initCloudBase = (): CloudInitState => {
     if (!isCloudConfigured()) {
       initState.message = "云开发环境未配置，请检查 .env 中的 VITE_CLOUDBASE_ENV_ID。"
       if (import.meta.env.DEV) {
-        console.info("[珊瑚行动] 云开发环境配置状态：未配置")
+        console.info("[小珊的树洞] 云开发环境配置状态：未配置")
       }
       return initState
     }
 
     const cloud = getNativeCloud()
     if (import.meta.env.DEV) {
-      console.info("[珊瑚行动] 云开发环境配置状态：已配置")
+      console.info("[小珊的树洞] 云开发环境配置状态：已配置")
     }
     cloud.init({
       env: appConfig.cloudbaseEnvId,

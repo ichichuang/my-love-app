@@ -31,12 +31,15 @@
 
         <slot />
       </view>
+
+      <wd-toast />
     </view>
   </wd-config-provider>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue"
+import { useAppToastHost } from "@/composables/useAppToast"
 import { useThemeStore } from "@/stores/theme"
 
 type NavVariant = "auto" | "home" | "page"
@@ -67,6 +70,7 @@ const emit = defineEmits<{
 }>()
 
 const theme = useThemeStore()
+useAppToastHost()
 
 const navTitleText = computed(() => props.navTitle || props.title || "")
 const navEyebrowText = computed(() => props.navEyebrow || props.eyebrow || "")

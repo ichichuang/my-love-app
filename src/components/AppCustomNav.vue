@@ -75,7 +75,7 @@ onMounted(() => {
 
 const navStyle = computed(() => ({
   height: `${metrics.value.customNavHeight}px`,
-  background: "transparent"
+  background: "var(--app-bg)"
 }))
 
 const statusStyle = computed(() => ({
@@ -112,7 +112,8 @@ const handleBack = () => {
 @import "../styles/mixins.scss";
 
 .app-custom-nav {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
   width: 100%;
 }

@@ -34,7 +34,7 @@
           <text class="memo-note__stamp">{{ noteStampText }}</text>
         </view>
 
-        <view class="memo-title-slip">
+        <view id="memo-title-field" class="memo-title-slip">
           <text class="memo-field__prompt">想记住什么？</text>
           <wd-input
             v-model="title"
@@ -45,6 +45,8 @@
             :maxlength="48"
             custom-class="memo-title-slip__input-root"
             custom-input-class="memo-title-slip__input-inner"
+            @focus="focusField('#memo-title-field')"
+            @keyboardheightchange="syncKeyboardHeight"
           />
         </view>
 
@@ -54,7 +56,7 @@
             <text class="memo-note__section-note">空着也没关系，先把标题收好就行。</text>
           </view>
 
-          <view class="memo-field">
+          <view id="memo-content-field" class="memo-field">
             <wd-textarea
               v-model="content"
               no-border
@@ -65,6 +67,8 @@
               custom-class="memo-field__textarea-root"
               custom-textarea-container-class="memo-field__textarea-box"
               custom-textarea-class="memo-field__textarea-inner"
+              @focus="focusField('#memo-content-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
         </view>
@@ -131,6 +135,7 @@
             删除这条小线索
           </wd-button>
         </view>
+        <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
     </view>
 
@@ -142,7 +147,9 @@
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { showAppError, showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
+import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
@@ -162,6 +169,7 @@ const saveFeedbackDelayMs = 520
 const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
+const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
 const memoCategoryOrder: MemoCategory[] = ["favorite", "profile", "avoid", "gift", "date", "note"]
 
@@ -357,10 +365,7 @@ const saveMemo = async () => {
   }
 
   if (!title.value.trim()) {
-    uni.showToast({
-      title: "先写下一条小线索",
-      icon: "none"
-    })
+    showAppWarning("先写下一条小线索")
     return
   }
 
@@ -377,17 +382,11 @@ const saveMemo = async () => {
     saving.value = false
     saved.value = true
     draftDirty.value = false
-    uni.showToast({
-      title: "小线索已经收好",
-      icon: "none"
-    })
+    showAppSuccess("小线索已经轻轻收好")
     await waitForSaveFeedback()
     backToMemos()
   } catch (error) {
-    uni.showToast({
-      title: resolveSaveErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(resolveSaveErrorMessage(error))
   } finally {
     if (!saved.value) {
       saving.value = false
@@ -404,16 +403,10 @@ const deleteCurrentMemo = async () => {
 
   try {
     await deleteMemo(memoId.value)
-    uni.showToast({
-      title: "已经从小档案移走",
-      icon: "none"
-    })
+    showAppSuccess("已经从小档案移走")
     backToMemos()
   } catch {
-    uni.showToast({
-      title: "这条小线索暂时没删掉，请稍后再试。",
-      icon: "none"
-    })
+    showAppError("这条小线索暂时没删掉，请稍后再试。")
   } finally {
     deleting.value = false
   }
@@ -597,23 +590,16 @@ onLoad((query) => {
 }
 
 :deep(.memo-title-slip__input-root) {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  padding: var(--app-space-0);
-  color: var(--app-text);
+  @include wot-paper-inline-input-root;
 }
 
 :deep(.memo-title-slip__input-root .wd-input__body),
 :deep(.memo-title-slip__input-root .wd-input__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.memo-title-slip__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
+  @include wot-paper-input-inner;
 }
 
 .memo-note__section {
@@ -632,15 +618,11 @@ onLoad((query) => {
 }
 
 :deep(.memo-field__textarea-root) {
-  @include field;
-  box-sizing: border-box;
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
-  overflow: hidden;
+  @include wot-paper-textarea-root;
 }
 
 :deep(.memo-field__textarea-root .wd-textarea__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.memo-field__textarea-box),
@@ -649,14 +631,12 @@ onLoad((query) => {
 }
 
 :deep(.memo-field__textarea-inner) {
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-line-height-relaxed);
+  @include wot-paper-textarea-inner;
 }
 
 :deep(.memo-title-slip__input-root.is-disabled),
 :deep(.memo-field__textarea-root.is-disabled) {
-  opacity: var(--app-disabled-opacity);
+  @include wot-paper-control-disabled;
 }
 
 .memo-choice__label {
@@ -690,5 +670,9 @@ onLoad((query) => {
 :deep(.memo-delete-button) {
   color: var(--app-danger);
   box-shadow: var(--app-shadow-none);
+}
+
+.keyboard-spacer {
+  flex-shrink: 0;
 }
 </style>

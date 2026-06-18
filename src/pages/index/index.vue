@@ -91,7 +91,7 @@
     </view>
 
     <view class="home-section">
-      <view class="home-section__head">
+      <view class="home-section__head" :style="stickySectionStyle">
         <text class="home-section__title">回忆时间线</text>
         <text class="home-section__count">{{ items.length }} 条回忆</text>
       </view>
@@ -127,13 +127,16 @@
 import { computed } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import AppPetNavigator from "@/components/AppPetNavigator.vue"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import { listEntries } from "@/services/repositories/entries"
 
 const theme = useNativeChromeSync()
+const { stickySectionStyle } = useStickySectionOffset()
 const { items, loading, reload } = useCachedList({
   cacheKey: dataCacheKeys.memoryList,
   loader: listEntries
@@ -146,16 +149,10 @@ const loadEntries = async (notifyCachedFailure = false) => {
   try {
     const result = await reload()
     if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      uni.showToast({
-        title: "小纸条暂时没更新好，请稍后再试。",
-        icon: "none"
-      })
+      showAppWarning("小纸条暂时没更新好，请稍后再试。")
     }
   } catch (error) {
-    uni.showToast({
-      title: getFriendlyErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     uni.stopPullDownRefresh()
   }
@@ -461,10 +458,13 @@ onPullDownRefresh(() => {
 }
 
 .home-section__head {
+  @include sticky-section;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: var(--app-space-8);
   margin-bottom: var(--app-space-7);
+  padding: var(--app-space-4) var(--app-space-0);
 }
 
 .home-section__title {
@@ -486,6 +486,7 @@ onPullDownRefresh(() => {
   display: flex;
   flex-direction: column;
   gap: var(--app-list-gap);
+  padding-bottom: var(--app-safe-action-bottom-gap);
 }
 
 :deep(.home-empty__button) {

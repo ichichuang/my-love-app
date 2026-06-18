@@ -1,5 +1,6 @@
 import { shallowRef } from "vue"
 import { appConfig } from "@/config/app"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import {
   deleteCloudFiles,
   getFriendlyErrorMessage,
@@ -82,10 +83,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
       const acceptedFiles = pickedFiles.filter((file) => typeof file.size !== "number" || file.size <= maxBytes)
 
       if (acceptedFiles.length !== pickedFiles.length) {
-        uni.showToast({
-          title: `单张图片需小于 ${appConfig.maxUploadSizeMb}MB`,
-          icon: "none"
-        })
+        showAppWarning(`单张图片需小于 ${appConfig.maxUploadSizeMb}MB`)
       }
 
       const uploadedFiles: CloudFile[] = []
@@ -103,10 +101,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
     } catch (error) {
       errorMessage.value = getFriendlyErrorMessage(error)
       if (errorMessage.value) {
-        uni.showToast({
-          title: errorMessage.value,
-          icon: "none"
-        })
+        showAppError(errorMessage.value)
       }
     } finally {
       uploading.value = false
@@ -129,10 +124,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
       await deleteCloudFiles([file.fileID])
     } catch (error) {
       errorMessage.value = getFriendlyErrorMessage(error)
-      uni.showToast({
-        title: errorMessage.value,
-        icon: "none"
-      })
+      showAppError(errorMessage.value)
     }
   }
 

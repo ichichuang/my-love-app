@@ -84,7 +84,7 @@
           <text class="edit-sheet__stamp">私密</text>
         </view>
 
-        <view class="paper-field paper-field--title">
+        <view id="detail-title-field" class="paper-field paper-field--title">
           <text class="paper-field__question">把哪件小事收起来？</text>
           <wd-input
             v-model="title"
@@ -94,10 +94,12 @@
             :maxlength="48"
             custom-class="paper-field__input-root paper-field__input-root--title"
             custom-input-class="paper-field__input-inner paper-field__input-inner--title"
+            @focus="focusField('#detail-title-field')"
+            @keyboardheightchange="syncKeyboardHeight"
           />
         </view>
 
-        <view class="paper-field">
+        <view id="detail-content-field" class="paper-field">
           <text class="paper-field__question">想留下哪句话？</text>
           <wd-textarea
             v-model="content"
@@ -108,11 +110,13 @@
             custom-class="paper-field__textarea-root"
             custom-textarea-container-class="paper-field__textarea-box"
             custom-textarea-class="paper-field__textarea-inner"
+            @focus="focusField('#detail-content-field')"
+            @keyboardheightchange="syncKeyboardHeight"
           />
         </view>
 
         <view class="paper-tag-row">
-          <view class="paper-field paper-field--tag">
+          <view id="detail-date-field" class="paper-field paper-field--tag">
             <text class="paper-field__question">今天是哪一天？</text>
             <wd-input
               v-model="occurredAt"
@@ -122,10 +126,12 @@
               :maxlength="10"
               custom-class="paper-field__input-root"
               custom-input-class="paper-field__input-inner"
+              @focus="focusField('#detail-date-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
 
-          <view class="paper-field paper-field--tag">
+          <view id="detail-mood-field" class="paper-field paper-field--tag">
             <text class="paper-field__question">今天的小心情</text>
             <wd-input
               v-model="mood"
@@ -135,6 +141,8 @@
               :maxlength="16"
               custom-class="paper-field__input-root"
               custom-input-class="paper-field__input-inner"
+              @focus="focusField('#detail-mood-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
         </view>
@@ -170,6 +178,7 @@
           <wd-button plain block @click="cancelEditing">取消</wd-button>
           <wd-button block size="large" :loading="saving" @click="saveChanges">保存修改</wd-button>
         </view>
+        <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
     </view>
 
@@ -181,8 +190,10 @@
 import { shallowRef } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useFileUpload } from "@/composables/useFileUpload"
+import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
@@ -205,6 +216,7 @@ const editing = shallowRef(false)
 const saving = shallowRef(false)
 const deleting = shallowRef(false)
 const removedFiles = shallowRef<CloudFile[]>([])
+const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 const {
   record: entry,
   loading,
@@ -268,10 +280,7 @@ const loadEntry = async () => {
       canApplyFresh: () => !editing.value
     })
   } catch (error) {
-    uni.showToast({
-      title: getFriendlyErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(getFriendlyErrorMessage(error))
   }
 }
 
@@ -309,18 +318,12 @@ const saveChanges = async () => {
   const dateToSave = occurredAt.value.trim()
 
   if (!titleToSave) {
-    uni.showToast({
-      title: "先给这条小回忆起个名字",
-      icon: "none"
-    })
+    showAppWarning("先给这条小回忆起个名字")
     return
   }
 
   if (!dateToSave || !datePattern.test(dateToSave)) {
-    uni.showToast({
-      title: "日期先写成 2026-06-11 这样",
-      icon: "none"
-    })
+    showAppWarning("日期先写成 2026-06-11 这样")
     return
   }
 
@@ -342,10 +345,7 @@ const saveChanges = async () => {
     hydrateForm(nextEntry)
     editing.value = false
   } catch (error) {
-    uni.showToast({
-      title: getFriendlyErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     saving.value = false
   }
@@ -389,10 +389,7 @@ const deleteCurrentEntry = async () => {
       url: "/pages/index/index"
     })
   } catch (error) {
-    uni.showToast({
-      title: getFriendlyErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     deleting.value = false
   }
@@ -642,15 +639,11 @@ onLoad((query) => {
 
 :deep(.paper-field__input-root),
 :deep(.paper-field__textarea-root) {
-  @include field;
-  box-sizing: border-box;
-  overflow: hidden;
+  @include wot-paper-input-root;
 }
 
-:deep(.paper-field__input-root) {
-  display: flex;
-  align-items: center;
-  padding: var(--app-space-0) var(--app-field-padding-x);
+:deep(.paper-field__textarea-root) {
+  @include wot-paper-textarea-root;
 }
 
 :deep(.paper-field__input-root--title) {
@@ -660,24 +653,15 @@ onLoad((query) => {
 :deep(.paper-field__input-root .wd-input__body),
 :deep(.paper-field__input-root .wd-input__value),
 :deep(.paper-field__textarea-root .wd-textarea__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.paper-field__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
+  @include wot-paper-input-inner;
 }
 
 :deep(.paper-field__input-inner--title) {
-  font-size: var(--app-font-size-2xl);
-  font-weight: var(--app-font-weight-semibold);
-}
-
-:deep(.paper-field__textarea-root) {
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
+  @include wot-paper-title-input-inner;
 }
 
 :deep(.paper-field__textarea-box),
@@ -686,9 +670,7 @@ onLoad((query) => {
 }
 
 :deep(.paper-field__textarea-inner) {
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-line-height-relaxed);
+  @include wot-paper-textarea-inner;
 }
 
 .paper-tag-row {
@@ -723,5 +705,9 @@ onLoad((query) => {
 
 :deep(.photo-folder__button) {
   margin-top: var(--app-space-2);
+}
+
+.keyboard-spacer {
+  flex-shrink: 0;
 }
 </style>

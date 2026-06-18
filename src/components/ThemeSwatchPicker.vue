@@ -59,7 +59,7 @@ const cellStyle = (palette: RomanticPalette) =>
 <style lang="scss" scoped>
 .theme-picker {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: var(--app-space-8);
   row-gap: var(--app-space-9);
   padding: var(--app-space-5) var(--app-space-2);
@@ -74,6 +74,7 @@ const cellStyle = (palette: RomanticPalette) =>
   border: var(--app-panel-border-width) solid var(--app-border-muted);
   border-radius: var(--app-radius-md);
   background: var(--app-surface);
+  overflow: visible;
   text-align: left;
   transform-origin: center;
   will-change: transform;
@@ -114,7 +115,7 @@ const cellStyle = (palette: RomanticPalette) =>
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  overflow: hidden;
+  overflow: visible;
   border-radius: var(--app-radius-md);
   background: var(--app-field);
 }
@@ -125,17 +126,21 @@ const cellStyle = (palette: RomanticPalette) =>
 }
 
 .theme-picker__swatch-block--primary {
+  border-top-left-radius: var(--app-radius-md);
+  border-bottom-left-radius: var(--app-radius-md);
   background: var(--app-option-swatch-primary);
 }
 
 .theme-picker__swatch-block--accent {
+  border-top-right-radius: var(--app-radius-md);
+  border-bottom-right-radius: var(--app-radius-md);
   background: var(--app-option-swatch-accent);
 }
 
 .theme-picker__stamp {
   position: absolute;
-  top: calc(var(--app-space-3) * -1);
-  right: calc(var(--app-space-3) * -1);
+  top: var(--app-space-2);
+  right: var(--app-space-2);
   padding: var(--app-space-1) var(--app-space-3);
   border: var(--app-panel-border-width) solid var(--app-primary);
   border-radius: var(--app-radius-badge);

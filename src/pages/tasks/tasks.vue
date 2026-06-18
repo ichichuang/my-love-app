@@ -51,16 +51,18 @@
       </empty-state>
 
       <template v-else>
-        <app-option-group :columns="3">
-          <app-option-button
-            v-for="option in filterOptions"
-            :key="option.value"
-            :active="activeFilter === option.value"
-            @click="setActiveFilter(option.value)"
-          >
-            <text>{{ option.label }}</text>
-          </app-option-button>
-        </app-option-group>
+        <view class="tasks-filter-bar" :style="stickySectionStyle">
+          <app-option-group :columns="3">
+            <app-option-button
+              v-for="option in filterOptions"
+              :key="option.value"
+              :active="activeFilter === option.value"
+              @click="setActiveFilter(option.value)"
+            >
+              <text>{{ option.label }}</text>
+            </app-option-button>
+          </app-option-group>
+        </view>
 
         <empty-state
           v-if="filteredTasks.length === 0"
@@ -120,12 +122,15 @@
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { dataCacheKeys } from "@/services/data-cache"
 import { listTasks, toggleTaskDone, type TaskRecord } from "@/services/repositories/tasks"
 
 const theme = useNativeChromeSync()
+const { stickySectionStyle } = useStickySectionOffset()
 
 type FilterValue = "all" | "undone" | "done"
 
@@ -235,10 +240,7 @@ const loadTasks = async (notifyCachedFailure = false) => {
   try {
     const result = await reload()
     if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      uni.showToast({
-        title: "小纸条暂时没更新好，请稍后再试。",
-        icon: "none"
-      })
+      showAppWarning("小纸条暂时没更新好，请稍后再试。")
     }
   } catch {
     return
@@ -280,15 +282,9 @@ const toggleTask = async (task: TaskRecord) => {
   try {
     const nextTask = await toggleTaskDone(task.id, nextDone)
     replaceTask(nextTask)
-    uni.showToast({
-      title: nextDone ? "已经轻轻勾上。" : "已经放回清单。",
-      icon: "none"
-    })
+    showAppSuccess(nextDone ? "已经轻轻勾上。" : "已经放回清单。")
   } catch {
-    uni.showToast({
-      title: "小约定暂时没改好，请稍后再试。",
-      icon: "none"
-    })
+    showAppWarning("小约定暂时没改好，请稍后再试。")
   } finally {
     setTaskToggling(task.id, false)
   }
@@ -355,6 +351,11 @@ onPullDownRefresh(() => {
 
 .tasks-content {
   gap: var(--app-form-gap);
+}
+
+.tasks-filter-bar {
+  @include sticky-section;
+  padding: var(--app-space-4) var(--app-space-0);
 }
 
 .tasks-progress {

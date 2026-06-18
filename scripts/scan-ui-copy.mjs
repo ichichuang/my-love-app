@@ -22,6 +22,14 @@ const userFacingChecks = [
   }
 ]
 
+const forbiddenNativeFeedbackApis = [
+  "uni.showToast",
+  "uni.showModal",
+  "uni.showActionSheet",
+  "uni.showLoading",
+  "uni.hideLoading"
+]
+
 const extensionOf = (filePath) => {
   const match = filePath.match(/\.[^.]+$/)
   return match ? match[0] : ""
@@ -61,6 +69,17 @@ for (const filePath of collectFiles(sourceRoot)) {
   const isVueFile = filePath.endsWith(".vue")
 
   lines.forEach((line, index) => {
+    for (const api of forbiddenNativeFeedbackApis) {
+      if (line.includes(api)) {
+        findings.push({
+          file: relativePath,
+          line: index + 1,
+          label: "forbidden native feedback API",
+          text: api
+        })
+      }
+    }
+
     for (const check of userFacingChecks) {
       if (check.vueOnly && !isVueFile) {
         continue

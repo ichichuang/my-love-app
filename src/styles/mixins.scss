@@ -31,6 +31,66 @@
   font-size: var(--app-font-size-xl);
 }
 
+@mixin wot-paper-input-root {
+  @include field;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: var(--app-space-0) var(--app-field-padding-x);
+  overflow: hidden;
+}
+
+@mixin wot-paper-inline-input-root {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  padding: var(--app-space-0);
+  background: transparent;
+  color: var(--app-text);
+}
+
+@mixin wot-paper-control-value {
+  width: 100%;
+}
+
+@mixin wot-paper-input-inner {
+  min-height: var(--app-input-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-input-height);
+}
+
+@mixin wot-paper-title-input-inner {
+  @include wot-paper-input-inner;
+  font-size: var(--app-font-size-2xl);
+  font-weight: var(--app-font-weight-semibold);
+}
+
+@mixin wot-paper-textarea-root {
+  @include field;
+  box-sizing: border-box;
+  min-height: var(--app-textarea-min-height);
+  padding: var(--app-field-padding-x);
+  overflow: hidden;
+}
+
+@mixin wot-paper-textarea-inner {
+  min-height: var(--app-textarea-min-height);
+  color: var(--app-text);
+  font-size: var(--app-font-size-xl);
+  line-height: var(--app-line-height-relaxed);
+}
+
+@mixin wot-paper-control-disabled {
+  opacity: var(--app-disabled-opacity);
+}
+
+@mixin sticky-section {
+  position: sticky;
+  z-index: 9;
+  background: var(--app-bg);
+}
+
 @mixin pressable {
   transition: opacity var(--app-transition-fast), transform var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 }

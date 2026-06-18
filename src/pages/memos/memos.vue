@@ -47,6 +47,9 @@
             <text class="memos-filters__body">想找喜欢、避雷，还是礼物线索，就点一下小标签。</text>
           </view>
 
+        </view>
+
+        <view v-if="memos.length > 0" class="memos-filter-strip" :style="stickySectionStyle">
           <app-option-group :columns="3">
             <app-option-button
               v-for="option in filterOptions"
@@ -125,8 +128,10 @@
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
   listMemos,
@@ -137,6 +142,7 @@ import {
 } from "@/services/repositories/memos"
 
 const theme = useNativeChromeSync()
+const { stickySectionStyle } = useStickySectionOffset()
 
 type FilterValue = "all" | MemoCategory
 
@@ -265,10 +271,7 @@ const loadMemos = async (notifyCachedFailure = false) => {
   try {
     const result = await reload()
     if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      uni.showToast({
-        title: "小线索暂时没更新好，请稍后再试。",
-        icon: "none"
-      })
+      showAppWarning("小线索暂时没更新好，请稍后再试。")
     }
   } catch {
     return
@@ -310,15 +313,9 @@ const changeMemoPinned = async (memo: MemoRecord) => {
   try {
     const nextMemo = await toggleMemoPinned(memo.id, nextPinned)
     replaceMemo(nextMemo)
-    uni.showToast({
-      title: nextPinned ? "已经贴到上面。" : "已经放回纸堆。",
-      icon: "none"
-    })
+    showAppSuccess(nextPinned ? "已经贴到上面。" : "已经放回纸堆。")
   } catch {
-    uni.showToast({
-      title: "这张小线索暂时没贴好，请稍后再试。",
-      icon: "none"
-    })
+    showAppWarning("这张小线索暂时没贴好，请稍后再试。")
   } finally {
     setMemoPinUpdating(memo.id, false)
   }
@@ -370,6 +367,7 @@ onPullDownRefresh(() => {
 .memos-intro,
 .memos-filters,
 .memos-status,
+.memos-filter-strip,
 .memo-card {
   @include panel;
 }
@@ -509,6 +507,12 @@ onPullDownRefresh(() => {
   gap: var(--app-space-7);
   background:
     linear-gradient(180deg, var(--app-surface), var(--app-surface-strong));
+}
+
+.memos-filter-strip {
+  @include sticky-section;
+  padding: var(--app-space-5);
+  background: var(--app-surface);
 }
 
 .memos-filters__head {

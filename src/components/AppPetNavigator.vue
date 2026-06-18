@@ -6,7 +6,8 @@
         'app-pet-navigator--ready': petReady,
         'app-pet-navigator--open': menuOpen,
         'app-pet-navigator--touching': touching,
-        'app-pet-navigator--dragging': dragging
+        'app-pet-navigator--dragging': dragging,
+        [`app-pet-navigator--dock-${petDockEdge}`]: true
       }"
       :style="petStyle"
       hover-class="app-pet-navigator--pressed"
@@ -125,7 +126,7 @@ type HorizontalPlacement = "left" | "right"
 type VerticalPlacement = "top" | "bottom"
 
 const maxNavigateStackDepth = 9
-const storageKey = "app-pet-navigator-position"
+const storageKey = "app-pet-navigator-position-v2"
 const cssPixelUnit = "px"
 const zeroPosition = { left: 0, top: 0 } satisfies Position
 const zeroSize = { width: 0, height: 0 } satisfies ElementSize
@@ -189,10 +190,28 @@ const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), safeMax)
 }
 
+const petDockEdge = computed<HorizontalPlacement>(() => {
+  const petCenterX = petPosition.value.left + petSize.value.width / 2
+  const viewportCenterX = viewport.value.width / 2
+
+  return petCenterX <= viewportCenterX ? "left" : "right"
+})
+const shouldDockPet = computed(() => petReady.value && !menuOpen.value && !touching.value && !dragging.value)
+const petDockTransform = computed(() => {
+  if (!shouldDockPet.value) {
+    return ""
+  }
+
+  const dockShift = Math.round(petSize.value.width)
+
+  return petDockEdge.value === "left"
+    ? `transform: translateX(-${dockShift}${cssPixelUnit});`
+    : `transform: translateX(${dockShift}${cssPixelUnit});`
+})
 const positionToStyle = (position: Position): string =>
   `left: ${Math.round(position.left)}${cssPixelUnit}; top: ${Math.round(position.top)}${cssPixelUnit};`
 
-const petStyle = computed(() => positionToStyle(petPosition.value))
+const petStyle = computed(() => `${positionToStyle(petPosition.value)} ${petDockTransform.value}`)
 const bubbleStyle = computed(() => positionToStyle(bubblePosition.value))
 const bubbleTailStyle = computed(() => positionToStyle(bubbleTailPosition.value))
 const bubbleClass = computed<Record<string, boolean>>(() => ({
@@ -361,8 +380,19 @@ const restorePetPosition = () => {
   }
 
   petPosition.value = clampPetPosition({
-    left: bounds.maxLeft,
+    left: bounds.minLeft,
     top: bounds.maxTop
+  })
+}
+
+const snapPetToNearestEdge = () => {
+  const bounds = resolvePetBounds()
+  const petCenterX = petPosition.value.left + petSize.value.width / 2
+  const viewportCenterX = viewport.value.width / 2
+
+  petPosition.value = clampPetPosition({
+    left: petCenterX <= viewportCenterX ? bounds.minLeft : bounds.maxLeft,
+    top: petPosition.value.top
   })
 }
 
@@ -581,6 +611,7 @@ const handlePetTouchEnd = () => {
 
   if (wasDragging) {
     petPosition.value = clampPetPosition(petPosition.value)
+    snapPetToNearestEdge()
     savePetPosition()
     resetTouchState()
     return
@@ -593,6 +624,7 @@ const handlePetTouchEnd = () => {
 const handlePetTouchCancel = () => {
   if (dragging.value) {
     petPosition.value = clampPetPosition(petPosition.value)
+    snapPetToNearestEdge()
     savePetPosition()
   }
 
@@ -623,8 +655,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--app-space-48);
-  height: var(--app-space-48);
+  width: var(--app-space-44);
+  height: var(--app-space-44);
   border: 0;
   background: transparent;
   box-shadow: none;

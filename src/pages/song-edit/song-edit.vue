@@ -37,7 +37,7 @@
           <text class="song-note__stamp">{{ songStatusLabels[songStatus] }}</text>
         </view>
 
-        <view class="song-title-slip">
+        <view id="song-title-field" class="song-title-slip">
           <view class="song-title-slip__line">
             <text class="song-title-slip__quote">《</text>
             <wd-input
@@ -49,6 +49,8 @@
               :maxlength="48"
               custom-class="song-title-slip__input-root"
               custom-input-class="song-title-slip__input-inner"
+              @focus="focusField('#song-title-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
             <text class="song-title-slip__quote">》</text>
           </view>
@@ -67,7 +69,7 @@
         </view>
 
         <view v-if="detailsExpanded" class="song-note__details">
-          <view class="song-field">
+          <view id="song-artist-field" class="song-field">
             <text class="song-field__prompt">是谁的版本？</text>
             <wd-input
               v-model="artist"
@@ -78,10 +80,12 @@
               :maxlength="48"
               custom-class="song-field__input-root"
               custom-input-class="song-field__input-inner"
+              @focus="focusField('#song-artist-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
 
-          <view class="song-field">
+          <view id="song-content-field" class="song-field">
             <text class="song-field__prompt">为什么想听？</text>
             <wd-textarea
               v-model="content"
@@ -93,6 +97,8 @@
               custom-class="song-field__textarea-root"
               custom-textarea-container-class="song-field__textarea-box"
               custom-textarea-class="song-field__textarea-inner"
+              @focus="focusField('#song-content-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
 
@@ -153,6 +159,7 @@
             删除这首歌
           </wd-button>
         </view>
+        <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
     </view>
 
@@ -164,7 +171,9 @@
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { showAppError, showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
+import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
@@ -186,6 +195,7 @@ const saveFeedbackDelayMs = 520
 const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
+const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
 const songId = shallowRef("")
 const hasLoadError = shallowRef(false)
@@ -402,10 +412,7 @@ const saveSong = async () => {
   }
 
   if (!title.value.trim()) {
-    uni.showToast({
-      title: "先写下歌名",
-      icon: "none"
-    })
+    showAppWarning("先写下歌名")
     return
   }
 
@@ -421,17 +428,11 @@ const saveSong = async () => {
 
     saving.value = false
     saved.value = true
-    uni.showToast({
-      title: "已经轻轻收好",
-      icon: "none"
-    })
+    showAppSuccess("这首歌已经放进小歌单")
     await waitForSaveFeedback()
     backToSongs()
   } catch (error) {
-    uni.showToast({
-      title: getFriendlyErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     if (!saved.value) {
       saving.value = false
@@ -448,16 +449,10 @@ const deleteCurrentSong = async () => {
 
   try {
     await deleteSong(songId.value)
-    uni.showToast({
-      title: "已经从小歌单移走",
-      icon: "none"
-    })
+    showAppSuccess("已经从小歌单移走")
     backToSongs()
   } catch {
-    uni.showToast({
-      title: "这首歌暂时没删掉，请稍后再试。",
-      icon: "none"
-    })
+    showAppError("这首歌暂时没删掉，请稍后再试。")
   } finally {
     deleting.value = false
   }
@@ -638,25 +633,17 @@ onLoad((query) => {
 }
 
 :deep(.song-title-slip__input-root) {
-  display: flex;
-  min-width: 0;
+  @include wot-paper-inline-input-root;
   flex: 1;
-  align-items: center;
-  padding: var(--app-space-0);
-  background: transparent;
-  color: var(--app-text);
 }
 
 :deep(.song-title-slip__input-root .wd-input__body),
 :deep(.song-title-slip__input-root .wd-input__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.song-title-slip__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
+  @include wot-paper-input-inner;
 }
 
 .song-detail-toggle-row {
@@ -704,33 +691,21 @@ onLoad((query) => {
 
 :deep(.song-field__input-root),
 :deep(.song-field__textarea-root) {
-  @include field;
-  box-sizing: border-box;
-  overflow: hidden;
+  @include wot-paper-input-root;
 }
 
-:deep(.song-field__input-root) {
-  display: flex;
-  align-items: center;
-  padding: var(--app-space-0) var(--app-field-padding-x);
+:deep(.song-field__textarea-root) {
+  @include wot-paper-textarea-root;
 }
 
 :deep(.song-field__input-root .wd-input__body),
 :deep(.song-field__input-root .wd-input__value),
 :deep(.song-field__textarea-root .wd-textarea__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.song-field__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
-}
-
-:deep(.song-field__textarea-root) {
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
+  @include wot-paper-input-inner;
 }
 
 :deep(.song-field__textarea-box),
@@ -739,14 +714,12 @@ onLoad((query) => {
 }
 
 :deep(.song-field__textarea-inner) {
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-line-height-relaxed);
+  @include wot-paper-textarea-inner;
 }
 
 :deep(.song-field__input-root.is-disabled),
 :deep(.song-field__textarea-root.is-disabled) {
-  opacity: var(--app-disabled-opacity);
+  @include wot-paper-control-disabled;
 }
 
 .song-choice__label {
@@ -775,6 +748,10 @@ onLoad((query) => {
 :deep(.song-delete-button) {
   color: var(--app-danger);
   box-shadow: var(--app-shadow-none);
+}
+
+.keyboard-spacer {
+  flex-shrink: 0;
 }
 
 .song-edit-error__actions {

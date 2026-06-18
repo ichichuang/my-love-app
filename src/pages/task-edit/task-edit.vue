@@ -38,7 +38,7 @@
           <text class="task-ticket__stamp">小票根</text>
         </view>
 
-        <view class="task-title-slip">
+        <view id="task-title-field" class="task-title-slip">
           <view class="task-title-slip__pin task-title-slip__pin--red" />
           <view class="task-title-slip__pin task-title-slip__pin--blue" />
           <wd-input
@@ -50,6 +50,8 @@
             :maxlength="48"
             custom-class="task-title-slip__input-root"
             custom-input-class="task-title-slip__input-inner"
+            @focus="focusField('#task-title-field')"
+            @keyboardheightchange="syncKeyboardHeight"
           />
         </view>
 
@@ -66,7 +68,7 @@
         </view>
 
         <view v-if="detailsExpanded" class="task-ticket__details">
-          <view class="task-field">
+          <view id="task-content-field" class="task-field">
             <text class="task-field__prompt">想留点什么小备注？</text>
             <wd-textarea
               v-model="content"
@@ -78,10 +80,12 @@
               custom-class="task-field__textarea-root"
               custom-textarea-container-class="task-field__textarea-box"
               custom-textarea-class="task-field__textarea-inner"
+              @focus="focusField('#task-content-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
 
-          <view class="task-field">
+          <view id="task-date-field" class="task-field">
             <text class="task-field__prompt">想什么时候去做？</text>
             <text class="task-field__hint">空着也没关系，写了就用 2026-01-01 这样。</text>
             <wd-input
@@ -93,6 +97,8 @@
               :maxlength="10"
               custom-class="task-field__input-root"
               custom-input-class="task-field__input-inner"
+              @focus="focusField('#task-date-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
 
@@ -134,6 +140,7 @@
             删除这件事
           </wd-button>
         </view>
+        <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
     </view>
 
@@ -145,7 +152,9 @@
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import { showAppError, showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
+import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
@@ -164,6 +173,7 @@ const placeholderStyle = "color: var(--app-text-muted)"
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const theme = useNativeChromeSync()
 const message = useMessage()
+const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
 const taskId = shallowRef("")
 const hasLoadError = shallowRef(false)
@@ -353,19 +363,13 @@ const saveTask = async () => {
   }
 
   if (!title.value.trim()) {
-    uni.showToast({
-      title: "先写下一件小事",
-      icon: "none"
-    })
+    showAppWarning("先写下一件小事")
     return
   }
 
   const trimmedDate = taskDueDate.value.trim()
   if (trimmedDate && !datePattern.test(trimmedDate)) {
-    uni.showToast({
-      title: "日期先写成 2026-01-01 这样",
-      icon: "none"
-    })
+    showAppWarning("日期先写成 2026-01-01 这样")
     return
   }
 
@@ -382,17 +386,11 @@ const saveTask = async () => {
 
     saving.value = false
     saved.value = true
-    uni.showToast({
-      title: "已经轻轻收好",
-      icon: "none"
-    })
+    showAppSuccess("这件小事已经轻轻收好")
     await waitForSaveFeedback()
     backToTasks()
   } catch (error) {
-    uni.showToast({
-      title: resolveSaveErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(resolveSaveErrorMessage(error))
   } finally {
     if (!saved.value) {
       saving.value = false
@@ -409,16 +407,10 @@ const deleteCurrentTask = async () => {
 
   try {
     await deleteTask(taskId.value)
-    uni.showToast({
-      title: "已经从小清单移走",
-      icon: "none"
-    })
+    showAppSuccess("已经从小清单移走")
     backToTasks()
   } catch {
-    uni.showToast({
-      title: "这件小事暂时没删掉，请稍后再试。",
-      icon: "none"
-    })
+    showAppError("这件小事暂时没删掉，请稍后再试。")
   } finally {
     deleting.value = false
   }
@@ -623,24 +615,16 @@ onLoad((query) => {
 }
 
 :deep(.task-title-slip__input-root) {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  padding: var(--app-space-0);
-  background: transparent;
-  color: var(--app-text);
+  @include wot-paper-inline-input-root;
 }
 
 :deep(.task-title-slip__input-root .wd-input__body),
 :deep(.task-title-slip__input-root .wd-input__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.task-title-slip__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
+  @include wot-paper-input-inner;
 }
 
 .task-detail-toggle-row {
@@ -680,33 +664,21 @@ onLoad((query) => {
 
 :deep(.task-field__input-root),
 :deep(.task-field__textarea-root) {
-  @include field;
-  box-sizing: border-box;
-  overflow: hidden;
+  @include wot-paper-input-root;
 }
 
-:deep(.task-field__input-root) {
-  display: flex;
-  align-items: center;
-  padding: var(--app-space-0) var(--app-field-padding-x);
+:deep(.task-field__textarea-root) {
+  @include wot-paper-textarea-root;
 }
 
 :deep(.task-field__input-root .wd-input__body),
 :deep(.task-field__input-root .wd-input__value),
 :deep(.task-field__textarea-root .wd-textarea__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.task-field__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
-}
-
-:deep(.task-field__textarea-root) {
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
+  @include wot-paper-input-inner;
 }
 
 :deep(.task-field__textarea-box),
@@ -715,14 +687,12 @@ onLoad((query) => {
 }
 
 :deep(.task-field__textarea-inner) {
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-line-height-relaxed);
+  @include wot-paper-textarea-inner;
 }
 
 :deep(.task-field__input-root.is-disabled),
 :deep(.task-field__textarea-root.is-disabled) {
-  opacity: var(--app-disabled-opacity);
+  @include wot-paper-control-disabled;
 }
 
 .task-choice__label {
@@ -759,5 +729,9 @@ onLoad((query) => {
   width: 100%;
   gap: var(--app-space-6);
   margin-top: var(--app-card-padding);
+}
+
+.keyboard-spacer {
+  flex-shrink: 0;
 }
 </style>

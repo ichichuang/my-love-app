@@ -30,7 +30,7 @@
           <text class="memory-paper__stamp">私密</text>
         </view>
 
-        <view class="paper-field paper-field--title">
+        <view id="create-title-field" class="paper-field paper-field--title">
           <text class="paper-field__question">把哪件小事收起来？</text>
           <wd-input
             v-model="title"
@@ -40,10 +40,12 @@
             :maxlength="48"
             custom-class="paper-field__input-root paper-field__input-root--title"
             custom-input-class="paper-field__input-inner paper-field__input-inner--title"
+            @focus="focusField('#create-title-field')"
+            @keyboardheightchange="syncKeyboardHeight"
           />
         </view>
 
-        <view class="paper-field">
+        <view id="create-content-field" class="paper-field">
           <text class="paper-field__question">想留下哪句话？</text>
           <wd-textarea
             v-model="content"
@@ -54,11 +56,13 @@
             custom-class="paper-field__textarea-root"
             custom-textarea-container-class="paper-field__textarea-box"
             custom-textarea-class="paper-field__textarea-inner"
+            @focus="focusField('#create-content-field')"
+            @keyboardheightchange="syncKeyboardHeight"
           />
         </view>
 
         <view class="paper-tag-row">
-          <view class="paper-field paper-field--tag">
+          <view id="create-date-field" class="paper-field paper-field--tag">
             <text class="paper-field__question">今天是哪一天？</text>
             <wd-input
               v-model="occurredAt"
@@ -68,10 +72,12 @@
               :maxlength="10"
               custom-class="paper-field__input-root"
               custom-input-class="paper-field__input-inner"
+              @focus="focusField('#create-date-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
 
-          <view class="paper-field paper-field--tag">
+          <view id="create-mood-field" class="paper-field paper-field--tag">
             <text class="paper-field__question">今天的小心情</text>
             <wd-input
               v-model="mood"
@@ -81,6 +87,8 @@
               :maxlength="16"
               custom-class="paper-field__input-root"
               custom-input-class="paper-field__input-inner"
+              @focus="focusField('#create-mood-field')"
+              @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
         </view>
@@ -115,6 +123,7 @@
         <view class="create-save">
           <wd-button block size="large" :loading="saving" @click="saveEntry">{{ saveButtonText }}</wd-button>
         </view>
+        <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
     </view>
   </app-shell>
@@ -122,7 +131,9 @@
 
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
+import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { createEntry } from "@/services/repositories/entries"
@@ -139,6 +150,7 @@ const mood = shallowRef("温柔")
 const occurredAt = shallowRef(todayString)
 const saving = shallowRef(false)
 const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "轻轻收好"))
+const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
 const { files, uploading, chooseAndUploadImages, removeFileAt } = useFileUpload()
 
@@ -149,26 +161,17 @@ const saveEntry = async () => {
   const dateToSave = occurredAt.value.trim() || todayString
 
   if (!titleToSave) {
-    uni.showToast({
-      title: "先给这条小回忆起个名字",
-      icon: "none"
-    })
+    showAppWarning("先给这条小回忆起个名字")
     return
   }
 
   if (!contentToSave && files.value.length === 0) {
-    uni.showToast({
-      title: "写一句话，或者放一张照片进去",
-      icon: "none"
-    })
+    showAppWarning("写一句话，或者放一张照片进去")
     return
   }
 
   if (occurredAt.value.trim() && !datePattern.test(occurredAt.value.trim())) {
-    uni.showToast({
-      title: "日期先写成 2026-06-11 这样",
-      icon: "none"
-    })
+    showAppWarning("日期先写成 2026-06-11 这样")
     return
   }
 
@@ -186,10 +189,7 @@ const saveEntry = async () => {
       url: `/pages/detail/detail?id=${encodeURIComponent(entry.id)}`
     })
   } catch (error) {
-    uni.showToast({
-      title: getFriendlyErrorMessage(error),
-      icon: "none"
-    })
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     saving.value = false
   }
@@ -369,15 +369,11 @@ const saveEntry = async () => {
 
 :deep(.paper-field__input-root),
 :deep(.paper-field__textarea-root) {
-  @include field;
-  box-sizing: border-box;
-  overflow: hidden;
+  @include wot-paper-input-root;
 }
 
-:deep(.paper-field__input-root) {
-  display: flex;
-  align-items: center;
-  padding: var(--app-space-0) var(--app-field-padding-x);
+:deep(.paper-field__textarea-root) {
+  @include wot-paper-textarea-root;
 }
 
 :deep(.paper-field__input-root--title) {
@@ -387,24 +383,15 @@ const saveEntry = async () => {
 :deep(.paper-field__input-root .wd-input__body),
 :deep(.paper-field__input-root .wd-input__value),
 :deep(.paper-field__textarea-root .wd-textarea__value) {
-  width: 100%;
+  @include wot-paper-control-value;
 }
 
 :deep(.paper-field__input-inner) {
-  min-height: var(--app-input-height);
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-input-height);
+  @include wot-paper-input-inner;
 }
 
 :deep(.paper-field__input-inner--title) {
-  font-size: var(--app-font-size-2xl);
-  font-weight: var(--app-font-weight-semibold);
-}
-
-:deep(.paper-field__textarea-root) {
-  min-height: var(--app-textarea-min-height);
-  padding: var(--app-field-padding-x);
+  @include wot-paper-title-input-inner;
 }
 
 :deep(.paper-field__textarea-box),
@@ -413,9 +400,7 @@ const saveEntry = async () => {
 }
 
 :deep(.paper-field__textarea-inner) {
-  color: var(--app-text);
-  font-size: var(--app-font-size-xl);
-  line-height: var(--app-line-height-relaxed);
+  @include wot-paper-textarea-inner;
 }
 
 .paper-tag-row {
@@ -482,5 +467,9 @@ const saveEntry = async () => {
   display: flex;
   flex-direction: column;
   padding-top: var(--app-space-2);
+}
+
+.keyboard-spacer {
+  flex-shrink: 0;
 }
 </style>
