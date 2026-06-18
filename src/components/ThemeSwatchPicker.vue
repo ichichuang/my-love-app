@@ -1,29 +1,29 @@
 <template>
-  <view class="theme-picker">
-    <view
+  <app-option-group class="theme-picker" :columns="2">
+    <app-option-button
       v-for="(palette, index) in romanticPalettes"
       :key="palette.id"
+      variant="swatch"
+      :active="palette.id === paletteId"
       class="theme-picker__cell"
       :class="[
         tiltClass(index),
         { 'theme-picker__cell--active': palette.id === paletteId }
       ]"
       :style="cellStyle(palette)"
-      hover-class="theme-picker__cell--pressed"
-      hover-stay-time="80"
+      :aria-label="`${palette.name}，${palette.description}`"
+      :aria-pressed="palette.id === paletteId"
       @click="emit('selectPalette', palette.id)"
     >
-      <view class="theme-picker__swatch">
-        <view class="theme-picker__swatch-block theme-picker__swatch-block--primary"></view>
-        <view class="theme-picker__swatch-block theme-picker__swatch-block--accent"></view>
+      <view class="theme-picker__content">
         <view v-if="palette.id === paletteId" class="theme-picker__stamp">已选</view>
+        <view class="theme-picker__copy">
+          <text class="theme-picker__name">{{ palette.name }}</text>
+          <text class="theme-picker__description">{{ palette.description }}</text>
+        </view>
       </view>
-      <view class="theme-picker__copy">
-        <text class="theme-picker__name">{{ palette.name }}</text>
-        <text class="theme-picker__description">{{ palette.description }}</text>
-      </view>
-    </view>
-  </view>
+    </app-option-button>
+  </app-option-group>
 </template>
 
 <script setup lang="ts">
@@ -58,37 +58,17 @@ const cellStyle = (palette: RomanticPalette) =>
 
 <style lang="scss" scoped>
 .theme-picker {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: var(--app-space-8);
-  row-gap: var(--app-space-9);
   padding: var(--app-space-5) var(--app-space-2);
 }
 
 .theme-picker__cell {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: var(--app-space-8);
-  padding: var(--app-space-7);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-radius-md);
-  background: var(--app-surface);
   overflow: visible;
-  text-align: left;
   transform-origin: center;
   will-change: transform;
 }
 
 .theme-picker__cell--active {
-  border-color: var(--app-primary);
-  box-shadow: var(--app-shadow-focus);
   transform: rotate(0deg);
-}
-
-.theme-picker__cell--pressed {
-  opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
 }
 
 /* 俏皮倾角：6 张卡片角度各异，回正时给保留聚焦环 */
@@ -111,30 +91,14 @@ const cellStyle = (palette: RomanticPalette) =>
   transform: rotate(-1.8deg);
 }
 
-.theme-picker__swatch {
+.theme-picker__content {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  overflow: visible;
-  border-radius: var(--app-radius-md);
-  background: var(--app-field);
-}
-
-.theme-picker__swatch-block {
-  display: block;
-  height: var(--app-space-32);
-}
-
-.theme-picker__swatch-block--primary {
-  border-top-left-radius: var(--app-radius-md);
-  border-bottom-left-radius: var(--app-radius-md);
-  background: var(--app-option-swatch-primary);
-}
-
-.theme-picker__swatch-block--accent {
-  border-top-right-radius: var(--app-radius-md);
-  border-bottom-right-radius: var(--app-radius-md);
-  background: var(--app-option-swatch-accent);
+  display: flex;
+  min-height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--app-space-8);
 }
 
 .theme-picker__stamp {
@@ -160,7 +124,7 @@ const cellStyle = (palette: RomanticPalette) =>
 
 .theme-picker__name {
   display: block;
-  color: var(--app-text);
+  color: var(--app-option-swatch-foreground);
   font-size: var(--app-font-size-md);
   font-weight: var(--app-font-weight-semibold);
   line-height: var(--app-line-height-tight);
@@ -169,7 +133,7 @@ const cellStyle = (palette: RomanticPalette) =>
 
 .theme-picker__description {
   display: block;
-  color: var(--app-text-soft);
+  color: var(--app-option-swatch-foreground);
   font-size: var(--app-font-size-2xs);
   line-height: var(--app-line-height-snug);
   overflow-wrap: anywhere;

@@ -142,16 +142,18 @@ Wot UI 通过 `AppShell.vue` 的 `wd-config-provider` 接收：
 - `button::after`
 - `button:after`
 
-设置页模式、密度、字号选择和 `ThemeSwatchPicker` 必须使用：
+设置页模式、密度、字号选择和 `ThemeSwatchPicker` 必须使用统一选项组件路径：
 
 - `AppOptionGroup.vue`
 - `AppOptionButton.vue`
+
+`ThemeSwatchPicker` 必须通过 `AppOptionButton variant="swatch"` 承载色板点击、选中、按压和可访问性语义；不得退回自定义可点击 `view` cell。
 
 CTA、保存、删除、上传等明确动作继续使用 Wot `wd-button`。
 
 ## 6. 设计系统预览页
 
-开发预览页位于 `pages/design-preview/design-preview`，页面标题为“设计系统预览”。入口在设置页“开发预览”区域，只用于本地和开发阶段 QA，不显示 AppSecret、OpenID 或其他敏感凭据。
+开发预览页位于 `pages/design-preview/design-preview`，页面标题为“小样本预览”。该页面仅供开发者直接访问，设置页不暴露入口。页面只用于本地和开发阶段 QA，不显示 AppSecret、OpenID 或其他敏感凭据。
 
 预览页必须继续包裹在 `AppShell.vue` 内，并使用同一个 `useThemeStore`。QA 时可在页面内切换外观模式、策展配色、界面密度和字号，确认运行时 CSS 变量、Wot UI 主题变量、语义颜色、尺寸刻度、排版、组件令牌、阴影、动效、照片角标和状态色能立即刷新。
 

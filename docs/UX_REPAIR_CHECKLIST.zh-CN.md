@@ -1,27 +1,27 @@
 # 小珊的树洞：界面体验与合规修复清单
 
-> 建议放置到项目路径：`docs/UX_REPAIR_CHECKLIST.zh-CN.md`
->
-> 生成日期：2026-06-18  
-> 审计基线：GitHub `ichichuang/my-love-app` 当前 `main` 源码与近期真机 / 微信开发者工具截图  
+> 状态：已完成
+> 完成日期：2026-06-18
+> 生成日期：2026-06-18
+> 审计基线：GitHub `ichichuang/my-love-app` 当前 `main` 源码与近期真机 / 微信开发者工具截图
 > 文档性质：后续 Codex / AI 修复任务的唯一问题清单与验收基线
 
 ---
 
 ## 1. 当前结论
 
-当前项目的业务架构、CloudBase 边界、owner-only 约束、自定义导航基础、数据缓存与主要业务闭环已经稳定；剩余问题主要集中在移动端体验、视觉统一和反馈组件规范。
+当前项目的业务架构、CloudBase 边界、owner-only 约束、自定义导航、数据缓存、键盘避让、统一反馈、设置页选项组件、小宠物避让与主要业务闭环已经稳定。
 
-当前不应判定为“体验完美收口”，但也不需要重新设计底层架构或大范围推翻页面。
+本清单对应的 `UX Runtime Repair` 已验收通过。`Final Compliance` 在完成文档去重、设计系统契约同步、视觉烟测证据固化和 CloudBase envId 笔误校正后，记录为 `Final Compliance Accepted`。
 
 ### 当前问题等级
 
 | 等级 | 数量 | 说明 |
 |---|---:|---|
 | P0 | 0 | 暂未发现构建、数据安全、CloudBase 或业务不可用阻断 |
-| P1 | 5 | 直接影响真机编辑、滚动、提示反馈和可用性，必须优先处理 |
-| P2 | 5 | 影响视觉统一、维护性和内容遮挡，应在 P1 后处理 |
-| P3 | 1 | 自动化视觉验收能力不足，不阻塞当前功能，但必须补齐 |
+| P1 | 0 | 已关闭 |
+| P2 | 0 | 已关闭 |
+| P3 | 0 | 已关闭 |
 
 ---
 
@@ -341,17 +341,17 @@ uni.showToast(...)
 
 ### 已知风险
 
-- 当前 `ThemeSwatchPicker` 使用自定义 cell。
-- 选中徽标位于负 top / right，同时色块容器存在 `overflow: hidden`，真机可能裁切“已选”。
-- 三列布局在偏大字号下可能拥挤。
-- 倾角与选中聚焦环可能在边缘出现裁切。
+- 旧版 `ThemeSwatchPicker` 使用自定义 cell。
+- 旧版选中徽标位于负 top / right，同时色块容器存在 `overflow: hidden`，真机可能裁切“已选”。
+- 旧版三列布局在偏大字号下可能拥挤。
+- 旧版倾角与选中聚焦环可能在边缘出现裁切。
 
 ### 修复方向
 
-- 收敛到 `AppOptionGroup / AppOptionButton variant="swatch"`，或把 ThemeSwatchPicker 明确升级为 approved app-level 选择组件。
+- 收敛到 `AppOptionGroup / AppOptionButton variant="swatch"`。
 - 修复“已选”印章裁切。
 - 保持 6 套主题与当前 palette id 不变。
-- 检查三列在标准字号、偏大字号和紧凑模式下的布局。
+- 使用两列布局检查标准字号、偏大字号和紧凑模式。
 - 不新增任意颜色输入。
 
 ### 验收标准
@@ -508,13 +508,14 @@ uni.showToast(...)
 ### 2026-06-18 自动截图证据
 
 - 输出目录：`/tmp/my-love-app-visual-smoke/`
-- 已生成 55 张矩阵截图：11 个页面 / 状态 × 5 套视觉变体。
+- 已生成 75 张截图：11 个页面 / 状态 × 5 套视觉变体、5 张 contact sheet、3 张创建页键盘 / 聚焦截图、12 张六套主题补充截图。
 - 覆盖页面 / 状态：首页、回忆创建、回忆详情、小歌单、点歌编辑、小约定、事项编辑、小档案、小线索编辑、设置页、小宠物菜单。
 - 覆盖变体：浅色默认、深色默认、桃雾蓝灰、偏大字号、紧凑密度。
 - 额外截图：`light-default__create-focus.png` 覆盖创建页聚焦状态。
 - 键盘避让截图：`light-default__create-keyboard-event.png` 与 `light-default__create-keyboard-spacer-bottom.png`。
 - 键盘避让运行证据：对原生 `input` 触发 `keyboardheightchange` 后，`.keyboard-spacer` 从 `height:0;` 变为 `height:320px;`，底部截图确认保存按钮与安全留白同时可见。
 - 六套主题补充烟测：`palette-1-warm-paper-red-blue__home.png` 至 `palette-6-indigo-letter__home.png`，以及对应 `__settings.png`。
+- 长期证据清单：`docs/qa/VISUAL_SMOKE_REPORT.zh-CN.md`。
 - 限制：`@dcloudio/uni-automator` 在当前 `mp-weixin` 目标返回 `App.keyboardInput unimplemented`，因此键盘文字输入本身未自动化；本批验证使用原生键盘高度事件与可视 spacer 作为遮挡证明。
 
 ---
@@ -654,7 +655,7 @@ git diff --check
 grep -R "uni.showToast\|uni.showModal\|uni.showActionSheet\|uni.showLoading\|uni.hideLoading" src/pages src/components src/composables || true
 grep -R "wx.cloud" src/pages src/components src/stores || true
 grep -R "getSystemInfoSync" src || true
-grep -R "李珊珊\|池闯" src/pages src/components src/services docs dist/build/mp-weixin || true
+grep -R "<项目禁用真实姓名词表>" src/pages src/components src/services docs dist/build/mp-weixin || true
 grep -R "珊瑚行动" src/pages src/components src/services dist/build/mp-weixin || true
 grep -R "AppSecret" src dist || true
 grep -R "appsecret" src dist || true
@@ -745,4 +746,5 @@ grep -R "love-entries\|main" src/config src/services dist/build/mp-weixin
 | 2026-06-18 | Settings Control Polish 1.0 | SETTINGS-001、SETTINGS-002 | 已完成 | 设置页模式 / 密度 / 字号改用 AppOption 体系；主题色板改为两列、选中印章不再负偏移并修复色块圆角；仍需 Visual Smoke 批次做真机截图确认。 |
 | 2026-06-18 | Pet Clearance 1.0 | PET-001 | 已完成 | 默认锚点移至左下安全边缘，拖动结束吸附最近边缘，首页列表增加安全阅读留白；Visual Smoke 发现旧位置仍可能遮挡首张卡片。 |
 | 2026-06-18 | Pet Clearance 1.1 | PET-001 | 已完成 | 小宠物位置存储升为 v2，废弃旧右侧停靠缓存；关闭态改为屏幕边缘小露出，打开 / 触摸 / 拖动时再完整出现，截图确认不再遮挡卡片文字和日期。 |
-| 2026-06-18 | Visual Smoke 1.0 | QA-001 | 已完成 | 通过 `@dcloudio/uni-automator` 启动源码自动化构建后，完成 `/tmp/my-love-app-visual-smoke/` 下 55 张矩阵截图、1 张聚焦截图与 2 张键盘避让截图；原生键盘高度事件确认 spacer 从 `height:0;` 变为 `height:320px;`。 |
+| 2026-06-18 | Visual Smoke 1.0 | QA-001 | 已完成 | 通过 `@dcloudio/uni-automator` 启动源码自动化构建后，完成 `/tmp/my-love-app-visual-smoke/` 下 75 张截图，覆盖页面矩阵、contact sheet、创建页聚焦、键盘避让和六套主题补充截图；原生键盘高度事件确认 spacer 从 `height:0;` 变为 `height:320px;`。 |
+| 2026-06-18 | Final Documentation Sync 1.0 | 文档去重、完成状态同步、设计系统契约同步、视觉烟测证据固化、CloudBase envId 笔误校正 | 已完成 | 权威清单迁入 `docs/UX_REPAIR_CHECKLIST.zh-CN.md`；根目录旧清单删除；`docs/UX_REMEDIATION_CHECKLIST.zh-CN.md` 改为归档指针；`ThemeSwatchPicker` 收敛到 `AppOptionGroup / AppOptionButton variant="swatch"`；正确 envId 为 `love-d4g006mox4b78e5c6`。 |
