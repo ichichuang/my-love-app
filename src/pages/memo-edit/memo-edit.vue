@@ -136,6 +136,8 @@
             v-if="canDeleteMemo"
             block
             type="text"
+            :loading="deleting"
+            :disabled="saving || saved || deleting"
             custom-class="memo-delete-button"
             @click="confirmDeleteMemo"
           >
@@ -227,7 +229,6 @@ const canDeleteMemo = computed(
     !loading.value &&
     !hasLoadError.value &&
     !saving.value &&
-    !deleting.value &&
     !saved.value
 )
 const formDisabled = computed(() => saving.value || saved.value || deleting.value)

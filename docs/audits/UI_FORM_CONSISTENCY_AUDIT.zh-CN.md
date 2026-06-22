@@ -106,6 +106,8 @@
 | BTN-002 | P2 | `src/pages/memo-edit/memo-edit.vue:135` | `wd-button type="text" custom-class="memo-delete-button"` | 备忘删除按钮同样缺少 deleting loading 与保存状态 disabled。 | 点歌删除按钮一致性。 | 为备忘删除按钮补齐 loading/disabled 状态。 |
 | BTN-003 | P3 | `src/components/AppOptionButton.vue:2` | `.app-option-button` | 项目级 wrapper 内部仍是原生 `button`，虽然页面调用是 app 组件，但需要明确长期例外或迁移方向。 | 新业务页不直接使用原生按钮；CTA/显式动作使用 Wot。 | 保持例外记录；若后续执行零原生控件策略，改造 wrapper。 |
 
+2026-06-22 BTN-001/BTN-002 跟进：`task-edit` 与 `memo-edit` 删除按钮已补齐 `deleting` loading 和保存/已保存/删除中 disabled；`canDeleteTask` / `canDeleteMemo` 已调整为删除请求中仍保持按钮挂载，便于 Wot 展示加载态。本次未启动其他审计项。
+
 已确认无新增问题：显式 CTA、上传按钮、列表状态按钮、详情编辑/删除按钮、小宠物浮层按钮、图片移除按钮均使用 Wot `wd-button`；`src/components/ImageGrid.vue:18` 的移除控件已是 Wot，并在 `src/components/ImageGrid.vue:129` 到 `src/components/ImageGrid.vue:170` 通过 token 化热区和视觉胶囊处理。
 
 ## 9. Toast/modal/feedback issues

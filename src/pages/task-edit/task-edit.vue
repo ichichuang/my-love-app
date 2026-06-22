@@ -141,6 +141,8 @@
             v-if="canDeleteTask"
             block
             type="text"
+            :loading="deleting"
+            :disabled="saving || saved || deleting"
             custom-class="task-delete-button"
             @click="confirmDeleteTask"
           >
@@ -222,7 +224,7 @@ const statusOptions: Array<{
 
 const isEditMode = computed(() => taskId.value.length > 0)
 const canDeleteTask = computed(
-  () => isEditMode.value && taskLoaded.value && !hasLoadError.value && !saving.value && !saved.value && !deleting.value
+  () => isEditMode.value && taskLoaded.value && !hasLoadError.value && !saving.value && !saved.value
 )
 const formDisabled = computed(() => saving.value || saved.value || deleting.value)
 const hasUnsavedDraft = computed(
