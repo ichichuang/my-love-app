@@ -42,7 +42,7 @@
             <text>私密相册页</text>
           </view>
           <view class="album-panel__body">
-            <image-grid :files="entry.files" />
+            <image-grid :files="entry.files" @image-error="recoverImage" />
           </view>
         </view>
 
@@ -160,7 +160,12 @@
               <text class="photo-folder__count">{{ files.length }}/9</text>
             </view>
 
-            <image-grid :files="files" editable @remove="removeEditFile" />
+            <image-grid
+              :files="files"
+              editable
+              @image-error="recoverImage"
+              @remove="removeEditFile"
+            />
 
             <wd-button
               block
@@ -196,6 +201,14 @@ import { useFileUpload } from "@/composables/useFileUpload"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
+import {
+  batchResolveEntries,
+  getTempFileURLByFileIds,
+  mergeResolvedTempURLsForEntry,
+  mergeResolvedTempURLsForFiles,
+  removeResolvedTempURLFromFiles,
+  setResolvedTempURLForFile
+} from "@/services/cloud-file-resolver"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
   deleteEntry,
@@ -231,6 +244,8 @@ const title = shallowRef("")
 const content = shallowRef("")
 const mood = shallowRef("")
 const occurredAt = shallowRef("")
+const imageRecoveryFileKeys = new Set<string>()
+let imageHydrationRun = 0
 
 const { files, uploading, setFiles, chooseAndUploadImages, removeFileAt } = useFileUpload()
 
@@ -260,6 +275,83 @@ const hydrateForm = (nextEntry: EntryRecord) => {
   removedFiles.value = []
 }
 
+const applyImageFallback = (fileID: string): void => {
+  if (entry.value) {
+    const nextEntryFiles = removeResolvedTempURLFromFiles(entry.value.files, fileID)
+    if (nextEntryFiles !== entry.value.files) {
+      entry.value = {
+        ...entry.value,
+        files: nextEntryFiles
+      }
+    }
+  }
+
+  if (editing.value) {
+    const nextDraftFiles = removeResolvedTempURLFromFiles(files.value, fileID)
+    if (nextDraftFiles !== files.value) {
+      setFiles(nextDraftFiles)
+    }
+  }
+}
+
+const applyResolvedImageEntry = (nextEntry: EntryRecord): void => {
+  if (entry.value) {
+    const mergedEntry = mergeResolvedTempURLsForEntry(entry.value, nextEntry)
+    if (mergedEntry !== entry.value) {
+      entry.value = mergedEntry
+    }
+  }
+
+  if (!editing.value) {
+    return
+  }
+
+  const nextDraftFiles = mergeResolvedTempURLsForFiles(files.value, nextEntry.files)
+  if (nextDraftFiles !== files.value) {
+    setFiles(nextDraftFiles)
+  }
+}
+
+const applyRecoveredImageUrl = (fileID: string, resolvedTempURL: string): void => {
+  if (entry.value) {
+    const nextEntryFiles = setResolvedTempURLForFile(entry.value.files, fileID, resolvedTempURL)
+    if (nextEntryFiles !== entry.value.files) {
+      entry.value = {
+        ...entry.value,
+        files: nextEntryFiles
+      }
+    }
+  }
+
+  if (editing.value) {
+    const nextDraftFiles = setResolvedTempURLForFile(files.value, fileID, resolvedTempURL)
+    if (nextDraftFiles !== files.value) {
+      setFiles(nextDraftFiles)
+    }
+  }
+}
+
+const hydrateImageUrls = async (sourceEntry: EntryRecord | null = entry.value): Promise<void> => {
+  const needsHydration = sourceEntry?.files.some((file) => file.fileID && !file.resolvedTempURL) ?? false
+  if (!sourceEntry || !needsHydration) {
+    return
+  }
+
+  const run = ++imageHydrationRun
+  try {
+    const [resolvedEntry] = await batchResolveEntries([sourceEntry])
+    if (run !== imageHydrationRun || resolvedEntry.id !== entryId.value) {
+      return
+    }
+
+    applyResolvedImageEntry(resolvedEntry)
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.info(`[小珊的树洞] 图片链接暂时没取到：${getFriendlyErrorMessage(error)}`)
+    }
+  }
+}
+
 const loadEntry = async () => {
   if (!entryId.value) {
     return
@@ -271,11 +363,13 @@ const loadEntry = async () => {
         if (!editing.value) {
           hydrateForm(nextEntry)
         }
+        void hydrateImageUrls(nextEntry)
       },
       applyFresh: (nextEntry) => {
         if (!editing.value) {
           hydrateForm(nextEntry)
         }
+        void hydrateImageUrls(nextEntry)
       },
       canApplyFresh: () => !editing.value
     })
@@ -290,6 +384,7 @@ const startEditing = () => {
   }
   hydrateForm(entry.value)
   editing.value = true
+  void hydrateImageUrls(entry.value)
 }
 
 const cancelEditing = () => {
@@ -305,6 +400,36 @@ const removeEditFile = async (index: number) => {
     removedFiles.value = [...removedFiles.value, file]
   }
   await removeFileAt(index, false)
+}
+
+const recoverImage = async (fileID: string) => {
+  const currentEntry = entry.value
+  if (!entryId.value || !currentEntry) {
+    return
+  }
+
+  applyImageFallback(fileID)
+  const recoveryKey = `${entryId.value}:${fileID}`
+  if (imageRecoveryFileKeys.has(recoveryKey)) {
+    return
+  }
+
+  imageRecoveryFileKeys.add(recoveryKey)
+  try {
+    const urls = await getTempFileURLByFileIds([fileID], {
+      force: true
+    })
+    const resolvedTempURL = urls.get(fileID)
+    if (resolvedTempURL) {
+      applyRecoveredImageUrl(fileID, resolvedTempURL)
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.info(`[小珊的树洞] 单张图片链接刷新失败：${getFriendlyErrorMessage(error)}`)
+    }
+  } finally {
+    imageRecoveryFileKeys.delete(recoveryKey)
+  }
 }
 
 const saveChanges = async () => {
@@ -341,9 +466,14 @@ const saveChanges = async () => {
       await deleteEntryFiles(removedFiles.value)
     }
 
-    entry.value = nextEntry
-    hydrateForm(nextEntry)
+    const visibleEntry: EntryRecord = {
+      ...nextEntry,
+      files: mergeResolvedTempURLsForFiles(nextEntry.files, files.value)
+    }
+    entry.value = visibleEntry
+    hydrateForm(visibleEntry)
     editing.value = false
+    void hydrateImageUrls(nextEntry)
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
   } finally {

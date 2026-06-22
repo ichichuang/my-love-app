@@ -20,6 +20,7 @@
         class="entry-card__cover"
         :src="coverUrl"
         mode="aspectFill"
+        @error="handleCoverError"
       />
       <view v-else class="entry-card__placeholder">
         <text class="entry-card__placeholder-mark">忆</text>
@@ -29,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, shallowRef } from "vue"
 import type { EntryRecord } from "@/services/repositories/entries"
 
 const props = defineProps<{
@@ -38,9 +39,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   open: [id: string]
+  "cover-error": [entryId: string, fileID: string]
 }>()
 
-const coverUrl = computed(() => props.entry.files[0]?.tempFileURL ?? "")
+const failedCoverUrl = shallowRef("")
+const coverFile = computed(() => props.entry.files[0])
+const coverUrl = computed(() => {
+  const url = coverFile.value?.resolvedTempURL ?? ""
+  return url && url !== failedCoverUrl.value ? url : ""
+})
 
 const imageCountLabel = computed(() => {
   const count = props.entry.files.length
@@ -70,6 +77,17 @@ const dateParts = computed(() => {
     day: String(date.getDate()).padStart(2, "0")
   }
 })
+
+const handleCoverError = () => {
+  const file = coverFile.value
+  const url = file?.resolvedTempURL ?? ""
+  if (!file?.fileID || !url) {
+    return
+  }
+
+  failedCoverUrl.value = url
+  emit("cover-error", props.entry.id, file.fileID)
+}
 </script>
 
 <style lang="scss" scoped>

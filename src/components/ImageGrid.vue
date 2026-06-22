@@ -2,16 +2,17 @@
   <view v-if="files.length > 0" class="image-grid">
     <view v-for="(file, index) in files" :key="file.fileID" class="image-grid__item">
       <image
-        v-if="file.tempFileURL"
+        v-if="isImageUsable(file)"
         class="image-grid__image"
-        :src="file.tempFileURL"
+        :src="file.resolvedTempURL || ''"
         mode="aspectFill"
         @click="preview(index)"
+        @error="handleImageError(index)"
       />
       <view v-else class="image-grid__fallback">
         <text>私密图片</text>
       </view>
-      <view v-if="file.tempFileURL" class="image-grid__veil">
+      <view v-if="isImageUsable(file)" class="image-grid__veil">
         <text>{{ index + 1 }}</text>
       </view>
       <button
@@ -27,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import { shallowRef } from "vue"
 import type { CloudFile } from "@/services/cloudbase"
 
 const props = defineProps<{
@@ -36,12 +38,20 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   remove: [index: number]
+  "image-error": [fileID: string]
 }>()
 
+const failedImageUrls = shallowRef<ReadonlySet<string>>(new Set())
+
+const isImageUsable = (file: CloudFile): boolean =>
+  Boolean(file.resolvedTempURL && !failedImageUrls.value.has(file.resolvedTempURL))
+
 const preview = (index: number) => {
-  const urls = props.files.map((file) => file.tempFileURL).filter((url): url is string => Boolean(url))
-  const current = props.files[index]?.tempFileURL
-  if (!current || urls.length === 0) {
+  const urls = props.files.map((file) => file.resolvedTempURL).filter((url): url is string => {
+    return Boolean(url && !failedImageUrls.value.has(url))
+  })
+  const current = props.files[index]?.resolvedTempURL
+  if (!current || failedImageUrls.value.has(current) || urls.length === 0) {
     return
   }
 
@@ -49,6 +59,19 @@ const preview = (index: number) => {
     urls,
     current
   })
+}
+
+const handleImageError = (index: number) => {
+  const file = props.files[index]
+  const url = file?.resolvedTempURL
+  if (!file?.fileID || !url) {
+    return
+  }
+
+  const nextFailedImageUrls = new Set(failedImageUrls.value)
+  nextFailedImageUrls.add(url)
+  failedImageUrls.value = nextFailedImageUrls
+  emit("image-error", file.fileID)
 }
 </script>
 

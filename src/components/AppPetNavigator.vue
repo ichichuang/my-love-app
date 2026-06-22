@@ -57,17 +57,6 @@
           {{ item.label }}
         </wd-button>
       </view>
-
-      <view class="app-pet-bubble__close">
-        <wd-button
-          plain
-          size="small"
-          custom-class="app-pet-bubble__hide-button"
-          @click="closeMenu"
-        >
-          先藏起来
-        </wd-button>
-      </view>
     </view>
   </view>
 </template>
@@ -196,22 +185,10 @@ const petDockEdge = computed<HorizontalPlacement>(() => {
 
   return petCenterX <= viewportCenterX ? "left" : "right"
 })
-const shouldDockPet = computed(() => petReady.value && !menuOpen.value && !touching.value && !dragging.value)
-const petDockTransform = computed(() => {
-  if (!shouldDockPet.value) {
-    return ""
-  }
-
-  const dockShift = Math.round(petSize.value.width)
-
-  return petDockEdge.value === "left"
-    ? `transform: translateX(-${dockShift}${cssPixelUnit});`
-    : `transform: translateX(${dockShift}${cssPixelUnit});`
-})
 const positionToStyle = (position: Position): string =>
   `left: ${Math.round(position.left)}${cssPixelUnit}; top: ${Math.round(position.top)}${cssPixelUnit};`
 
-const petStyle = computed(() => `${positionToStyle(petPosition.value)} ${petDockTransform.value}`)
+const petStyle = computed(() => positionToStyle(petPosition.value))
 const bubbleStyle = computed(() => positionToStyle(bubblePosition.value))
 const bubbleTailStyle = computed(() => positionToStyle(bubbleTailPosition.value))
 const bubbleClass = computed<Record<string, boolean>>(() => ({
@@ -728,8 +705,8 @@ onMounted(async () => {
   flex-direction: column;
   width: calc(var(--app-space-64) + var(--app-space-20));
   max-width: calc(100vw - var(--app-page-padding-x) - var(--app-page-padding-x));
-  gap: var(--app-space-3);
-  padding: var(--app-space-8) var(--app-space-8) var(--app-space-6) var(--app-space-9);
+  gap: var(--app-space-4);
+  padding: var(--app-space-10);
   border: var(--app-panel-border-width) solid var(--app-border-muted);
   border-radius: var(--app-radius-3xl) var(--app-radius-3xl) var(--app-radius-2xl) var(--app-radius-3xl);
   background:
@@ -884,9 +861,9 @@ onMounted(async () => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--app-space-2);
-  padding-right: var(--app-space-7);
-  padding-bottom: var(--app-space-4);
+  gap: var(--app-space-3);
+  padding-right: var(--app-space-8);
+  padding-bottom: var(--app-space-5);
 }
 
 .app-pet-bubble__speech::after {
@@ -916,14 +893,16 @@ onMounted(async () => {
 .app-pet-bubble__title {
   color: var(--app-primary);
   font-family: var(--app-font-family-display);
-  font-size: var(--app-font-size-3xl);
+  font-size: var(--app-font-size-2xl);
   font-weight: var(--app-font-weight-semibold);
   line-height: var(--app-line-height-tight);
 }
 
 .app-pet-bubble__subtitle {
   color: var(--app-text-soft);
-  font: var(--app-font-caption);
+  font-family: var(--app-font-family-body);
+  font-size: var(--app-font-size-sm);
+  line-height: var(--app-line-height-normal);
 }
 
 .app-pet-bubble__actions {
@@ -931,29 +910,24 @@ onMounted(async () => {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--app-space-3);
-  margin-top: var(--app-space-1);
-}
-
-.app-pet-bubble__close {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--app-space-1);
+  gap: var(--app-space-4);
+  margin-top: var(--app-space-2);
 }
 
 :deep(.app-pet-bubble__action-button) {
   justify-content: center;
   height: var(--app-control-scale-xs);
   min-height: var(--app-control-scale-xs);
-  padding: var(--app-space-0) var(--app-space-4);
+  padding: var(--app-space-0) var(--app-space-5);
   border-color: var(--app-border-muted);
   border-radius: var(--app-radius-pill) var(--app-radius-lg) var(--app-radius-pill) var(--app-radius-md);
   background: var(--app-field);
   box-shadow: var(--app-shadow-none);
   color: var(--app-text);
-  font: var(--app-font-caption);
+  font-family: var(--app-font-family-body);
+  font-size: var(--app-font-size-sm);
+  font-weight: var(--app-font-weight-medium);
+  line-height: var(--app-line-height-none);
   transform: rotate(-1deg);
 }
 
@@ -969,18 +943,5 @@ onMounted(async () => {
 
 :deep(.app-pet-bubble__action-button:nth-child(4n)) {
   background: var(--app-primary-soft);
-}
-
-:deep(.app-pet-bubble__hide-button) {
-  height: var(--app-space-14);
-  min-height: var(--app-space-14);
-  padding: var(--app-space-0) var(--app-space-4);
-  border-color: var(--app-border-muted);
-  border-radius: var(--app-radius-pill);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-none);
-  color: var(--app-text-muted);
-  font: var(--app-font-caption);
-  opacity: var(--app-muted-opacity);
 }
 </style>

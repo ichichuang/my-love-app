@@ -8,7 +8,7 @@ export interface CloudFile {
   name: string
   type: CloudFileKind
   size?: number
-  tempFileURL?: string
+  resolvedTempURL?: string
   uploadedAt: number
 }
 
@@ -266,7 +266,6 @@ export const uploadFileToCloud = async (input: UploadCloudFileInput): Promise<Cl
       cloudPath,
       filePath: input.filePath
     })
-    const tempUrls = await getTemporaryFileURLs([result.fileID])
 
     return {
       fileID: result.fileID,
@@ -274,7 +273,6 @@ export const uploadFileToCloud = async (input: UploadCloudFileInput): Promise<Cl
       name: input.name,
       type: input.type,
       size: input.size,
-      tempFileURL: tempUrls.get(result.fileID),
       uploadedAt: Date.now()
     }
   } catch (error) {

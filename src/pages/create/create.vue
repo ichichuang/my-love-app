@@ -106,7 +106,7 @@
               <text class="photo-folder__count">{{ files.length }}/9</text>
             </view>
 
-            <image-grid :files="files" editable @remove="removeFileAt" />
+            <image-grid :files="files" editable @image-error="recoverImage" @remove="removeFileAt" />
 
             <wd-button
               block
@@ -136,6 +136,11 @@ import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import {
+  getTempFileURLByFileIds,
+  removeResolvedTempURLFromFiles,
+  setResolvedTempURLForFile
+} from "@/services/cloud-file-resolver"
 import { createEntry } from "@/services/repositories/entries"
 
 const theme = useNativeChromeSync()
@@ -152,7 +157,34 @@ const saving = shallowRef(false)
 const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "轻轻收好"))
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
-const { files, uploading, chooseAndUploadImages, removeFileAt } = useFileUpload()
+const imageRecoveryFileIDs = new Set<string>()
+const { files, uploading, setFiles, chooseAndUploadImages, removeFileAt } = useFileUpload()
+
+const recoverImage = async (fileID: string) => {
+  const fallbackFiles = removeResolvedTempURLFromFiles(files.value, fileID)
+  if (fallbackFiles !== files.value) {
+    setFiles(fallbackFiles)
+  }
+
+  if (imageRecoveryFileIDs.has(fileID)) {
+    return
+  }
+
+  imageRecoveryFileIDs.add(fileID)
+  try {
+    const urls = await getTempFileURLByFileIds([fileID], {
+      force: true
+    })
+    const resolvedTempURL = urls.get(fileID)
+    if (resolvedTempURL) {
+      setFiles(setResolvedTempURLForFile(files.value, fileID, resolvedTempURL))
+    }
+  } catch {
+    showAppWarning("这张图片暂时没取到，请稍后再试。")
+  } finally {
+    imageRecoveryFileIDs.delete(fileID)
+  }
+}
 
 const saveEntry = async () => {
   const titleToSave = title.value.trim()

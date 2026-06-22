@@ -4,7 +4,6 @@ import {
   CloudBaseUserError,
   deleteCloudFiles,
   getDocument,
-  getTemporaryFileURLs,
   listDocuments,
   removeDocument,
   updateDocument,
@@ -35,7 +34,7 @@ export interface EntryRecord extends EntryDraft {
   updatedAt: number
 }
 
-type StoredCloudFile = Omit<CloudFile, "tempFileURL">
+type StoredCloudFile = Omit<CloudFile, "resolvedTempURL">
 
 interface StoredEntryDocument {
   _id?: string
@@ -68,7 +67,7 @@ const entryUnavailableError = (): CloudBaseUserError =>
 export const isEntryUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === ENTRY_UNAVAILABLE_MESSAGE
 
-const stripTemporaryUrl = (file: CloudFile): StoredCloudFile => ({
+const stripRuntimeUrl = (file: CloudFile): StoredCloudFile => ({
   fileID: file.fileID,
   cloudPath: file.cloudPath,
   name: file.name,
@@ -129,19 +128,6 @@ const normalizeEntry = (document: StoredEntryDocument): EntryRecord | null => {
   }
 }
 
-const attachTemporaryUrls = async (entries: EntryRecord[]): Promise<EntryRecord[]> => {
-  const fileIDs = entries.flatMap((entry) => entry.files.map((file) => file.fileID))
-  const tempUrls = await getTemporaryFileURLs(fileIDs)
-
-  return entries.map((entry) => ({
-    ...entry,
-    files: entry.files.map((file) => ({
-      ...file,
-      tempFileURL: tempUrls.get(file.fileID)
-    }))
-  }))
-}
-
 const toStoredDraft = (draft: EntryDraft, timestamp: number): Omit<StoredEntryDocument, "_id"> => ({
   coupleId: appConfig.coupleId,
   kind: "memory",
@@ -149,7 +135,7 @@ const toStoredDraft = (draft: EntryDraft, timestamp: number): Omit<StoredEntryDo
   content: draft.content.trim(),
   occurredAt: draft.occurredAt,
   mood: draft.mood.trim(),
-  files: draft.files.map(stripTemporaryUrl),
+  files: draft.files.map(stripRuntimeUrl),
   createdAt: timestamp,
   updatedAt: timestamp
 })
@@ -179,9 +165,8 @@ export const listEntries = async (): Promise<EntryRecord[]> => {
   })
 
   const entries = documents.map(normalizeEntry).filter((entry): entry is EntryRecord => entry !== null)
-  const entriesWithTemporaryUrls = await attachTemporaryUrls(entries)
-  writeDataCache(dataCacheKeys.memoryList(), entriesWithTemporaryUrls)
-  return entriesWithTemporaryUrls
+  writeDataCache(dataCacheKeys.memoryList(), entries)
+  return entries
 }
 
 const getNormalizedEntry = async (id: string): Promise<EntryRecord> => {
@@ -200,8 +185,7 @@ const getNormalizedEntry = async (id: string): Promise<EntryRecord> => {
 
 export const getEntry = async (id: string): Promise<EntryRecord> => {
   try {
-    const normalized = await getNormalizedEntry(id)
-    const [entry] = await attachTemporaryUrls([normalized])
+    const entry = await getNormalizedEntry(id)
     writeEntryCache(entry, false)
     return entry
   } catch (error) {
@@ -231,7 +215,7 @@ export const updateEntry = async (id: string, draft: EntryDraft): Promise<EntryR
     content: draft.content.trim(),
     occurredAt: draft.occurredAt,
     mood: draft.mood.trim(),
-    files: draft.files.map(stripTemporaryUrl),
+    files: draft.files.map(stripRuntimeUrl),
     updatedAt: now
   })
 

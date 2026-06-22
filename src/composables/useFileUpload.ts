@@ -7,6 +7,7 @@ import {
   uploadFileToCloud,
   type CloudFile
 } from "@/services/cloudbase"
+import { batchResolveFiles } from "@/services/cloud-file-resolver"
 
 interface LocalImageFile {
   path: string
@@ -97,7 +98,15 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
         uploadedFiles.push(uploaded)
       }
 
-      files.value = [...files.value, ...uploadedFiles]
+      let resolvedUploadedFiles = uploadedFiles
+      try {
+        resolvedUploadedFiles = await batchResolveFiles(uploadedFiles, {
+          force: true
+        })
+      } catch {
+        showAppWarning("图片链接暂时没取到，稍后会再试。")
+      }
+      files.value = [...files.value, ...resolvedUploadedFiles]
     } catch (error) {
       errorMessage.value = getFriendlyErrorMessage(error)
       if (errorMessage.value) {

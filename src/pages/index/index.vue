@@ -114,6 +114,7 @@
           v-for="entry in items"
           :key="entry.id"
           :entry="entry"
+          @cover-error="recoverCover"
           @open="openEntry"
         />
       </view>
@@ -124,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, watch } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -132,8 +133,15 @@ import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import {
+  batchResolveEntryCovers,
+  getTempFileURLByFileIds,
+  mergeResolvedTempURLsForEntry,
+  removeResolvedTempURLFromFiles,
+  setResolvedTempURLForFile
+} from "@/services/cloud-file-resolver"
 import { dataCacheKeys } from "@/services/data-cache"
-import { listEntries } from "@/services/repositories/entries"
+import { listEntries, type EntryRecord } from "@/services/repositories/entries"
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
@@ -144,6 +152,122 @@ const { items, loading, reload } = useCachedList({
 const hour = new Date().getHours()
 const todayGreeting = hour < 12 ? "早安，今天也慢慢收藏" : hour < 18 ? "午后，把小事轻轻放好" : "晚上好，给今天留一盏小灯"
 const memoryCountText = computed(() => (items.value.length > 0 ? `已收好 ${items.value.length} 条回忆` : "等第一颗小记忆"))
+const coverRecoveryFileKeys = new Set<string>()
+let timelineImageHydrationRun = 0
+
+const mergeEntriesInTimeline = (nextEntries: EntryRecord[]): void => {
+  const nextEntryById = new Map(nextEntries.map((entry) => [entry.id, entry]))
+  let changed = false
+  const nextItems = items.value.map((item) => {
+    const nextEntry = nextEntryById.get(item.id)
+    if (!nextEntry) {
+      return item
+    }
+
+    const mergedItem = mergeResolvedTempURLsForEntry(item, nextEntry)
+    if (mergedItem !== item) {
+      changed = true
+    }
+    return mergedItem
+  })
+
+  if (changed) {
+    items.value = nextItems
+  }
+}
+
+const hydrateTimelineImages = async (sourceItems: EntryRecord[]): Promise<void> => {
+  const needsHydration = sourceItems.some((entry) =>
+    Boolean(entry.files[0]?.fileID && !entry.files[0]?.resolvedTempURL)
+  )
+  if (!needsHydration) {
+    return
+  }
+
+  const run = ++timelineImageHydrationRun
+  try {
+    const resolvedEntries = await batchResolveEntryCovers(sourceItems)
+    if (run !== timelineImageHydrationRun) {
+      return
+    }
+
+    mergeEntriesInTimeline(resolvedEntries)
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.info(`[小珊的树洞] 时间线图片链接暂时没取到：${getFriendlyErrorMessage(error)}`)
+    }
+  }
+}
+
+const hideFailedCover = (id: string, fileID: string): void => {
+  let changed = false
+  const nextItems = items.value.map((item) => {
+    if (item.id !== id) {
+      return item
+    }
+
+    const nextFiles = removeResolvedTempURLFromFiles(item.files, fileID)
+    if (nextFiles === item.files) {
+      return item
+    }
+
+    changed = true
+    return { ...item, files: nextFiles }
+  })
+
+  if (changed) {
+    items.value = nextItems
+  }
+}
+
+const applyRecoveredCover = (id: string, fileID: string, resolvedTempURL: string): void => {
+  let changed = false
+  const nextItems = items.value.map((item) => {
+    if (item.id !== id) {
+      return item
+    }
+
+    const nextFiles = setResolvedTempURLForFile(item.files, fileID, resolvedTempURL)
+    if (nextFiles === item.files) {
+      return item
+    }
+
+    changed = true
+    return {
+      ...item,
+      files: nextFiles
+    }
+  })
+
+  if (changed) {
+    items.value = nextItems
+  }
+}
+
+const recoverCover = async (id: string, fileID: string) => {
+  hideFailedCover(id, fileID)
+  const recoveryKey = `${id}:${fileID}`
+  if (coverRecoveryFileKeys.has(recoveryKey)) {
+    return
+  }
+
+  coverRecoveryFileKeys.add(recoveryKey)
+  try {
+    const urls = await getTempFileURLByFileIds([fileID], {
+      force: true
+    })
+    const resolvedTempURL = urls.get(fileID)
+    if (resolvedTempURL) {
+      applyRecoveredCover(id, fileID, resolvedTempURL)
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.info(`[小珊的树洞] 封面图片链接刷新失败：${getFriendlyErrorMessage(error)}`)
+    }
+  } finally {
+    coverRecoveryFileKeys.delete(recoveryKey)
+  }
+}
 
 const loadEntries = async (notifyCachedFailure = false) => {
   try {
@@ -193,6 +317,9 @@ onShow(() => {
 })
 onPullDownRefresh(() => {
   void loadEntries(true)
+})
+watch(items, (nextItems) => {
+  void hydrateTimelineImages(nextItems)
 })
 </script>
 
