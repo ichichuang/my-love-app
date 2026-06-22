@@ -91,9 +91,9 @@
 - Modify: `src/pages/create/create.vue`
 - Modify: `src/pages/detail/detail.vue`
 
-- [ ] 暴露 `maxUploadReached` 或 `remainingUploadCount`，由页面消费。
-- [ ] 图片达到 `appConfig.maxUploadCount` 时禁用上传 `wd-button`，按钮文案改为“照片已经放满啦”。
-- [ ] 禁用状态下不打开相册；同时在按钮旁保留“最多 9 张，已经放满啦”的静态提示，不只写入未消费的 `errorMessage`。
+- [x] 暴露 `maxUploadReached` 或 `remainingUploadCount`，由页面消费。
+- [x] 图片达到 `appConfig.maxUploadCount` 时禁用上传 `wd-button`，按钮文案改为“照片已经放满啦”。
+- [x] 禁用状态下不打开相册；同时在按钮旁保留“最多 9 张，已经放满啦”的静态提示，不只写入未消费的 `errorMessage`。
 - [ ] 验证：9 张图片时新增页和详情编辑页上传按钮不可继续触发相册。
 
 ### Task 4: DATA-001 回忆删除一致性

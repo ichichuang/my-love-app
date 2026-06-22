@@ -101,22 +101,28 @@
             <view class="photo-folder__head">
               <view>
                 <text class="photo-folder__title">把小照片放进来</text>
-                <text class="photo-folder__note">小票、风景、合照都行，最多放 9 张。</text>
+                <text class="photo-folder__note">小票、风景、合照都行，最多放 {{ maxUploadCount }} 张。</text>
               </view>
-              <text class="photo-folder__count">{{ files.length }}/9</text>
+              <text class="photo-folder__count">{{ files.length }}/{{ maxUploadCount }}</text>
             </view>
 
             <image-grid :files="files" editable @image-error="recoverImage" @remove="removeFileAt" />
 
-            <wd-button
-              block
-              plain
-              :loading="uploading"
-              custom-class="photo-folder__button"
-              @click="chooseAndUploadImages"
-            >
-              轻轻放进一张
-            </wd-button>
+            <view class="photo-folder__upload">
+              <wd-button
+                block
+                plain
+                :loading="uploading"
+                :disabled="maxUploadReached || uploading"
+                custom-class="photo-folder__button"
+                @click="chooseAndUploadImages"
+              >
+                {{ maxUploadReached ? "照片已经放满啦" : "轻轻放进一张" }}
+              </wd-button>
+              <text v-if="remainingUploadCount === 0" class="photo-folder__limit-note">
+                最多 {{ maxUploadCount }} 张，已经放满啦。
+              </text>
+            </view>
           </view>
         </view>
 
@@ -158,7 +164,16 @@ const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "�
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
 const imageRecoveryFileIDs = new Set<string>()
-const { files, uploading, setFiles, chooseAndUploadImages, removeFileAt } = useFileUpload()
+const {
+  files,
+  uploading,
+  maxUploadCount,
+  remainingUploadCount,
+  maxUploadReached,
+  setFiles,
+  chooseAndUploadImages,
+  removeFileAt
+} = useFileUpload()
 
 const recoverImage = async (fileID: string) => {
   const fallbackFiles = removeResolvedTempURLFromFiles(files.value, fileID)
@@ -493,6 +508,17 @@ const saveEntry = async () => {
 
 :deep(.photo-folder__button) {
   box-shadow: var(--app-shadow-none);
+}
+
+.photo-folder__upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-4);
+}
+
+.photo-folder__limit-note {
+  color: var(--app-primary);
+  font: var(--app-font-caption);
 }
 
 .create-save {

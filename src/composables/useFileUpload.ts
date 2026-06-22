@@ -1,4 +1,4 @@
-import { shallowRef } from "vue"
+import { computed, shallowRef } from "vue"
 import { appConfig } from "@/config/app"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import {
@@ -84,15 +84,16 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
   const files = shallowRef<CloudFile[]>(initialFiles)
   const uploading = shallowRef(false)
   const errorMessage = shallowRef("")
+  const maxUploadCount = appConfig.maxUploadCount
+  const remainingUploadCount = computed(() => Math.max(0, maxUploadCount - files.value.length))
+  const maxUploadReached = computed(() => remainingUploadCount.value === 0)
 
   const setFiles = (nextFiles: CloudFile[]) => {
     files.value = nextFiles
   }
 
   const chooseAndUploadImages = async () => {
-    const remaining = appConfig.maxUploadCount - files.value.length
-    if (remaining <= 0) {
-      errorMessage.value = `最多可以上传 ${appConfig.maxUploadCount} 张图片。`
+    if (uploading.value || maxUploadReached.value) {
       return
     }
 
@@ -100,7 +101,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
     errorMessage.value = ""
 
     try {
-      const pickedFiles = await chooseImages(remaining)
+      const pickedFiles = await chooseImages(remainingUploadCount.value)
       if (pickedFiles.length === 0) {
         return
       }
@@ -166,6 +167,9 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
     files,
     uploading,
     errorMessage,
+    maxUploadCount,
+    remainingUploadCount,
+    maxUploadReached,
     setFiles,
     chooseAndUploadImages,
     removeFileAt

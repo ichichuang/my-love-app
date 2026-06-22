@@ -157,7 +157,7 @@
                 <text class="photo-folder__title">换一张或删一张</text>
                 <text class="photo-folder__note">移除的照片，确认保存后才会从云端一起清理。</text>
               </view>
-              <text class="photo-folder__count">{{ files.length }}/9</text>
+              <text class="photo-folder__count">{{ files.length }}/{{ maxUploadCount }}</text>
             </view>
 
             <image-grid
@@ -167,15 +167,21 @@
               @remove="removeEditFile"
             />
 
-            <wd-button
-              block
-              plain
-              :loading="uploading"
-              custom-class="photo-folder__button"
-              @click="chooseAndUploadImages"
-            >
-              再加一张
-            </wd-button>
+            <view class="photo-folder__upload">
+              <wd-button
+                block
+                plain
+                :loading="uploading"
+                :disabled="maxUploadReached || uploading"
+                custom-class="photo-folder__button"
+                @click="chooseAndUploadImages"
+              >
+                {{ maxUploadReached ? "照片已经放满啦" : "再加一张" }}
+              </wd-button>
+              <text v-if="remainingUploadCount === 0" class="photo-folder__limit-note">
+                最多 {{ maxUploadCount }} 张，已经放满啦。
+              </text>
+            </view>
           </view>
         </view>
 
@@ -249,7 +255,16 @@ const occurredAt = shallowRef("")
 const imageRecoveryFileKeys = new Set<string>()
 let imageHydrationRun = 0
 
-const { files, uploading, setFiles, chooseAndUploadImages, removeFileAt } = useFileUpload()
+const {
+  files,
+  uploading,
+  maxUploadCount,
+  remainingUploadCount,
+  maxUploadReached,
+  setFiles,
+  chooseAndUploadImages,
+  removeFileAt
+} = useFileUpload()
 
 const decodeQueryId = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -838,6 +853,17 @@ onLoad((query) => {
 
 :deep(.photo-folder__button) {
   margin-top: var(--app-space-2);
+}
+
+.photo-folder__upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-4);
+}
+
+.photo-folder__limit-note {
+  color: var(--app-primary);
+  font: var(--app-font-caption);
 }
 
 .keyboard-spacer {
