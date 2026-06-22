@@ -635,7 +635,7 @@ onBackPress((options) => {
 .task-title-slip {
   position: relative;
   z-index: 1;
-  padding: var(--app-space-5) var(--app-field-padding-x);
+  padding: var(--app-space-5) var(--app-space-0);
   border: var(--app-panel-border-width) solid var(--app-border);
   border-radius: var(--app-radius-input);
   background: var(--app-field);
@@ -671,7 +671,9 @@ onBackPress((options) => {
 }
 
 :deep(.task-title-slip__input-root) {
-  @include wot-paper-inline-input-root;
+  @include wot-paper-input-root;
+  border: 0;
+  background: transparent;
 }
 
 :deep(.task-title-slip__input-root .wd-input__body),
@@ -680,7 +682,7 @@ onBackPress((options) => {
 }
 
 :deep(.task-title-slip__input-inner) {
-  @include wot-paper-input-inner;
+  @include wot-paper-title-input-inner;
 }
 
 .task-detail-toggle-row {
