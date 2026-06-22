@@ -51,11 +51,6 @@ const responsiveClass = computed(() => `app-option-group--${props.responsive}`)
   min-height: var(--app-swatch-height);
 }
 
-.app-option-group--auto :deep(.app-option-button > *),
-.app-option-group--swatch :deep(.app-option-button > *) {
-  min-width: 0;
-}
-
 .app-option-group--auto :deep(text),
 .app-option-group--swatch :deep(text) {
   overflow-wrap: anywhere;
