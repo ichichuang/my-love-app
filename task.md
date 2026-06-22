@@ -46,7 +46,7 @@
 | UI-003 | P2 | 新增页和详情编辑页“日期 + 心情”固定双列，缺少窄屏兜底 | `src/pages/create/create.vue:64`, `src/pages/create/create.vue:438`, `src/pages/detail/detail.vue:118`, `src/pages/detail/detail.vue:806` |
 | UI-004 | P3 | 设置页字号预览轨道填充宽度固定，大字号时圆点移动但填充条不跟随 | `src/pages/settings/settings.vue:90`, `src/pages/settings/settings.vue:271` |
 | COPY-001 | P2 | 首页存在测试残留“本人测试” | `src/pages/index/index.vue:24` |
-| COPY-002 | P2 | `design-preview` 是已注册页面且包含大量开发文案；审计要求生产路由移除或仅开发环境开放 | `src/pages.json:77`, `src/pages/design-preview/design-preview.vue:9`, `docs/DESIGN_SYSTEM.zh-CN.md:156` |
+| COPY-002 | P2 | 仅拥有者使用的产品决策接受 `design-preview` 继续注册并可见；需修正文档，避免继续描述为路由缺陷 | `docs/DESIGN_SYSTEM.zh-CN.md:156`, `task.md` |
 | COPY-003 | P3 | 设置页仍有偏功能性文案，可在不牺牲可理解性的前提下柔化 | `src/pages/settings/settings.vue:19`, `src/pages/settings/settings.vue:51`, `src/pages/settings/settings.vue:74`, `src/pages/settings/settings.vue:129`, `src/pages/settings/settings.vue:154` |
 | COPY-004 | P3 | 底层 CloudBase 错误文案仍出现“纪念”、`.env`、通用“操作没有完成”等技术或泛化表达 | `src/services/cloudbase.ts:78`, `src/services/cloudbase.ts:101`, `src/services/cloudbase.ts:167`, `src/services/cloudbase.ts:187`, `src/pages/task-edit/task-edit.vue:355`, `src/pages/memo-edit/memo-edit.vue:357` |
 
@@ -224,17 +224,16 @@
 - [x] 替换时使用符合产品语气且不暴露测试状态的文案，例如“私密”或“小树洞”。
 - [ ] 验证：`pnpm scan:ui-copy` 通过，首页首屏无测试残留。
 
-### Task 14: COPY-002 限制开发预览页
+### Task 14: COPY-002 设计预览页仅拥有者使用例外文档修正
 
 **Files:**
-- Modify: `src/pages.json`
-- Modify: `src/pages/design-preview/design-preview.vue`
 - Modify: `docs/DESIGN_SYSTEM.zh-CN.md`
+- Modify: `task.md`
 
-- [ ] 从生产 `src/pages.json` 中移除 `pages/design-preview/design-preview` 注册，保留源文件作为开发参考页面。
-- [ ] 文档明确该源文件不属于生产用户路径；需要开发 QA 时通过临时开发注册或本地分支使用。
-- [ ] 确认设置页仍不暴露入口。
-- [ ] 验证：生产构建可用，开发 QA 仍有可访问的设计系统预览方式。
+- [x] 根据仅拥有者使用的产品决策，将 `pages/design-preview/design-preview` 记录为允许继续注册并可见的设计系统与主题 QA 页面。
+- [x] 明确该页面不是公开用户功能，不应作为首页、小宠物导航或设置页的常规产品入口推广，除非后续明确要求。
+- [x] 明确该页面不得暴露 AppSecret、OpenID、私有凭据、调试 token 或敏感账号数据。
+- [x] 明确无需为 COPY-002 进行路由隐藏或移除代码修复；本轮只完成文档决策修正。
 
 ### Task 15: COPY-003 设置页功能文案柔化
 
