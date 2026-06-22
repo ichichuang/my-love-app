@@ -21,7 +21,7 @@
 
       <view class="home-hero__stamps">
         <text class="home-hero__stamp home-hero__stamp--memory">{{ memoryCountText }}</text>
-        <text class="home-hero__stamp">本人测试</text>
+        <text class="home-hero__stamp">私密</text>
       </view>
 
       <wd-button block size="large" custom-class="home-hero__button" @click="goCreate">写下此刻</wd-button>
