@@ -1,5 +1,9 @@
 import { appConfig } from "@/config/app"
-import { CloudBaseUserError, deleteCloudFiles } from "@/services/cloudbase"
+import {
+  CloudBaseUserError,
+  deleteCloudFilesWithResult,
+  type CloudFileDeleteFailure
+} from "@/services/cloudbase"
 
 interface CloudFileCleanupEnvelope {
   version: 1
@@ -61,6 +65,14 @@ const logCleanupIssue = (message: string, error?: unknown): void => {
   })
 }
 
+const formatDeleteFailures = (failures: CloudFileDeleteFailure[]): string =>
+  failures
+    .map((failure) => {
+      const status = typeof failure.status === "number" ? failure.status : "missing"
+      return `${failure.fileID} status=${status} errMsg=${failure.errMsg}`
+    })
+    .join("; ")
+
 const readPersistedFileIDs = (): string[] => {
   try {
     const raw = uni.getStorageSync(cleanupStorageKey()) as unknown
@@ -117,7 +129,24 @@ const runFlush = async (): Promise<CloudFileCleanupResult> => {
     attempted += snapshot.length
 
     try {
-      await deleteCloudFiles(snapshot)
+      const result = await deleteCloudFilesWithResult(snapshot)
+      deleted += result.deletedFileIDs.length
+
+      if (result.deletedFileIDs.length > 0) {
+        removeProcessedFileIDs(result.deletedFileIDs)
+      }
+
+      if (result.failures.length > 0) {
+        logCleanupIssue(
+          `云文件清理部分未完成，失败 ${result.failures.length} 个，已保留待重试队列。`,
+          new CloudBaseUserError("云文件清理部分失败。", formatDeleteFailures(result.failures))
+        )
+        return {
+          attempted,
+          deleted,
+          pending: pendingSnapshot().length
+        }
+      }
     } catch (error) {
       logCleanupIssue("云文件清理暂未完成，已保留待重试队列。", error)
       return {
@@ -126,9 +155,6 @@ const runFlush = async (): Promise<CloudFileCleanupResult> => {
         pending: pendingSnapshot().length
       }
     }
-
-    deleted += snapshot.length
-    removeProcessedFileIDs(snapshot)
   }
 }
 

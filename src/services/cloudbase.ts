@@ -29,6 +29,18 @@ export interface QueryOptions {
   skip?: number
 }
 
+export interface CloudFileDeleteFailure {
+  fileID: string
+  status?: number
+  errMsg: string
+}
+
+export interface CloudFileDeleteResult {
+  requestedFileIDs: string[]
+  deletedFileIDs: string[]
+  failures: CloudFileDeleteFailure[]
+}
+
 interface CloudInitState {
   initialized: boolean
   message: string
@@ -238,6 +250,9 @@ const makeCloudPath = (input: UploadCloudFileInput): string => {
   return `${appConfig.storageEntriesPath}/${Date.now()}-${safeFileName(input.name)}`
 }
 
+const normalizeCloudFileIDs = (fileIDs: readonly string[]): string[] =>
+  Array.from(new Set(fileIDs.map((fileID) => fileID.trim()).filter(Boolean)))
+
 export const getTemporaryFileURLs = async (fileIDs: string[]): Promise<Map<string, string>> => {
   try {
     const uniqueFileIDs = Array.from(new Set(fileIDs.filter(Boolean)))
@@ -280,17 +295,112 @@ export const uploadFileToCloud = async (input: UploadCloudFileInput): Promise<Cl
   }
 }
 
-export const deleteCloudFiles = async (fileIDs: string[]): Promise<void> => {
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+const readDeleteFileItem = (value: unknown): Partial<WxCloudNative.DeleteFileItem> => {
+  if (!isRecord(value)) {
+    return {}
+  }
+
+  return {
+    fileID: typeof value.fileID === "string" ? value.fileID : undefined,
+    status: typeof value.status === "number" ? value.status : undefined,
+    errMsg: typeof value.errMsg === "string" ? value.errMsg : undefined
+  }
+}
+
+const buildDeleteFileFailures = (fileIDs: string[], errMsg: string): CloudFileDeleteFailure[] =>
+  fileIDs.map((fileID) => ({
+    fileID,
+    errMsg
+  }))
+
+const formatDeleteFailureCause = (failures: CloudFileDeleteFailure[]): string =>
+  failures
+    .map((failure) => {
+      const status = typeof failure.status === "number" ? failure.status : "missing"
+      return `${failure.fileID} status=${status} errMsg=${failure.errMsg}`
+    })
+    .join("; ")
+
+export const deleteCloudFilesWithResult = async (fileIDs: string[]): Promise<CloudFileDeleteResult> => {
+  const requestedFileIDs = normalizeCloudFileIDs(fileIDs)
+  const emptyResult: CloudFileDeleteResult = {
+    requestedFileIDs,
+    deletedFileIDs: [],
+    failures: []
+  }
+
+  if (requestedFileIDs.length === 0) {
+    return emptyResult
+  }
+
   try {
-    const uniqueFileIDs = Array.from(new Set(fileIDs.filter(Boolean)))
-    if (uniqueFileIDs.length === 0) {
-      return
+    const result = await ensureCloudBaseReady().deleteFile({
+      fileList: requestedFileIDs
+    })
+    const rawFileList = (result as { fileList?: unknown }).fileList
+
+    if (!Array.isArray(rawFileList)) {
+      return {
+        requestedFileIDs,
+        deletedFileIDs: [],
+        failures: buildDeleteFileFailures(requestedFileIDs, "deleteFile result.fileList is not an array")
+      }
     }
 
-    await ensureCloudBaseReady().deleteFile({
-      fileList: uniqueFileIDs
+    const requestedSet = new Set(requestedFileIDs)
+    const returnedItems = new Map<string, Partial<WxCloudNative.DeleteFileItem>>()
+
+    rawFileList.forEach((rawItem) => {
+      const item = readDeleteFileItem(rawItem)
+      if (!item.fileID || !requestedSet.has(item.fileID) || returnedItems.has(item.fileID)) {
+        return
+      }
+
+      returnedItems.set(item.fileID, item)
     })
+
+    const deletedFileIDs: string[] = []
+    const failures: CloudFileDeleteFailure[] = []
+
+    requestedFileIDs.forEach((fileID) => {
+      const item = returnedItems.get(fileID)
+      if (!item) {
+        failures.push({
+          fileID,
+          errMsg: "deleteFile result.fileList missing requested fileID"
+        })
+        return
+      }
+
+      if (item.status === 0 || typeof item.status === "undefined") {
+        deletedFileIDs.push(fileID)
+        return
+      }
+
+      failures.push({
+        fileID,
+        status: item.status,
+        errMsg: item.errMsg || "deleteFile returned non-zero status"
+      })
+    })
+
+    return {
+      requestedFileIDs,
+      deletedFileIDs,
+      failures
+    }
   } catch (error) {
     throw friendlyError("删除云端文件失败，请稍后再试。", error)
+  }
+}
+
+export const deleteCloudFiles = async (fileIDs: string[]): Promise<void> => {
+  const result = await deleteCloudFilesWithResult(fileIDs)
+  if (result.failures.length > 0) {
+    throw new CloudBaseUserError("删除云端文件失败，请稍后再试。", formatDeleteFailureCause(result.failures))
   }
 }
