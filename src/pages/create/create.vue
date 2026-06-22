@@ -149,11 +149,11 @@ import {
   setResolvedTempURLForFile
 } from "@/services/cloud-file-resolver"
 import { createEntry } from "@/services/repositories/entries"
+import { isValidCalendarDate } from "@/utils/date"
 
 const theme = useNativeChromeSync()
 const today = new Date()
 const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
-const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const placeholderStyle = "color: var(--app-text-muted);"
 
 const title = shallowRef("")
@@ -209,7 +209,8 @@ const saveEntry = async () => {
   const titleToSave = title.value.trim()
   const contentToSave = content.value.trim()
   const moodToSave = mood.value.trim() || "温柔"
-  const dateToSave = occurredAt.value.trim() || todayString
+  const dateInput = occurredAt.value.trim()
+  const dateToSave = dateInput || todayString
 
   if (!titleToSave) {
     showAppWarning("先给这条小回忆起个名字")
@@ -221,7 +222,7 @@ const saveEntry = async () => {
     return
   }
 
-  if (occurredAt.value.trim() && !datePattern.test(occurredAt.value.trim())) {
+  if (dateInput && !isValidCalendarDate(dateInput)) {
     showAppWarning("日期先写成 2026-06-11 这样")
     return
   }

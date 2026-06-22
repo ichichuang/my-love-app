@@ -168,10 +168,10 @@ import {
   type TaskDraft,
   type TaskRecord
 } from "@/services/repositories/tasks"
+import { isValidCalendarDate } from "@/utils/date"
 
 const tasksRoute = "/pages/tasks/tasks"
 const placeholderStyle = "color: var(--app-text-muted)"
-const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const theme = useNativeChromeSync()
 const message = useMessage()
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
@@ -364,7 +364,7 @@ const saveTask = async () => {
   }
 
   const trimmedDate = taskDueDate.value.trim()
-  if (trimmedDate && !datePattern.test(trimmedDate)) {
+  if (trimmedDate && !isValidCalendarDate(trimmedDate)) {
     showAppWarning("日期先写成 2026-01-01 这样")
     return
   }

@@ -225,8 +225,8 @@ import {
   updateEntry,
   type EntryRecord
 } from "@/services/repositories/entries"
+import { isValidCalendarDate } from "@/utils/date"
 
-const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const indexRoute = "/pages/index/index"
 const placeholderStyle = "color: var(--app-text-muted);"
 
@@ -477,7 +477,7 @@ const saveChanges = async () => {
     return
   }
 
-  if (!dateToSave || !datePattern.test(dateToSave)) {
+  if (!dateToSave || !isValidCalendarDate(dateToSave)) {
     showAppWarning("日期先写成 2026-06-11 这样")
     return
   }

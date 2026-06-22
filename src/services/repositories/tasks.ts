@@ -15,6 +15,7 @@ import {
   writeDataCache
 } from "@/services/data-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
+import { normalizeCalendarDate } from "@/utils/date"
 
 export interface TaskDraft {
   title: string
@@ -64,8 +65,6 @@ const normalizeKind = (value: unknown): LoveEntryKind =>
 
 const taskMood = (done: boolean): string => (done ? "已完成" : "未完成")
 
-const validDueDate = (value: string): string => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "")
-
 const TASK_UNAVAILABLE_MESSAGE = "这张小票根暂时打不开，请稍后再试一次。"
 
 const taskUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(TASK_UNAVAILABLE_MESSAGE)
@@ -104,8 +103,8 @@ const normalizeTask = (document: StoredTaskDocument): TaskRecord | null => {
 }
 
 const compareIncompleteTasks = (left: TaskRecord, right: TaskRecord): number => {
-  const leftDueDate = validDueDate(left.taskDueDate)
-  const rightDueDate = validDueDate(right.taskDueDate)
+  const leftDueDate = normalizeCalendarDate(left.taskDueDate)
+  const rightDueDate = normalizeCalendarDate(right.taskDueDate)
 
   if (leftDueDate && rightDueDate && leftDueDate !== rightDueDate) {
     return leftDueDate.localeCompare(rightDueDate)
