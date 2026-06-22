@@ -173,9 +173,9 @@
 - Modify: `src/design-system/size-resolver.ts`
 - Modify: `src/design-system/token-registry.ts`
 
-- [ ] 将原生 `button` 替换为 Wot `wd-button` 或已批准的 app-level control，并满足现有 UI library policy。
-- [ ] 保持小巧视觉外观，同时提供约 80rpx 的透明点击热区。
-- [ ] 点击热区不得遮挡图片预览主体交互。
+- [x] 将原生 `button` 替换为 Wot `wd-button` 或已批准的 app-level control，并满足现有 UI library policy。
+- [x] 保持小巧视觉外观，同时提供约 80rpx 的透明点击热区。
+- [x] 点击热区不得遮挡图片预览主体交互。
 - [ ] 验证：图片右下角“移除”在真机/微信开发者工具中易点，且 `pnpm scan:design-tokens` 通过。
 
 ### Task 10: UI-002 选项组响应式降级

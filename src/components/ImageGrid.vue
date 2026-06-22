@@ -15,14 +15,16 @@
       <view v-if="isImageUsable(file)" class="image-grid__veil">
         <text>{{ index + 1 }}</text>
       </view>
-      <button
+      <wd-button
         v-if="editable"
-        class="image-grid__remove"
-        hover-class="image-grid__remove--active"
+        size="small"
+        type="info"
+        custom-class="image-grid__remove"
+        hover-stop-propagation
         @click.stop="emit('remove', index)"
       >
         移除
-      </button>
+      </wd-button>
     </view>
   </view>
 </template>
@@ -124,22 +126,48 @@ const handleImageError = (index: number) => {
   text-align: center;
 }
 
-.image-grid__remove {
+:deep(.image-grid__remove.wd-button.is-small) {
   position: absolute;
-  right: var(--app-space-2);
-  bottom: var(--app-space-2);
-  min-width: 0;
+  right: var(--app-space-0);
+  bottom: var(--app-space-0);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: var(--app-image-remove-touch-size);
+  min-width: var(--app-image-remove-touch-size);
+  height: var(--app-image-remove-touch-size);
+  min-height: var(--app-image-remove-touch-size);
+  padding: var(--app-space-2);
+  border: 0;
+  border-radius: var(--app-radius-image);
+  background: transparent;
+  box-shadow: var(--app-shadow-none);
+  color: var(--app-color-on-overlay);
+  font-family: var(--app-font-family-body);
+  font-size: var(--app-font-size-sm);
+  font-weight: var(--app-font-weight-medium);
+  line-height: var(--app-line-height-none);
+}
+
+:deep(.image-grid__remove.wd-button.is-small::before) {
+  display: none;
+}
+
+:deep(.image-grid__remove .wd-button__content) {
   height: var(--app-image-remove-height);
   padding: var(--app-space-0) var(--app-image-remove-padding-x);
-  border: 0;
   border-radius: var(--app-radius-pill);
   background: var(--app-color-overlay-strong);
   color: var(--app-color-on-overlay);
-  font-size: var(--app-font-size-sm);
   line-height: var(--app-image-remove-height);
 }
 
-.image-grid__remove--active {
+:deep(.image-grid__remove .wd-button__text) {
+  color: inherit;
+  line-height: var(--app-line-height-none);
+}
+
+:deep(.image-grid__remove.wd-button.is-small.wd-button--active .wd-button__content) {
   opacity: var(--app-muted-opacity);
 }
 </style>

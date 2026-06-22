@@ -383,6 +383,7 @@ export const componentVarNames = [
   "--app-entry-meta-padding-y",
   "--app-entry-meta-padding-x",
   "--app-image-badge-size",
+  "--app-image-remove-touch-size",
   "--app-image-remove-height",
   "--app-image-remove-padding-x",
   "--app-option-group-gap",

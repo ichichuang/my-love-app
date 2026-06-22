@@ -125,6 +125,7 @@ const structuralVars = (density: ThemeDensity) => {
     "--app-entry-meta-padding-x": isCompact ? "12rpx" : "14rpx",
 
     "--app-image-badge-size": isCompact ? "30rpx" : "34rpx",
+    "--app-image-remove-touch-size": "80rpx",
     "--app-image-remove-height": isCompact ? "38rpx" : "42rpx",
     "--app-image-remove-padding-x": isCompact ? "12rpx" : "14rpx",
 
