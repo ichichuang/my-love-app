@@ -953,8 +953,13 @@ onUnload(() => {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns:
+    repeat(auto-fit, minmax(min(100%, var(--app-paper-tag-field-min-width)), 1fr));
   gap: var(--app-space-8);
+}
+
+.paper-tag-row > .paper-field {
+  min-width: 0;
 }
 
 .photo-folder__head {

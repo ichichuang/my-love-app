@@ -201,9 +201,9 @@
 - Modify: `src/pages/create/create.vue`
 - Modify: `src/pages/detail/detail.vue`
 
-- [ ] 将 `.paper-tag-row` 固定双列改为可降级布局。
-- [ ] 在窄屏、大字号或字段内容较长时切换为单列。
-- [ ] 保持现有视觉节奏，不引入 raw spacing。
+- [x] 将 `.paper-tag-row` 固定双列改为可降级布局。
+- [x] 在窄屏、大字号或字段内容较长时切换为单列。
+- [x] 保持现有视觉节奏，不引入 raw spacing。
 - [ ] 验证：新增页、详情编辑页在窄屏和大字号下日期/心情输入不拥挤。
 
 ### Task 12: UI-004 字号预览轨道

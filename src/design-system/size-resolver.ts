@@ -137,6 +137,9 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-option-group-swatch-min-width": isLargeFont
       ? (isCompact ? "316rpx" : "336rpx")
       : (isCompact ? "274rpx" : "292rpx"),
+    "--app-paper-tag-field-min-width": isLargeFont
+      ? (isCompact ? "316rpx" : "336rpx")
+      : (isCompact ? "274rpx" : "292rpx"),
     "--app-option-padding-x": isCompact ? "18rpx" : "22rpx",
     "--app-option-padding-y": isCompact ? "14rpx" : "18rpx",
     "--app-option-min-height": control.md,

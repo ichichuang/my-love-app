@@ -389,6 +389,7 @@ export const componentVarNames = [
   "--app-option-group-gap",
   "--app-option-group-auto-min-width",
   "--app-option-group-swatch-min-width",
+  "--app-paper-tag-field-min-width",
   "--app-option-padding-x",
   "--app-option-padding-y",
   "--app-option-min-height",
