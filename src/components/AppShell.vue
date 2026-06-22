@@ -6,6 +6,7 @@
         :title="navTitleText"
         :eyebrow="navEyebrowText"
         :show-back="navShowBack"
+        :auto-back="props.navAutoBack"
         :variant="navVariant"
         @back="emit('back')"
       >
@@ -51,6 +52,7 @@ const props = withDefaults(
     navTitle?: string
     navEyebrow?: string
     navShowBack?: boolean
+    navAutoBack?: boolean
     navVariant?: NavVariant
     useCustomNav?: boolean
   }>(),
@@ -60,6 +62,7 @@ const props = withDefaults(
     navTitle: "",
     navEyebrow: "",
     navShowBack: false,
+    navAutoBack: true,
     navVariant: "auto",
     useCustomNav: true
   }

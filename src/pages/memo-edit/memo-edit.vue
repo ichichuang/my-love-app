@@ -6,7 +6,14 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :nav-title="pageTitle" :nav-eyebrow="pageEyebrow" nav-show-back nav-variant="page">
+  <app-shell
+    :nav-title="pageTitle"
+    :nav-eyebrow="pageEyebrow"
+    nav-show-back
+    nav-variant="page"
+    :nav-auto-back="false"
+    @back="handleBackNavigation"
+  >
     <view v-if="loading" class="memo-edit-status">
       <text>正在翻这张小线索…</text>
     </view>
@@ -18,7 +25,7 @@
     >
       <view class="memo-edit-error__actions">
         <wd-button block :loading="loading" @click="loadMemo">再试一次</wd-button>
-        <wd-button block plain @click="backToMemos">返回小档案</wd-button>
+        <wd-button block plain @click="handleBackNavigation">返回小档案</wd-button>
       </view>
     </empty-state>
 
@@ -145,7 +152,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
-import { onLoad } from "@dcloudio/uni-app"
+import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
@@ -224,6 +231,9 @@ const canDeleteMemo = computed(
     !saved.value
 )
 const formDisabled = computed(() => saving.value || saved.value || deleting.value)
+const hasUnsavedDraft = computed(
+  () => draftDirty.value && !saving.value && !deleting.value && !saved.value && !formDisabled.value
+)
 const pageTitle = computed(() => (isEditMode.value ? "改小线索" : "写小线索"))
 const pageEyebrow = computed(() => (isEditMode.value ? "重新整理" : "小纸条"))
 const introKicker = computed(() => (isEditMode.value ? "把这张小线索理一理" : "写一张小线索"))
@@ -242,6 +252,21 @@ const saveButtonText = computed(() => {
 
   return isEditMode.value ? "收好这张小线索" : "轻轻收好"
 })
+const discardDraftConfirmOptions = {
+  title: "这张纸条还没收好",
+  msg: "离开后，这次没保存的内容不会留下。",
+  cancelButtonText: "继续写",
+  confirmButtonText: "不保存离开",
+  confirmButtonProps: {
+    plain: true,
+    type: "error" as const
+  },
+  cancelButtonProps: {
+    plain: true,
+    type: "info" as const
+  }
+}
+const isLeaveConfirming = shallowRef(false)
 
 const decodeQueryId = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -343,6 +368,33 @@ const backToMemos = () => {
   })
 }
 
+const confirmDiscardDraft = async (): Promise<boolean> => {
+  if (isLeaveConfirming.value) {
+    return false
+  }
+
+  isLeaveConfirming.value = true
+  try {
+    await message.confirm(discardDraftConfirmOptions)
+    return true
+  } catch {
+    return false
+  } finally {
+    isLeaveConfirming.value = false
+  }
+}
+
+const handleBackNavigation = async () => {
+  if (!hasUnsavedDraft.value) {
+    backToMemos()
+    return
+  }
+
+  if (await confirmDiscardDraft()) {
+    backToMemos()
+  }
+}
+
 const buildDraft = (): MemoDraft => ({
   title: title.value,
   content: content.value,
@@ -436,6 +488,15 @@ const confirmDeleteMemo = async () => {
 onLoad((query) => {
   memoId.value = decodeQueryId(query?.id)
   void loadMemo()
+})
+
+onBackPress((options) => {
+  if (options.from === "navigateBack" || !hasUnsavedDraft.value) {
+    return false
+  }
+
+  void handleBackNavigation()
+  return true
 })
 </script>
 

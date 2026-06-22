@@ -6,9 +6,16 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :nav-title="pageTitle" :nav-eyebrow="pageEyebrow" nav-show-back nav-variant="page">
+  <app-shell
+    :nav-title="pageTitle"
+    :nav-eyebrow="pageEyebrow"
+    nav-show-back
+    nav-variant="page"
+    :nav-auto-back="false"
+    @back="handleBackNavigation"
+  >
     <template #nav-actions>
-      <wd-button size="small" plain :disabled="formDisabled" @click="backToSongs">{{ backActionText }}</wd-button>
+      <wd-button size="small" plain :disabled="formDisabled" @click="handleBackNavigation">{{ backActionText }}</wd-button>
     </template>
 
     <view v-if="loading" class="song-edit-status">
@@ -22,7 +29,7 @@
     >
       <view class="song-edit-error__actions">
         <wd-button block :loading="loading" @click="loadSong">再试一次</wd-button>
-        <wd-button block plain @click="backToSongs">返回小歌单</wd-button>
+        <wd-button block plain @click="handleBackNavigation">返回小歌单</wd-button>
       </view>
     </empty-state>
 
@@ -169,7 +176,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
-import { onLoad } from "@dcloudio/uni-app"
+import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
@@ -261,6 +268,9 @@ const statusOptions: Array<{
 const isEditMode = computed(() => songId.value.length > 0)
 const canDeleteSong = computed(() => isEditMode.value && songLoaded.value && !hasLoadError.value)
 const formDisabled = computed(() => saving.value || saved.value || deleting.value)
+const hasUnsavedDraft = computed(
+  () => draftDirty.value && !saving.value && !deleting.value && !saved.value && !formDisabled.value
+)
 const pageTitle = computed(() => "点歌便签")
 const pageEyebrow = computed(() => (isEditMode.value ? "改一张小纸条" : "丢进小歌单"))
 const backActionText = computed(() => (isEditMode.value ? "先不改了" : "先不写了"))
@@ -276,6 +286,21 @@ const saveButtonText = computed(() => {
 
   return isEditMode.value ? "收好这张纸条" : "放进小歌单"
 })
+const discardDraftConfirmOptions = {
+  title: "这张纸条还没收好",
+  msg: "离开后，这次没保存的内容不会留下。",
+  cancelButtonText: "继续写",
+  confirmButtonText: "不保存离开",
+  confirmButtonProps: {
+    plain: true,
+    type: "error" as const
+  },
+  cancelButtonProps: {
+    plain: true,
+    type: "info" as const
+  }
+}
+const isLeaveConfirming = shallowRef(false)
 
 const decodeQueryId = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -394,6 +419,33 @@ const backToSongs = () => {
   })
 }
 
+const confirmDiscardDraft = async (): Promise<boolean> => {
+  if (isLeaveConfirming.value) {
+    return false
+  }
+
+  isLeaveConfirming.value = true
+  try {
+    await message.confirm(discardDraftConfirmOptions)
+    return true
+  } catch {
+    return false
+  } finally {
+    isLeaveConfirming.value = false
+  }
+}
+
+const handleBackNavigation = async () => {
+  if (!hasUnsavedDraft.value) {
+    backToSongs()
+    return
+  }
+
+  if (await confirmDiscardDraft()) {
+    backToSongs()
+  }
+}
+
 const buildDraft = (): SongDraft => ({
   title: title.value,
   artist: artist.value,
@@ -482,6 +534,15 @@ const confirmDeleteSong = async () => {
 onLoad((query) => {
   songId.value = decodeQueryId(query?.id)
   void loadSong()
+})
+
+onBackPress((options) => {
+  if (options.from === "navigateBack" || !hasUnsavedDraft.value) {
+    return false
+  }
+
+  void handleBackNavigation()
+  return true
 })
 </script>
 

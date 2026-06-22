@@ -53,12 +53,14 @@ const props = withDefaults(
     title?: string
     eyebrow?: string
     showBack?: boolean
+    autoBack?: boolean
     variant?: NavVariant
   }>(),
   {
     title: "",
     eyebrow: "",
     showBack: false,
+    autoBack: true,
     variant: "auto"
   }
 )
@@ -104,7 +106,9 @@ const resolveBack = (): void => {
 
 const handleBack = () => {
   emit("back")
-  resolveBack()
+  if (props.autoBack) {
+    resolveBack()
+  }
 }
 </script>
 

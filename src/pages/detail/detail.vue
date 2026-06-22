@@ -6,7 +6,14 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell nav-title="翻这张小纸页" :nav-eyebrow="editing ? '改一张小纸条' : '收好的小事'" nav-show-back nav-variant="page">
+  <app-shell
+    nav-title="翻这张小纸页"
+    :nav-eyebrow="editing ? '改一张小纸条' : '收好的小事'"
+    nav-show-back
+    nav-variant="page"
+    :nav-auto-back="false"
+    @back="handleBackNavigation"
+  >
     <template #nav-actions>
       <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
     </template>
@@ -186,7 +193,7 @@
         </view>
 
         <view class="edit-actions">
-          <wd-button plain block @click="cancelEditing">取消</wd-button>
+          <wd-button plain block @click="handleCancelEditing">取消</wd-button>
           <wd-button block size="large" :loading="saving" @click="saveChanges">保存修改</wd-button>
         </view>
         <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
@@ -198,8 +205,8 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from "vue"
-import { onLoad, onUnload } from "@dcloudio/uni-app"
+import { computed, shallowRef } from "vue"
+import { onBackPress, onLoad, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
@@ -268,6 +275,42 @@ const {
   queueUncommittedUploadedFilesForCleanup,
   isUncommittedUploadedFile
 } = useFileUpload()
+
+const discardDraftConfirmOptions = {
+  title: "这张纸条还没收好",
+  msg: "离开后，这次没保存的内容不会留下。",
+  cancelButtonText: "继续写",
+  confirmButtonText: "不保存离开",
+  confirmButtonProps: {
+    plain: true,
+    type: "error" as const
+  },
+  cancelButtonProps: {
+    plain: true,
+    type: "info" as const
+  }
+}
+const isLeaveConfirming = shallowRef(false)
+
+const hasSameFileIDOrder = (left: CloudFile[], right: CloudFile[]): boolean =>
+  left.length === right.length && left.every((file, index) => file.fileID === right[index]?.fileID)
+
+const hasDirtyDraft = computed(() => {
+  const currentEntry = entry.value
+  if (!editing.value || !currentEntry) {
+    return false
+  }
+
+  return (
+    title.value !== currentEntry.title ||
+    content.value !== currentEntry.content ||
+    mood.value !== currentEntry.mood ||
+    occurredAt.value !== currentEntry.occurredAt ||
+    !hasSameFileIDOrder(files.value, currentEntry.files) ||
+    removedFiles.value.length > 0 ||
+    files.value.some((file) => isUncommittedUploadedFile(file.fileID))
+  )
+})
 
 const decodeQueryId = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -414,6 +457,56 @@ const cancelEditing = () => {
     hydrateForm(entry.value)
   }
   editing.value = false
+}
+
+const confirmDiscardDraft = async (): Promise<boolean> => {
+  if (isLeaveConfirming.value) {
+    return false
+  }
+
+  isLeaveConfirming.value = true
+  try {
+    await message.confirm(discardDraftConfirmOptions)
+    return true
+  } catch {
+    return false
+  } finally {
+    isLeaveConfirming.value = false
+  }
+}
+
+const navigateBackFromDetail = () => {
+  if (getCurrentPages().length > 1) {
+    uni.navigateBack()
+    return
+  }
+
+  uni.redirectTo({
+    url: indexRoute
+  })
+}
+
+const handleBackNavigation = async () => {
+  if (!editing.value || !hasDirtyDraft.value) {
+    navigateBackFromDetail()
+    return
+  }
+
+  if (await confirmDiscardDraft()) {
+    queueUncommittedUploadedFilesForCleanup(entry.value?.files)
+    navigateBackFromDetail()
+  }
+}
+
+const handleCancelEditing = async () => {
+  if (!hasDirtyDraft.value) {
+    cancelEditing()
+    return
+  }
+
+  if (await confirmDiscardDraft()) {
+    cancelEditing()
+  }
 }
 
 const removeEditFile = async (index: number) => {
@@ -564,6 +657,15 @@ const deleteCurrentEntry = async () => {
 onLoad((query) => {
   entryId.value = decodeQueryId(query?.id)
   void loadEntry()
+})
+
+onBackPress((options) => {
+  if (options.from === "navigateBack" || !editing.value || !hasDirtyDraft.value) {
+    return false
+  }
+
+  void handleBackNavigation()
+  return true
 })
 
 onUnload(() => {

@@ -6,9 +6,16 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell :nav-title="pageTitle" :nav-eyebrow="pageEyebrow" nav-show-back nav-variant="page">
+  <app-shell
+    :nav-title="pageTitle"
+    :nav-eyebrow="pageEyebrow"
+    nav-show-back
+    nav-variant="page"
+    :nav-auto-back="false"
+    @back="handleBackNavigation"
+  >
     <template #nav-actions>
-      <wd-button size="small" plain :disabled="formDisabled" @click="backToTasks">{{ backActionText }}</wd-button>
+      <wd-button size="small" plain :disabled="formDisabled" @click="handleBackNavigation">{{ backActionText }}</wd-button>
     </template>
 
     <view v-if="loading" class="task-edit-status">
@@ -22,7 +29,7 @@
     >
       <view class="task-edit-error__actions">
         <wd-button block :loading="loading" @click="loadTask">再试一次</wd-button>
-        <wd-button block plain @click="backToTasks">返回小清单</wd-button>
+        <wd-button block plain @click="handleBackNavigation">返回小清单</wd-button>
       </view>
     </empty-state>
 
@@ -150,7 +157,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
-import { onLoad } from "@dcloudio/uni-app"
+import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
@@ -218,6 +225,9 @@ const canDeleteTask = computed(
   () => isEditMode.value && taskLoaded.value && !hasLoadError.value && !saving.value && !saved.value && !deleting.value
 )
 const formDisabled = computed(() => saving.value || saved.value || deleting.value)
+const hasUnsavedDraft = computed(
+  () => draftDirty.value && !saving.value && !deleting.value && !saved.value && !formDisabled.value
+)
 const pageTitle = computed(() => "小约定票根")
 const pageEyebrow = computed(() => (isEditMode.value ? "改一张小计划" : "新的计划"))
 const backActionText = computed(() => (isEditMode.value ? "先不改了" : "先不写了"))
@@ -233,6 +243,21 @@ const saveButtonText = computed(() => {
 
   return isEditMode.value ? "收好这张票根" : "收进小清单"
 })
+const discardDraftConfirmOptions = {
+  title: "这张纸条还没收好",
+  msg: "离开后，这次没保存的内容不会留下。",
+  cancelButtonText: "继续写",
+  confirmButtonText: "不保存离开",
+  confirmButtonProps: {
+    plain: true,
+    type: "error" as const
+  },
+  cancelButtonProps: {
+    plain: true,
+    type: "info" as const
+  }
+}
+const isLeaveConfirming = shallowRef(false)
 
 const decodeQueryId = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -341,6 +366,33 @@ const backToTasks = () => {
   })
 }
 
+const confirmDiscardDraft = async (): Promise<boolean> => {
+  if (isLeaveConfirming.value) {
+    return false
+  }
+
+  isLeaveConfirming.value = true
+  try {
+    await message.confirm(discardDraftConfirmOptions)
+    return true
+  } catch {
+    return false
+  } finally {
+    isLeaveConfirming.value = false
+  }
+}
+
+const handleBackNavigation = async () => {
+  if (!hasUnsavedDraft.value) {
+    backToTasks()
+    return
+  }
+
+  if (await confirmDiscardDraft()) {
+    backToTasks()
+  }
+}
+
 const buildDraft = (): TaskDraft => ({
   title: title.value,
   content: content.value,
@@ -440,6 +492,15 @@ const confirmDeleteTask = async () => {
 onLoad((query) => {
   taskId.value = decodeQueryId(query?.id)
   void loadTask()
+})
+
+onBackPress((options) => {
+  if (options.from === "navigateBack" || !hasUnsavedDraft.value) {
+    return false
+  }
+
+  void handleBackNavigation()
+  return true
 })
 </script>
 
