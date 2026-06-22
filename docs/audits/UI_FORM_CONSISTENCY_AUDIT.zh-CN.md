@@ -94,6 +94,8 @@
 
 已确认无新增问题：`create.vue` 与 `detail.vue` 的日期/心情行已使用 `repeat(auto-fit, minmax(min(100%, var(--app-paper-tag-field-min-width)), 1fr))`；卡片外层大多使用 `@include panel`、`var(--app-card-padding)`、`var(--app-form-gap)`，未发现 raw spacing 违规。
 
+2026-06-22 跟进：FORM-002 与 FORM-003 已按已修复的 `task-edit` 标题输入方向处理；`song-edit` 与 `memo-edit` 标题仍保留各自 wrapper，并改用 `wot-paper-input-root`、`wot-paper-title-input-inner` 提供统一内距与标题输入视觉。
+
 ## 8. Button/action issues
 
 | ID | priority | page | selector | problem | expected baseline | recommended fix |

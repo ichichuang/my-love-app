@@ -646,7 +646,9 @@ onBackPress((options) => {
 }
 
 :deep(.memo-title-slip__input-root) {
-  @include wot-paper-inline-input-root;
+  @include wot-paper-input-root;
+  border: 0;
+  background: transparent;
 }
 
 :deep(.memo-title-slip__input-root .wd-input__body),
@@ -655,7 +657,7 @@ onBackPress((options) => {
 }
 
 :deep(.memo-title-slip__input-inner) {
-  @include wot-paper-input-inner;
+  @include wot-paper-title-input-inner;
 }
 
 .memo-note__section {

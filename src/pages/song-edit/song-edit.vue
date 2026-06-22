@@ -689,8 +689,11 @@ onBackPress((options) => {
 }
 
 :deep(.song-title-slip__input-root) {
-  @include wot-paper-inline-input-root;
   flex: 1;
+  min-width: 0;
+  @include wot-paper-input-root;
+  border: 0;
+  background: transparent;
 }
 
 :deep(.song-title-slip__input-root .wd-input__body),
@@ -699,7 +702,7 @@ onBackPress((options) => {
 }
 
 :deep(.song-title-slip__input-inner) {
-  @include wot-paper-input-inner;
+  @include wot-paper-title-input-inner;
 }
 
 .song-detail-toggle-row {
