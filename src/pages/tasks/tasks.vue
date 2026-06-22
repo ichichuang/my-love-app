@@ -125,12 +125,14 @@ import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import { showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { dataCacheKeys } from "@/services/data-cache"
 import { listTasks, toggleTaskDone, type TaskRecord } from "@/services/repositories/tasks"
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
+const tasksRoute = "/pages/tasks/tasks"
 
 type FilterValue = "all" | "undone" | "done"
 
@@ -303,6 +305,7 @@ const openTask = (id: string) => {
 }
 
 onShow(() => {
+  consumeRouteFeedback(tasksRoute)
   void loadTasks()
 })
 

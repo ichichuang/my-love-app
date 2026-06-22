@@ -200,6 +200,7 @@ import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
 import {
   batchResolveEntries,
@@ -220,6 +221,7 @@ import {
 } from "@/services/repositories/entries"
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
+const indexRoute = "/pages/index/index"
 const placeholderStyle = "color: var(--app-text-muted);"
 
 const entryId = shallowRef("")
@@ -515,8 +517,9 @@ const deleteCurrentEntry = async () => {
   deleting.value = true
   try {
     await deleteEntry(entry.value.id)
+    setRouteSuccessFeedback(indexRoute, "这条回忆已经收起来")
     uni.redirectTo({
-      url: "/pages/index/index"
+      url: indexRoute
     })
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))

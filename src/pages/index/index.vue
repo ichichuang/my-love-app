@@ -131,6 +131,7 @@ import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import {
@@ -145,6 +146,7 @@ import { listEntries, type EntryRecord } from "@/services/repositories/entries"
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
+const indexRoute = "/pages/index/index"
 const { items, loading, reload } = useCachedList({
   cacheKey: dataCacheKeys.memoryList,
   loader: listEntries
@@ -313,6 +315,7 @@ const openEntry = (id: string) => {
 }
 
 onShow(() => {
+  consumeRouteFeedback(indexRoute)
   void loadEntries()
 })
 onPullDownRefresh(() => {

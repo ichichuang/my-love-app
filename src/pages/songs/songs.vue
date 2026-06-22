@@ -108,6 +108,7 @@ import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import { showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -122,6 +123,7 @@ import {
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
+const songsRoute = "/pages/songs/songs"
 
 type FilterValue = "all" | SongStatus
 
@@ -311,6 +313,7 @@ const openSong = (id: string) => {
 }
 
 onShow(() => {
+  consumeRouteFeedback(songsRoute)
   void loadSongs()
 })
 

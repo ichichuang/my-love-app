@@ -131,6 +131,7 @@ import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import { showAppSuccess, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -143,6 +144,7 @@ import {
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
+const memosRoute = "/pages/memos/memos"
 
 type FilterValue = "all" | MemoCategory
 
@@ -334,6 +336,7 @@ const openMemo = (id: string) => {
 }
 
 onShow(() => {
+  consumeRouteFeedback(memosRoute)
   void loadMemos()
 })
 

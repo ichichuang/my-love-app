@@ -152,10 +152,11 @@
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
-import { showAppError, showAppSuccess, showAppWarning } from "@/composables/useAppToast"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -168,7 +169,7 @@ import {
   type TaskRecord
 } from "@/services/repositories/tasks"
 
-const saveFeedbackDelayMs = 520
+const tasksRoute = "/pages/tasks/tasks"
 const placeholderStyle = "color: var(--app-text-muted)"
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const theme = useNativeChromeSync()
@@ -336,7 +337,7 @@ const backToTasks = () => {
   }
 
   uni.redirectTo({
-    url: "/pages/tasks/tasks"
+    url: tasksRoute
   })
 }
 
@@ -346,11 +347,6 @@ const buildDraft = (): TaskDraft => ({
   taskDone: taskDone.value,
   taskDueDate: taskDueDate.value
 })
-
-const waitForSaveFeedback = (): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, saveFeedbackDelayMs)
-  })
 
 const resolveSaveErrorMessage = (error: unknown): string => {
   const message = getFriendlyErrorMessage(error)
@@ -386,8 +382,7 @@ const saveTask = async () => {
 
     saving.value = false
     saved.value = true
-    showAppSuccess("这件小事已经轻轻收好")
-    await waitForSaveFeedback()
+    setRouteSuccessFeedback(tasksRoute, "这件小事已经轻轻收好")
     backToTasks()
   } catch (error) {
     showAppError(resolveSaveErrorMessage(error))
@@ -407,7 +402,7 @@ const deleteCurrentTask = async () => {
 
   try {
     await deleteTask(taskId.value)
-    showAppSuccess("已经从小清单移走")
+    setRouteSuccessFeedback(tasksRoute, "已经从小清单移走")
     backToTasks()
   } catch {
     showAppError("这件小事暂时没删掉，请稍后再试。")

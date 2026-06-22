@@ -171,10 +171,11 @@
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
-import { showAppError, showAppSuccess, showAppWarning } from "@/composables/useAppToast"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -191,7 +192,7 @@ import {
   type SongStatus
 } from "@/services/repositories/songs"
 
-const saveFeedbackDelayMs = 520
+const songsRoute = "/pages/songs/songs"
 const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
@@ -389,7 +390,7 @@ const backToSongs = () => {
   }
 
   uni.redirectTo({
-    url: "/pages/songs/songs"
+    url: songsRoute
   })
 }
 
@@ -400,11 +401,6 @@ const buildDraft = (): SongDraft => ({
   songPriority: songPriority.value,
   songStatus: songStatus.value
 })
-
-const waitForSaveFeedback = (): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, saveFeedbackDelayMs)
-  })
 
 const saveSong = async () => {
   if (saving.value) {
@@ -428,8 +424,7 @@ const saveSong = async () => {
 
     saving.value = false
     saved.value = true
-    showAppSuccess("这首歌已经放进小歌单")
-    await waitForSaveFeedback()
+    setRouteSuccessFeedback(songsRoute, "这首歌已经放进小歌单")
     backToSongs()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
@@ -449,7 +444,7 @@ const deleteCurrentSong = async () => {
 
   try {
     await deleteSong(songId.value)
-    showAppSuccess("已经从小歌单移走")
+    setRouteSuccessFeedback(songsRoute, "已经从小歌单移走")
     backToSongs()
   } catch {
     showAppError("这首歌暂时没删掉，请稍后再试。")

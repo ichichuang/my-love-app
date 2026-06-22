@@ -147,10 +147,11 @@
 import { computed, shallowRef, watch } from "vue"
 import { onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
-import { showAppError, showAppSuccess, showAppWarning } from "@/composables/useAppToast"
+import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -165,7 +166,7 @@ import {
   type MemoRecord
 } from "@/services/repositories/memos"
 
-const saveFeedbackDelayMs = 520
+const memosRoute = "/pages/memos/memos"
 const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
@@ -338,7 +339,7 @@ const backToMemos = () => {
   }
 
   uni.redirectTo({
-    url: "/pages/memos/memos"
+    url: memosRoute
   })
 }
 
@@ -348,11 +349,6 @@ const buildDraft = (): MemoDraft => ({
   memoCategory: memoCategory.value,
   memoPinned: memoPinned.value
 })
-
-const waitForSaveFeedback = (): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, saveFeedbackDelayMs)
-  })
 
 const resolveSaveErrorMessage = (error: unknown): string => {
   const message = getFriendlyErrorMessage(error)
@@ -382,8 +378,7 @@ const saveMemo = async () => {
     saving.value = false
     saved.value = true
     draftDirty.value = false
-    showAppSuccess("小线索已经轻轻收好")
-    await waitForSaveFeedback()
+    setRouteSuccessFeedback(memosRoute, "小线索已经轻轻收好")
     backToMemos()
   } catch (error) {
     showAppError(resolveSaveErrorMessage(error))
@@ -403,7 +398,7 @@ const deleteCurrentMemo = async () => {
 
   try {
     await deleteMemo(memoId.value)
-    showAppSuccess("已经从小档案移走")
+    setRouteSuccessFeedback(memosRoute, "已经从小档案移走")
     backToMemos()
   } catch {
     showAppError("这条小线索暂时没删掉，请稍后再试。")
