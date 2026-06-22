@@ -219,9 +219,9 @@ import {
 import { dataCacheKeys } from "@/services/data-cache"
 import {
   deleteEntry,
-  deleteEntryFiles,
   getEntry,
   isEntryUnavailableError,
+  queueEntryFilesForCleanup,
   updateEntry,
   type EntryRecord
 } from "@/services/repositories/entries"
@@ -470,6 +470,8 @@ const saveChanges = async () => {
   }
 
   saving.value = true
+  const removedFilesSnapshot = [...removedFiles.value]
+  let filesToCleanupAfterSave: CloudFile[] = []
   try {
     const nextEntry = await updateEntry(entry.value.id, {
       title: titleToSave,
@@ -479,10 +481,6 @@ const saveChanges = async () => {
       files: files.value
     })
 
-    if (removedFiles.value.length > 0) {
-      await deleteEntryFiles(removedFiles.value)
-    }
-
     const visibleEntry: EntryRecord = {
       ...nextEntry,
       files: mergeResolvedTempURLsForFiles(nextEntry.files, files.value)
@@ -491,10 +489,16 @@ const saveChanges = async () => {
     hydrateForm(visibleEntry)
     editing.value = false
     void hydrateImageUrls(nextEntry)
+    const visibleFileIDs = new Set(visibleEntry.files.map((file) => file.fileID))
+    filesToCleanupAfterSave = removedFilesSnapshot.filter((file) => !visibleFileIDs.has(file.fileID))
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
   } finally {
     saving.value = false
+  }
+
+  if (filesToCleanupAfterSave.length > 0) {
+    queueEntryFilesForCleanup(filesToCleanupAfterSave)
   }
 }
 

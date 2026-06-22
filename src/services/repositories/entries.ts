@@ -236,3 +236,19 @@ export const deleteEntry = async (id: string): Promise<void> => {
 export const deleteEntryFiles = async (files: CloudFile[]): Promise<void> => {
   await deleteCloudFiles(files.map((file) => file.fileID))
 }
+
+export const queueEntryFilesForCleanup = (files: CloudFile[]): void => {
+  const fileIDs = Array.from(
+    new Set(
+      files
+        .map((file) => file.fileID.trim())
+        .filter((fileID) => fileID.length > 0)
+    )
+  )
+
+  if (fileIDs.length === 0) {
+    return
+  }
+
+  queueCloudFilesForCleanup(fileIDs)
+}
