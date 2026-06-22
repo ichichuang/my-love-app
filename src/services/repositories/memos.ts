@@ -93,6 +93,18 @@ const memoUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(ME
 export const isMemoUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === MEMO_UNAVAILABLE_MESSAGE
 
+const wrapMemoCloudError = (message: string, error: unknown): never => {
+  if (isMemoUnavailableError(error)) {
+    throw error
+  }
+
+  if (error instanceof CloudBaseUserError) {
+    throw new CloudBaseUserError(message, error.causeDetail || error.message)
+  }
+
+  throw error
+}
+
 const normalizeMemo = (document: StoredMemoDocument): MemoRecord | null => {
   const id = asString(document._id)
   if (!id || document.coupleId !== appConfig.coupleId || normalizeKind(document.kind) !== "memo") {
@@ -161,20 +173,24 @@ const removeMemoCache = (id: string): void => {
 }
 
 export const listMemos = async (): Promise<MemoRecord[]> => {
-  const documents = await listDocuments<StoredMemoDocument>(appConfig.entriesCollection, {
-    where: {
-      coupleId: appConfig.coupleId
-    },
-    orderBy: {
-      field: "updatedAt",
-      direction: "desc"
-    },
-    limit: 100
-  })
+  try {
+    const documents = await listDocuments<StoredMemoDocument>(appConfig.entriesCollection, {
+      where: {
+        coupleId: appConfig.coupleId
+      },
+      orderBy: {
+        field: "updatedAt",
+        direction: "desc"
+      },
+      limit: 100
+    })
 
-  const memos = documents.map(normalizeMemo).filter((memo): memo is MemoRecord => memo !== null).sort(compareMemos)
-  writeDataCache(dataCacheKeys.memoList(), memos)
-  return memos
+    const memos = documents.map(normalizeMemo).filter((memo): memo is MemoRecord => memo !== null).sort(compareMemos)
+    writeDataCache(dataCacheKeys.memoList(), memos)
+    return memos
+  } catch (error) {
+    return wrapMemoCloudError("小线索暂时没翻到，请稍后再试。", error)
+  }
 }
 
 export const getMemo = async (id: string): Promise<MemoRecord> => {
@@ -194,47 +210,64 @@ export const getMemo = async (id: string): Promise<MemoRecord> => {
   } catch (error) {
     if (isMemoUnavailableError(error)) {
       removeDataCache(dataCacheKeys.memoDetail(id))
+      throw error
     }
-    throw error
+    return wrapMemoCloudError("这张小线索暂时没翻到，请稍后再试。", error)
   }
 }
 
 export const createMemo = async (draft: MemoDraft): Promise<MemoRecord> => {
-  const now = Date.now()
-  const id = await addDocument(appConfig.entriesCollection, toStoredMemo(draft, now))
-  const memo = await getMemo(id)
-  writeMemoCache(memo)
-  return memo
+  try {
+    const now = Date.now()
+    const id = await addDocument(appConfig.entriesCollection, toStoredMemo(draft, now))
+    const memo = await getMemo(id)
+    writeMemoCache(memo)
+    return memo
+  } catch (error) {
+    return wrapMemoCloudError("小线索暂时没收好，请稍后再试。", error)
+  }
 }
 
 export const updateMemo = async (id: string, draft: MemoDraft): Promise<MemoRecord> => {
-  const existing = await getMemo(id)
-  const now = Date.now()
-  await updateDocument<StoredMemoDocument>(appConfig.entriesCollection, id, toStoredMemo(draft, now, existing))
-  const memo = await getMemo(id)
-  writeMemoCache(memo)
-  return memo
+  try {
+    const existing = await getMemo(id)
+    const now = Date.now()
+    await updateDocument<StoredMemoDocument>(appConfig.entriesCollection, id, toStoredMemo(draft, now, existing))
+    const memo = await getMemo(id)
+    writeMemoCache(memo)
+    return memo
+  } catch (error) {
+    return wrapMemoCloudError("小线索暂时没改好，请稍后再试。", error)
+  }
 }
 
 export const deleteMemo = async (id: string): Promise<void> => {
-  await getMemo(id)
-  await removeDocument(appConfig.entriesCollection, id)
-  removeMemoCache(id)
+  try {
+    await getMemo(id)
+    await removeDocument(appConfig.entriesCollection, id)
+    removeMemoCache(id)
+  } catch (error) {
+    return wrapMemoCloudError("这条小线索暂时没删掉，请稍后再试。", error)
+  }
 }
 
 export const toggleMemoPinned = async (id: string, pinned: boolean): Promise<MemoRecord> => {
-  await getMemo(id)
-  const now = Date.now()
+  try {
+    await getMemo(id)
+    const now = Date.now()
 
-  await updateDocument<StoredMemoDocument>(appConfig.entriesCollection, id, {
-    coupleId: appConfig.coupleId,
-    kind: "memo",
-    files: [],
-    memoPinned: pinned === true,
-    updatedAt: now
-  })
+    await updateDocument<StoredMemoDocument>(appConfig.entriesCollection, id, {
+      coupleId: appConfig.coupleId,
+      kind: "memo",
+      files: [],
+      memoPinned: pinned === true,
+      updatedAt: now
+    })
 
-  const memo = await getMemo(id)
-  writeMemoCache(memo)
-  return memo
+    const memo = await getMemo(id)
+    writeMemoCache(memo)
+    return memo
+  } catch (error) {
+    return wrapMemoCloudError("小线索暂时没改好，请稍后再试。", error)
+  }
 }

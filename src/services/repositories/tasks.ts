@@ -72,6 +72,18 @@ const taskUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(TA
 export const isTaskUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === TASK_UNAVAILABLE_MESSAGE
 
+const wrapTaskCloudError = (message: string, error: unknown): never => {
+  if (isTaskUnavailableError(error)) {
+    throw error
+  }
+
+  if (error instanceof CloudBaseUserError) {
+    throw new CloudBaseUserError(message, error.causeDetail || error.message)
+  }
+
+  throw error
+}
+
 const normalizeTask = (document: StoredTaskDocument): TaskRecord | null => {
   const id = asString(document._id)
   if (!id || document.coupleId !== appConfig.coupleId || normalizeKind(document.kind) !== "task") {
@@ -184,20 +196,24 @@ const removeTaskCache = (id: string): void => {
 }
 
 export const listTasks = async (): Promise<TaskRecord[]> => {
-  const documents = await listDocuments<StoredTaskDocument>(appConfig.entriesCollection, {
-    where: {
-      coupleId: appConfig.coupleId
-    },
-    orderBy: {
-      field: "updatedAt",
-      direction: "desc"
-    },
-    limit: 100
-  })
+  try {
+    const documents = await listDocuments<StoredTaskDocument>(appConfig.entriesCollection, {
+      where: {
+        coupleId: appConfig.coupleId
+      },
+      orderBy: {
+        field: "updatedAt",
+        direction: "desc"
+      },
+      limit: 100
+    })
 
-  const tasks = documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null).sort(compareTasks)
-  writeDataCache(dataCacheKeys.taskList(), tasks)
-  return tasks
+    const tasks = documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null).sort(compareTasks)
+    writeDataCache(dataCacheKeys.taskList(), tasks)
+    return tasks
+  } catch (error) {
+    return wrapTaskCloudError("小约定暂时没翻到，请稍后再试。", error)
+  }
 }
 
 export const getTask = async (id: string): Promise<TaskRecord> => {
@@ -217,52 +233,69 @@ export const getTask = async (id: string): Promise<TaskRecord> => {
   } catch (error) {
     if (isTaskUnavailableError(error)) {
       removeDataCache(dataCacheKeys.taskDetail(id))
+      throw error
     }
-    throw error
+    return wrapTaskCloudError("这件小事暂时没翻到，请稍后再试。", error)
   }
 }
 
 export const createTask = async (draft: TaskDraft): Promise<TaskRecord> => {
-  const now = Date.now()
-  const id = await addDocument(appConfig.entriesCollection, toStoredTask(draft, now))
-  const task = await getTask(id)
-  writeTaskCache(task)
-  return task
+  try {
+    const now = Date.now()
+    const id = await addDocument(appConfig.entriesCollection, toStoredTask(draft, now))
+    const task = await getTask(id)
+    writeTaskCache(task)
+    return task
+  } catch (error) {
+    return wrapTaskCloudError("这件小事暂时没收好，请稍后再试。", error)
+  }
 }
 
 export const updateTask = async (id: string, draft: TaskDraft): Promise<TaskRecord> => {
-  const existing = await getTask(id)
-  const now = Date.now()
-  await updateDocument<StoredTaskDocument>(appConfig.entriesCollection, id, toStoredTask(draft, now, existing))
-  const task = await getTask(id)
-  writeTaskCache(task)
-  return task
+  try {
+    const existing = await getTask(id)
+    const now = Date.now()
+    await updateDocument<StoredTaskDocument>(appConfig.entriesCollection, id, toStoredTask(draft, now, existing))
+    const task = await getTask(id)
+    writeTaskCache(task)
+    return task
+  } catch (error) {
+    return wrapTaskCloudError("这件小事暂时没改好，请稍后再试。", error)
+  }
 }
 
 export const toggleTaskDone = async (id: string, done: boolean): Promise<TaskRecord> => {
-  const existing = await getTask(id)
-  const now = Date.now()
-  const taskDone = done === true
+  try {
+    const existing = await getTask(id)
+    const now = Date.now()
+    const taskDone = done === true
 
-  await updateDocument<StoredTaskDocument>(appConfig.entriesCollection, id, {
-    coupleId: appConfig.coupleId,
-    kind: "task",
-    files: [],
-    taskDone,
-    taskCompletedAt: taskDone ? now : 0,
-    taskDueDate: existing.taskDueDate,
-    occurredAt: existing.taskDueDate,
-    mood: taskMood(taskDone),
-    updatedAt: now
-  })
+    await updateDocument<StoredTaskDocument>(appConfig.entriesCollection, id, {
+      coupleId: appConfig.coupleId,
+      kind: "task",
+      files: [],
+      taskDone,
+      taskCompletedAt: taskDone ? now : 0,
+      taskDueDate: existing.taskDueDate,
+      occurredAt: existing.taskDueDate,
+      mood: taskMood(taskDone),
+      updatedAt: now
+    })
 
-  const task = await getTask(id)
-  writeTaskCache(task)
-  return task
+    const task = await getTask(id)
+    writeTaskCache(task)
+    return task
+  } catch (error) {
+    return wrapTaskCloudError("这件小事暂时没改好，请稍后再试。", error)
+  }
 }
 
 export const deleteTask = async (id: string): Promise<void> => {
-  await getTask(id)
-  await removeDocument(appConfig.entriesCollection, id)
-  removeTaskCache(id)
+  try {
+    await getTask(id)
+    await removeDocument(appConfig.entriesCollection, id)
+    removeTaskCache(id)
+  } catch (error) {
+    return wrapTaskCloudError("这件小事暂时没删掉，请稍后再试。", error)
+  }
 }

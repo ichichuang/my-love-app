@@ -112,6 +112,18 @@ const songUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(SO
 export const isSongUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === SONG_UNAVAILABLE_MESSAGE
 
+const wrapSongCloudError = (message: string, error: unknown): never => {
+  if (isSongUnavailableError(error)) {
+    throw error
+  }
+
+  if (error instanceof CloudBaseUserError) {
+    throw new CloudBaseUserError(message, error.causeDetail || error.message)
+  }
+
+  throw error
+}
+
 const normalizeSong = (document: StoredSongDocument): SongRecord | null => {
   const id = asString(document._id)
   if (!id || document.coupleId !== appConfig.coupleId || normalizeKind(document.kind) !== "song") {
@@ -209,20 +221,24 @@ const removeSongCache = (id: string): void => {
 }
 
 export const listSongs = async (): Promise<SongRecord[]> => {
-  const documents = await listDocuments<StoredSongDocument>(appConfig.entriesCollection, {
-    where: {
-      coupleId: appConfig.coupleId
-    },
-    orderBy: {
-      field: "updatedAt",
-      direction: "desc"
-    },
-    limit: 100
-  })
+  try {
+    const documents = await listDocuments<StoredSongDocument>(appConfig.entriesCollection, {
+      where: {
+        coupleId: appConfig.coupleId
+      },
+      orderBy: {
+        field: "updatedAt",
+        direction: "desc"
+      },
+      limit: 100
+    })
 
-  const songs = documents.map(normalizeSong).filter((song): song is SongRecord => song !== null).sort(compareSongs)
-  writeDataCache(dataCacheKeys.songList(), songs)
-  return songs
+    const songs = documents.map(normalizeSong).filter((song): song is SongRecord => song !== null).sort(compareSongs)
+    writeDataCache(dataCacheKeys.songList(), songs)
+    return songs
+  } catch (error) {
+    return wrapSongCloudError("小歌单暂时没翻到，请稍后再试。", error)
+  }
 }
 
 export const getSong = async (id: string): Promise<SongRecord> => {
@@ -242,52 +258,69 @@ export const getSong = async (id: string): Promise<SongRecord> => {
   } catch (error) {
     if (isSongUnavailableError(error)) {
       removeDataCache(dataCacheKeys.songDetail(id))
+      throw error
     }
-    throw error
+    return wrapSongCloudError("这首歌暂时没翻到，请稍后再试。", error)
   }
 }
 
 export const createSong = async (draft: SongDraft): Promise<SongRecord> => {
-  const now = Date.now()
-  const id = await addDocument(appConfig.entriesCollection, toStoredSong(draft, now))
-  const song = await getSong(id)
-  writeSongCache(song)
-  return song
+  try {
+    const now = Date.now()
+    const id = await addDocument(appConfig.entriesCollection, toStoredSong(draft, now))
+    const song = await getSong(id)
+    writeSongCache(song)
+    return song
+  } catch (error) {
+    return wrapSongCloudError("这首歌暂时没收好，请稍后再试。", error)
+  }
 }
 
 export const updateSong = async (id: string, draft: SongDraft): Promise<SongRecord> => {
-  const existing = await getSong(id)
-  const now = Date.now()
-  await updateDocument<StoredSongDocument>(appConfig.entriesCollection, id, toStoredSong(draft, now, existing))
-  const song = await getSong(id)
-  writeSongCache(song)
-  return song
+  try {
+    const existing = await getSong(id)
+    const now = Date.now()
+    await updateDocument<StoredSongDocument>(appConfig.entriesCollection, id, toStoredSong(draft, now, existing))
+    const song = await getSong(id)
+    writeSongCache(song)
+    return song
+  } catch (error) {
+    return wrapSongCloudError("这首歌暂时没改好，请稍后再试。", error)
+  }
 }
 
 export const updateSongStatus = async (id: string, status: SongStatus): Promise<SongRecord> => {
-  const existing = await getSong(id)
-  const now = Date.now()
-  const songStatus = normalizeSongStatus(status)
-  const sungAt = songStatus === "sung" ? now : 0
+  try {
+    const existing = await getSong(id)
+    const now = Date.now()
+    const songStatus = normalizeSongStatus(status)
+    const sungAt = songStatus === "sung" ? now : 0
 
-  await updateDocument<StoredSongDocument>(appConfig.entriesCollection, id, {
-    coupleId: appConfig.coupleId,
-    kind: "song",
-    files: [],
-    songStatus,
-    sungAt,
-    occurredAt: resolveOccurredAt(songStatus, sungAt, existing.createdAt, now),
-    mood: songPriorityLabels[existing.songPriority],
-    updatedAt: now
-  })
+    await updateDocument<StoredSongDocument>(appConfig.entriesCollection, id, {
+      coupleId: appConfig.coupleId,
+      kind: "song",
+      files: [],
+      songStatus,
+      sungAt,
+      occurredAt: resolveOccurredAt(songStatus, sungAt, existing.createdAt, now),
+      mood: songPriorityLabels[existing.songPriority],
+      updatedAt: now
+    })
 
-  const song = await getSong(id)
-  writeSongCache(song)
-  return song
+    const song = await getSong(id)
+    writeSongCache(song)
+    return song
+  } catch (error) {
+    return wrapSongCloudError("这首歌暂时没改好，请稍后再试。", error)
+  }
 }
 
 export const deleteSong = async (id: string): Promise<void> => {
-  await getSong(id)
-  await removeDocument(appConfig.entriesCollection, id)
-  removeSongCache(id)
+  try {
+    await getSong(id)
+    await removeDocument(appConfig.entriesCollection, id)
+    removeSongCache(id)
+  } catch (error) {
+    return wrapSongCloudError("这首歌暂时没删掉，请稍后再试。", error)
+  }
 }

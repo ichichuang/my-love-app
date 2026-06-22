@@ -255,10 +255,10 @@
 - Modify: `src/pages/task-edit/task-edit.vue`
 - Modify: `src/pages/memo-edit/memo-edit.vue`
 
-- [ ] 避免 song/task/memo 页面把底层“纪念”错误直接展示给用户。
-- [ ] `.env`、`VITE_CLOUDBASE_ENV_ID` 等技术细节只在开发日志或开发诊断页展示，用户 Toast 使用克制中文。
-- [ ] 保留足够诊断信息在 `CloudBaseUserError.causeDetail` 或开发日志中，避免排障信息丢失。
-- [ ] 验证：保存歌曲、任务、备忘失败时分别显示对应业务文案；开发模式仍可定位原始 cause。
+- [x] 避免 song/task/memo 页面把底层“纪念”错误直接展示给用户。
+- [x] `.env`、`VITE_CLOUDBASE_ENV_ID` 等技术细节只在开发日志或开发诊断页展示，用户 Toast 使用克制中文。
+- [x] 保留足够诊断信息在 `CloudBaseUserError.causeDetail` 或开发日志中，避免排障信息丢失。
+- [x] 验证：保存歌曲、任务、备忘失败时分别显示对应业务文案；开发模式仍可定位原始 cause。
 
 ## 审计中提到但不列为缺陷的例外
 

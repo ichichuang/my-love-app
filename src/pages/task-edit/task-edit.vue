@@ -402,11 +402,6 @@ const buildDraft = (): TaskDraft => ({
   taskDueDate: taskDueDate.value
 })
 
-const resolveSaveErrorMessage = (error: unknown): string => {
-  const message = getFriendlyErrorMessage(error)
-  return message.includes("纪念") ? "小约定暂时没改好，请稍后再试。" : message
-}
-
 const saveTask = async () => {
   if (saving.value) {
     return
@@ -439,7 +434,7 @@ const saveTask = async () => {
     setRouteSuccessFeedback(tasksRoute, "这件小事已经轻轻收好")
     backToTasks()
   } catch (error) {
-    showAppError(resolveSaveErrorMessage(error))
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     if (!saved.value) {
       saving.value = false

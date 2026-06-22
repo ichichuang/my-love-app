@@ -163,6 +163,7 @@
 
 - Phase 4: copy cleanup
   - CloudBase/repository 错误分域，避免“纪念”、`.env`、泛化“操作没有完成”泄漏到业务页面。
+  - 2026-06-22：COPY-004 已修复 CloudBase/repository 错误分域；底层记录错误改为中性文案，song/task/memo 仓库负责业务域错误提示。
   - 仅保留 design-preview 的 owner-only QA 文案，不作为普通入口。
   - 微调中文标点和截断符号。
 

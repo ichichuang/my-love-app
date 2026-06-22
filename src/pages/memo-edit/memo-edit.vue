@@ -403,11 +403,6 @@ const buildDraft = (): MemoDraft => ({
   memoPinned: memoPinned.value
 })
 
-const resolveSaveErrorMessage = (error: unknown): string => {
-  const message = getFriendlyErrorMessage(error)
-  return message.includes("纪念") ? "小线索暂时没收好，请稍后再试。" : message
-}
-
 const saveMemo = async () => {
   if (saving.value) {
     return
@@ -434,7 +429,7 @@ const saveMemo = async () => {
     setRouteSuccessFeedback(memosRoute, "小线索已经轻轻收好")
     backToMemos()
   } catch (error) {
-    showAppError(resolveSaveErrorMessage(error))
+    showAppError(getFriendlyErrorMessage(error))
   } finally {
     if (!saved.value) {
       saving.value = false

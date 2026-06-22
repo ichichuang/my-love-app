@@ -92,13 +92,16 @@ export const getFriendlyErrorMessage = (error: unknown): string => {
     return error.message
   }
 
-  return "操作没有完成，请稍后再试。"
+  return "暂时没处理好，请稍后再试。"
 }
 
 const getNativeCloud = (): WxCloudNative.Api => {
   const cloud = (globalThis as WxHost).wx?.cloud
   if (!cloud) {
-    throw new CloudBaseUserError("请在微信开发者工具或真机中打开云开发能力后再试。")
+    throw new CloudBaseUserError(
+      "云端小仓库暂时打不开，请稍后再试。",
+      "wx.cloud is unavailable; open in WeChat DevTools or a device with CloudBase enabled."
+    )
   }
 
   return cloud
@@ -111,9 +114,9 @@ export const initCloudBase = (): CloudInitState => {
     }
 
     if (!isCloudConfigured()) {
-      initState.message = "云开发环境未配置，请检查 .env 中的 VITE_CLOUDBASE_ENV_ID。"
+      initState.message = "云端小仓库暂时还没配置好。"
       if (import.meta.env.DEV) {
-        console.info("[小珊的树洞] 云开发环境配置状态：未配置")
+        console.info("[小珊的树洞] 云开发环境配置状态：未配置，请检查 VITE_CLOUDBASE_ENV_ID")
       }
       return initState
     }
@@ -132,7 +135,10 @@ export const initCloudBase = (): CloudInitState => {
     return initState
   } catch (error) {
     initState.initialized = false
-    initState.message = friendlyError("云开发初始化失败，请检查微信开发者工具云开发配置。", error).message
+    if (import.meta.env.DEV) {
+      console.info("[小珊的树洞] 云开发初始化失败", error)
+    }
+    initState.message = friendlyError("云端小仓库暂时打不开，请稍后再试。", error).message
     return initState
   }
 }
@@ -140,7 +146,10 @@ export const initCloudBase = (): CloudInitState => {
 const ensureCloudBaseReady = (): WxCloudNative.Api => {
   const state = initCloudBase()
   if (!state.initialized) {
-    throw new CloudBaseUserError(state.message || "云开发尚未初始化。")
+    throw new CloudBaseUserError(
+      state.message || "云端小仓库暂时打不开，请稍后再试。",
+      "CloudBase init state is not initialized."
+    )
   }
 
   return getNativeCloud()
@@ -176,7 +185,7 @@ export const listDocuments = async <T extends object>(collectionName: string, op
     const result = await query.get()
     return result.data
   } catch (error) {
-    throw friendlyError("读取纪念列表失败，请稍后再试。", error)
+    throw friendlyError("读取记录列表失败，请稍后再试。", error)
   }
 }
 
@@ -185,7 +194,7 @@ export const getDocument = async <T extends object>(collectionName: string, id: 
     const result = await database().collection<T>(collectionName).doc(id).get()
     return result.data
   } catch (error) {
-    throw friendlyError("读取纪念详情失败，请稍后再试。", error)
+    throw friendlyError("读取记录详情失败，请稍后再试。", error)
   }
 }
 
@@ -196,7 +205,7 @@ export const addDocument = async <T extends object>(collectionName: string, data
     })
     return result._id
   } catch (error) {
-    throw friendlyError("保存纪念失败，请稍后再试。", error)
+    throw friendlyError("保存记录失败，请稍后再试。", error)
   }
 }
 
@@ -210,7 +219,7 @@ export const updateDocument = async <T extends object>(
       data
     })
   } catch (error) {
-    throw friendlyError("更新纪念失败，请稍后再试。", error)
+    throw friendlyError("更新记录失败，请稍后再试。", error)
   }
 }
 
@@ -218,7 +227,7 @@ export const removeDocument = async (collectionName: string, id: string): Promis
   try {
     await database().collection(collectionName).doc(id).remove()
   } catch (error) {
-    throw friendlyError("删除纪念失败，请稍后再试。", error)
+    throw friendlyError("删除记录失败，请稍后再试。", error)
   }
 }
 
