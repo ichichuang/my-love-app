@@ -16,6 +16,7 @@ import {
   upsertCachedListItem,
   writeDataCache
 } from "@/services/data-cache"
+import { queueCloudFilesForCleanup } from "@/services/cloud-file-cleanup"
 
 export type LoveEntryKind = "memory" | "song" | "task" | "memo"
 
@@ -226,9 +227,10 @@ export const updateEntry = async (id: string, draft: EntryDraft): Promise<EntryR
 
 export const deleteEntry = async (id: string): Promise<void> => {
   const entry = await getEntry(id)
-  await deleteCloudFiles(entry.files.map((file) => file.fileID))
+  const fileIDs = entry.files.map((file) => file.fileID)
   await removeDocument(appConfig.entriesCollection, id)
   removeEntryCache(id)
+  queueCloudFilesForCleanup(fileIDs)
 }
 
 export const deleteEntryFiles = async (files: CloudFile[]): Promise<void> => {

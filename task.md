@@ -100,14 +100,13 @@
 
 **Files:**
 - Modify: `src/services/repositories/entries.ts`
-- Create: `src/services/repositories/file-cleanup.ts`
-- Modify: `src/services/data-cache.ts`
-- Modify: `src/pages/detail/detail.vue`
+- Create: `src/services/cloud-file-cleanup.ts`
+- Modify: `src/App.vue`
 
-- [ ] 不再使用“先删云文件、再删数据库”的顺序作为唯一删除流程。
-- [ ] 以数据库状态为主：先删除或标记删除记录，再清理文件；文件清理失败不能让已删除记录重新出现在列表。
-- [ ] 对清理失败的文件记录可重试信息，至少保证失败被记录到开发日志或本地待清理队列。
-- [ ] 删除成功后同步移除本地缓存中的回忆详情和列表项。
+- [x] 不再使用“先删云文件、再删数据库”的顺序作为唯一删除流程。
+- [x] 以数据库状态为主：先删除或标记删除记录，再清理文件；文件清理失败不能让已删除记录重新出现在列表。
+- [x] 对清理失败的文件记录可重试信息，至少保证失败被记录到开发日志或本地待清理队列。
+- [x] 删除成功后同步移除本地缓存中的回忆详情和列表项。
 - [ ] 验证：模拟 `deleteCloudFiles` 失败时，数据库记录不会处于“仍存在但图片已消失”的半删除状态。
 
 ### Task 5: DATA-002 编辑保存与旧文件清理拆分
@@ -115,7 +114,7 @@
 **Files:**
 - Modify: `src/pages/detail/detail.vue`
 - Modify: `src/services/repositories/entries.ts`
-- Modify: `src/services/repositories/file-cleanup.ts`
+- Modify: `src/services/cloud-file-cleanup.ts`
 
 - [ ] 将“保存记录成功”和“清理用户移除的旧文件”拆成两个结果。
 - [ ] `updateEntry()` 成功后立即更新页面、缓存和编辑状态；旧文件清理失败只提示温和的后台清理信息或记录重试，不显示“保存失败”。

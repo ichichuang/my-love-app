@@ -2,6 +2,7 @@
 import { watch } from "vue"
 import { onLaunch, onShow } from "@dcloudio/uni-app"
 import { scheduleNativeChromeTheme } from "@/design-system/nav-theme"
+import { flushPendingCloudFileCleanup } from "@/services/cloud-file-cleanup"
 import { initCloudBase } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
 
@@ -9,6 +10,14 @@ const theme = useThemeStore()
 
 const scheduleCurrentNativeChromeTheme = () => {
   scheduleNativeChromeTheme(theme.nativeChromeTheme)
+}
+
+const retryPendingCloudFileCleanup = () => {
+  void flushPendingCloudFileCleanup().catch((error) => {
+    if (import.meta.env.DEV) {
+      console.warn("[小珊的树洞] 云文件清理重试未完成。", error)
+    }
+  })
 }
 
 watch(
@@ -29,11 +38,13 @@ onLaunch(() => {
   theme.initTheme()
   scheduleCurrentNativeChromeTheme()
   initCloudBase()
+  retryPendingCloudFileCleanup()
 })
 
 onShow(() => {
   theme.bindSystemThemeListener()
   scheduleCurrentNativeChromeTheme()
+  retryPendingCloudFileCleanup()
 })
 </script>
 
