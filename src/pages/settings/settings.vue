@@ -88,7 +88,10 @@
             </app-option-button>
           </app-option-group>
           <view class="font-card__rail" aria-hidden="true">
-            <view class="font-card__rail-fill"></view>
+            <view
+              class="font-card__rail-fill"
+              :class="{ 'font-card__rail-fill--large': theme.fontScale === 'large' }"
+            ></view>
             <view
               class="font-card__rail-dot"
               :class="{ 'font-card__rail-dot--large': theme.fontScale === 'large' }"
@@ -276,6 +279,10 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   width: var(--app-space-20);
   border-radius: var(--app-radius-pill);
   background: var(--app-primary);
+}
+
+.font-card__rail-fill--large {
+  width: calc(100% - var(--app-space-20));
 }
 
 .font-card__rail-dot {

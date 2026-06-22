@@ -211,8 +211,8 @@
 **Files:**
 - Modify: `src/pages/settings/settings.vue`
 
-- [ ] 让 `.font-card__rail-fill` 宽度随 `theme.fontScale` 与圆点位置同步。
-- [ ] 标准与偏大状态都应表现为“填充条连接到圆点”。
+- [x] 让 `.font-card__rail-fill` 宽度随 `theme.fontScale` 与圆点位置同步。
+- [x] 标准与偏大状态都应表现为“填充条连接到圆点”。
 - [ ] 验证：切换字号后轨道填充和圆点无脱节感。
 
 ### Task 13: COPY-001 删除首页测试残留
