@@ -25,9 +25,10 @@ export interface ResolvedSizeTokens {
   }
 }
 
-const structuralVars = (density: ThemeDensity) => {
+const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
   const { spacing, radius, control } = resolveDensityScales(density)
   const isCompact = density === "compact"
+  const isLargeFont = fontScale === "large"
 
   return {
     ...scaleToCssVars("space-scale", spacing),
@@ -130,6 +131,12 @@ const structuralVars = (density: ThemeDensity) => {
     "--app-image-remove-padding-x": isCompact ? "12rpx" : "14rpx",
 
     "--app-option-group-gap": isCompact ? "12rpx" : "14rpx",
+    "--app-option-group-auto-min-width": isLargeFont
+      ? (isCompact ? "212rpx" : "224rpx")
+      : (isCompact ? "172rpx" : "184rpx"),
+    "--app-option-group-swatch-min-width": isLargeFont
+      ? (isCompact ? "316rpx" : "336rpx")
+      : (isCompact ? "274rpx" : "292rpx"),
     "--app-option-padding-x": isCompact ? "18rpx" : "22rpx",
     "--app-option-padding-y": isCompact ? "14rpx" : "18rpx",
     "--app-option-min-height": control.md,
@@ -164,7 +171,7 @@ const structuralVars = (density: ThemeDensity) => {
 }
 
 export const resolveSizeTokens = (density: ThemeDensity, fontScale: ThemeFontScale): ResolvedSizeTokens => {
-  const sizeVars = structuralVars(density)
+  const sizeVars = structuralVars(density, fontScale)
   const typography = resolveTypographyTokens(fontScale)
 
   return {

@@ -190,9 +190,9 @@
 - Modify: `src/pages/memo-edit/memo-edit.vue`
 - Modify: `src/pages/design-preview/design-preview.vue`
 
-- [ ] 为 `AppOptionGroup` 增加响应式策略：三列在窄屏或大字号下降到两列/单列，两列在空间不足时降到单列。
-- [ ] 不破坏 `ThemeSwatchPicker` 的两列色板默认体验；色板可使用单独 variant 或 prop 指定降级方式。
-- [ ] 所有调用点显式选择合理策略，避免未来长标签默认挤压。
+- [x] 为 `AppOptionGroup` 增加响应式策略：三列在窄屏或大字号下降到两列/单列，两列在空间不足时降到单列。
+- [x] 不破坏 `ThemeSwatchPicker` 的两列色板默认体验；色板可使用单独 variant 或 prop 指定降级方式。
+- [x] 所有调用点显式选择合理策略，避免未来长标签默认挤压。
 - [ ] 验证：窄屏、大字号、紧凑模式下选项文字不重叠、不截断、不出现高度突兀错位。
 
 ### Task 11: UI-003 日期与心情双列降级

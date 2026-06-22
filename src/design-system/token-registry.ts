@@ -387,6 +387,8 @@ export const componentVarNames = [
   "--app-image-remove-height",
   "--app-image-remove-padding-x",
   "--app-option-group-gap",
+  "--app-option-group-auto-min-width",
+  "--app-option-group-swatch-min-width",
   "--app-option-padding-x",
   "--app-option-padding-y",
   "--app-option-min-height",

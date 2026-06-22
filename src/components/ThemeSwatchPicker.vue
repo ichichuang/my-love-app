@@ -1,5 +1,5 @@
 <template>
-  <app-option-group class="theme-picker" :columns="2">
+  <app-option-group class="theme-picker" :columns="2" responsive="swatch">
     <app-option-button
       v-for="(palette, index) in romanticPalettes"
       :key="palette.id"

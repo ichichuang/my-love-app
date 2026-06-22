@@ -28,7 +28,7 @@
         </view>
         <view class="preview-control-group">
           <text class="preview-control-group__label">外观模式</text>
-          <app-option-group :columns="3">
+          <app-option-group :columns="3" responsive="auto">
             <app-option-button
               v-for="option in modeOptions"
               :key="option.value"
@@ -45,7 +45,7 @@
         </view>
         <view class="preview-control-group">
           <text class="preview-control-group__label">界面密度</text>
-          <app-option-group :columns="2">
+          <app-option-group :columns="2" responsive="auto">
             <app-option-button
               v-for="option in densityOptions"
               :key="option.value"
@@ -58,7 +58,7 @@
         </view>
         <view class="preview-control-group">
           <text class="preview-control-group__label">字号大小</text>
-          <app-option-group :columns="2">
+          <app-option-group :columns="2" responsive="auto">
             <app-option-button
               v-for="option in fontScaleOptions"
               :key="option.value"

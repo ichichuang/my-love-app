@@ -18,7 +18,7 @@
           <text class="settings-section__title">白天夜里的样子</text>
           <text class="settings-section__hint">跟随系统 / 浅色 / 深色</text>
         </view>
-        <app-option-group :columns="3">
+        <app-option-group :columns="3" responsive="auto">
           <app-option-button
             v-for="option in modeOptions"
             :key="option.value"
@@ -50,7 +50,7 @@
           <text class="settings-section__title">小纸条间距</text>
           <text class="settings-section__hint">舒适 / 紧凑</text>
         </view>
-        <app-option-group :columns="2">
+        <app-option-group :columns="2" responsive="auto">
           <app-option-button
             v-for="option in densityOptions"
             :key="option.value"
@@ -74,7 +74,7 @@
           <text class="settings-section__hint">标准 / 偏大</text>
         </view>
         <view class="font-card">
-          <app-option-group :columns="2">
+          <app-option-group :columns="2" responsive="auto">
             <app-option-button
               v-for="option in fontScaleOptions"
               :key="option.value"

@@ -50,7 +50,7 @@
         </view>
 
         <view v-if="memos.length > 0" class="memos-filter-strip" :style="stickySectionStyle">
-          <app-option-group :columns="3">
+          <app-option-group :columns="3" responsive="auto">
             <app-option-button
               v-for="option in filterOptions"
               :key="option.value"

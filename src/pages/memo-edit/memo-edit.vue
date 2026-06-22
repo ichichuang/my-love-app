@@ -86,7 +86,7 @@
             <text class="memo-note__section-note">分进小抽屉里，以后翻起来更快一点。</text>
           </view>
 
-          <app-option-group :columns="3">
+          <app-option-group :columns="3" responsive="auto">
             <app-option-button
               v-for="option in categoryOptions"
               :key="option.value"
@@ -105,7 +105,7 @@
             <text class="memo-note__section-note">常翻的小线索，就先贴在最上面。</text>
           </view>
 
-          <app-option-group :columns="2">
+          <app-option-group :columns="2" responsive="auto">
             <app-option-button
               v-for="option in pinnedOptions"
               :key="option.label"

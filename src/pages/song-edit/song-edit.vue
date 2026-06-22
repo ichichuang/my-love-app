@@ -114,7 +114,7 @@
               <text class="song-note__section-title">心愿贴纸</text>
               <text class="song-note__section-note">像小印章一样贴一下</text>
             </view>
-            <app-option-group :columns="3">
+            <app-option-group :columns="3" responsive="auto">
               <app-option-button
                 v-for="option in priorityOptions"
                 :key="option.value"
@@ -132,7 +132,7 @@
               <text class="song-note__section-title">小歌单状态</text>
               <text class="song-note__section-note">只在小歌单里轻轻标记</text>
             </view>
-            <app-option-group :columns="3">
+            <app-option-group :columns="3" responsive="auto">
               <app-option-button
                 v-for="option in statusOptions"
                 :key="option.value"

@@ -52,7 +52,7 @@
 
       <template v-else>
         <view class="tasks-filter-bar" :style="stickySectionStyle">
-          <app-option-group :columns="3">
+          <app-option-group :columns="3" responsive="auto">
             <app-option-button
               v-for="option in filterOptions"
               :key="option.value"
