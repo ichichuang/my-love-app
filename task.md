@@ -79,9 +79,9 @@
 **Files:**
 - Modify: `src/composables/useFileUpload.ts`
 
-- [ ] 在 `chooseImages()` 的 `fail` 回调中读取错误对象，识别 `cancel`、`abort`、用户取消等取消语义。
-- [ ] 取消选择时直接 resolve 空数组或抛出内部可识别的取消结果，`chooseAndUploadImages()` 不显示错误 Toast。
-- [ ] 非取消失败继续走 `getFriendlyErrorMessage()` 并显示错误。
+- [x] 在 `chooseImages()` 的 `fail` 回调中读取错误对象，识别 `cancel`、`abort`、用户取消等取消语义。
+- [x] 取消选择时直接 resolve 空数组或抛出内部可识别的取消结果，`chooseAndUploadImages()` 不显示错误 Toast。
+- [x] 非取消失败继续走 `getFriendlyErrorMessage()` 并显示错误。
 - [ ] 验证：点击上传后取消相册，不出现“操作没有完成，请稍后再试。”；断网或权限失败仍有明确提示。
 
 ### Task 3: UPLOAD-002 图片满额反馈

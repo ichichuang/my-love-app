@@ -15,8 +15,24 @@ interface LocalImageFile {
   name: string
 }
 
+const chooseImageCancelKeywords = ["cancel", "canceled", "cancelled", "abort", "用户取消"] as const
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
+
+const getChooseImageErrMsg = (result: unknown): string => {
+  if (!isRecord(result)) {
+    return ""
+  }
+
+  return typeof result.errMsg === "string" ? result.errMsg : ""
+}
+
+const isChooseImageCancel = (result: unknown): boolean => {
+  const errMsg = getChooseImageErrMsg(result).trim().toLowerCase()
+
+  return errMsg.length > 0 && chooseImageCancelKeywords.some((keyword) => errMsg.includes(keyword))
+}
 
 const toLocalImageFiles = (result: UniNamespace.ChooseImageSuccessCallbackResult): LocalImageFile[] => {
   const tempFiles: unknown[] = Array.isArray(result.tempFiles) ? result.tempFiles : [result.tempFiles]
@@ -52,8 +68,13 @@ const chooseImages = (count: number): Promise<LocalImageFile[]> => {
       success: (result) => {
         resolve(toLocalImageFiles(result))
       },
-      fail: () => {
-        reject(new Error("Image selection cancelled or failed"))
+      fail: (result: unknown) => {
+        if (isChooseImageCancel(result)) {
+          resolve([])
+          return
+        }
+
+        reject(new Error(getChooseImageErrMsg(result) || "选择图片失败"))
       }
     })
   })
@@ -80,6 +101,10 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
 
     try {
       const pickedFiles = await chooseImages(remaining)
+      if (pickedFiles.length === 0) {
+        return
+      }
+
       const maxBytes = appConfig.maxUploadSizeMb * 1024 * 1024
       const acceptedFiles = pickedFiles.filter((file) => typeof file.size !== "number" || file.size <= maxBytes)
 
