@@ -38,7 +38,7 @@
 
     <view v-else class="songs-content">
       <view class="songs-filter-bar" :style="stickySectionStyle">
-        <app-option-group :columns="2">
+        <app-option-group :columns="2" responsive="auto">
           <app-option-button
             v-for="option in filterOptions"
             :key="option.value"

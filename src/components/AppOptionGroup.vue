@@ -45,15 +45,12 @@ const responsiveClass = computed(() => `app-option-group--${props.responsive}`)
 .app-option-group--auto :deep(.app-option-button),
 .app-option-group--swatch :deep(.app-option-button) {
   height: auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .app-option-group--swatch :deep(.app-option-button--swatch) {
   min-height: var(--app-swatch-height);
-}
-
-.app-option-group--auto :deep(text),
-.app-option-group--swatch :deep(text) {
-  overflow-wrap: anywhere;
-  white-space: normal;
 }
 </style>

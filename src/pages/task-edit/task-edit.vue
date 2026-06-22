@@ -114,7 +114,7 @@
               <text class="task-ticket__section-title">现在状态</text>
               <text class="task-ticket__section-note">只在小清单里轻轻标记</text>
             </view>
-            <app-option-group :columns="2">
+            <app-option-group :columns="2" responsive="auto">
               <app-option-button
                 v-for="option in statusOptions"
                 :key="option.label"

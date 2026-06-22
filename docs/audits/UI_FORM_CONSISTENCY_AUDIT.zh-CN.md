@@ -96,6 +96,8 @@
 
 2026-06-22 跟进：FORM-002 与 FORM-003 已按已修复的 `task-edit` 标题输入方向处理；`song-edit` 与 `memo-edit` 标题仍保留各自 wrapper，并改用 `wot-paper-input-root`、`wot-paper-title-input-inner` 提供统一内距与标题输入视觉。
 
+2026-06-22 UI-002 跟进：FORM-004 与 FORM-005 已补充 `responsive="auto"`；FORM-006 已移除 `AppOptionGroup` 中对原生 `text` 的 `:deep(text)` 选择器，改由 `.app-option-button` 承接自动换行与收缩规则。本次未启动其他审计项。
+
 ## 8. Button/action issues
 
 | ID | priority | page | selector | problem | expected baseline | recommended fix |
