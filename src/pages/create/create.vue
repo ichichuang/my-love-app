@@ -137,6 +137,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
+import { onUnload } from "@dcloudio/uni-app"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -160,6 +161,7 @@ const content = shallowRef("")
 const mood = shallowRef("温柔")
 const occurredAt = shallowRef(todayString)
 const saving = shallowRef(false)
+const saveSucceeded = shallowRef(false)
 const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "轻轻收好"))
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
 
@@ -172,7 +174,9 @@ const {
   maxUploadReached,
   setFiles,
   chooseAndUploadImages,
-  removeFileAt
+  removeFileAt,
+  markFilesCommitted,
+  queueUncommittedUploadedFilesForCleanup
 } = useFileUpload()
 
 const recoverImage = async (fileID: string) => {
@@ -232,6 +236,8 @@ const saveEntry = async () => {
       files: files.value
     })
 
+    markFilesCommitted(entry.files)
+    saveSucceeded.value = true
     uni.redirectTo({
       url: `/pages/detail/detail?id=${encodeURIComponent(entry.id)}`
     })
@@ -241,6 +247,14 @@ const saveEntry = async () => {
     saving.value = false
   }
 }
+
+onUnload(() => {
+  if (saveSucceeded.value) {
+    return
+  }
+
+  queueUncommittedUploadedFilesForCleanup()
+})
 </script>
 
 <style lang="scss" scoped>

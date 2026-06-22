@@ -7,6 +7,7 @@ import {
   uploadFileToCloud,
   type CloudFile
 } from "@/services/cloudbase"
+import { queueCloudFilesForCleanup } from "@/services/cloud-file-cleanup"
 import { batchResolveFiles } from "@/services/cloud-file-resolver"
 
 interface LocalImageFile {
@@ -33,6 +34,15 @@ const isChooseImageCancel = (result: unknown): boolean => {
 
   return errMsg.length > 0 && chooseImageCancelKeywords.some((keyword) => errMsg.includes(keyword))
 }
+
+const normalizeCloudFileIDs = (files: readonly CloudFile[] | undefined): string[] =>
+  Array.from(
+    new Set(
+      (files ?? [])
+        .map((file) => file.fileID.trim())
+        .filter((fileID) => fileID.length > 0)
+    )
+  )
 
 const toLocalImageFiles = (result: UniNamespace.ChooseImageSuccessCallbackResult): LocalImageFile[] => {
   const tempFiles: unknown[] = Array.isArray(result.tempFiles) ? result.tempFiles : [result.tempFiles]
@@ -84,6 +94,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
   const files = shallowRef<CloudFile[]>(initialFiles)
   const uploading = shallowRef(false)
   const errorMessage = shallowRef("")
+  const uncommittedUploadedFileIDs = new Set<string>()
   const maxUploadCount = appConfig.maxUploadCount
   const remainingUploadCount = computed(() => Math.max(0, maxUploadCount - files.value.length))
   const maxUploadReached = computed(() => remainingUploadCount.value === 0)
@@ -91,6 +102,44 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
   const setFiles = (nextFiles: CloudFile[]) => {
     files.value = nextFiles
   }
+
+  const rememberUploadedFile = (file: CloudFile): void => {
+    const fileID = file.fileID.trim()
+    if (fileID) {
+      uncommittedUploadedFileIDs.add(fileID)
+    }
+  }
+
+  const forgetUncommittedUploadedFileIDs = (fileIDs: readonly string[]): void => {
+    fileIDs.forEach((fileID) => {
+      uncommittedUploadedFileIDs.delete(fileID.trim())
+    })
+  }
+
+  const markFilesCommitted = (committedFiles: CloudFile[] = []): void => {
+    forgetUncommittedUploadedFileIDs(normalizeCloudFileIDs(committedFiles))
+  }
+
+  const queueUncommittedUploadedFilesForCleanup = (retainedFiles: CloudFile[] = []): void => {
+    const retainedFileIDs = new Set(normalizeCloudFileIDs(retainedFiles))
+    const fileIDsToCleanup = Array.from(
+      new Set(
+        [...uncommittedUploadedFileIDs]
+          .map((fileID) => fileID.trim())
+          .filter((fileID) => fileID.length > 0 && !retainedFileIDs.has(fileID))
+      )
+    )
+
+    if (fileIDsToCleanup.length === 0) {
+      return
+    }
+
+    queueCloudFilesForCleanup(fileIDsToCleanup)
+    forgetUncommittedUploadedFileIDs(fileIDsToCleanup)
+  }
+
+  const isUncommittedUploadedFile = (fileID: string): boolean =>
+    uncommittedUploadedFileIDs.has(fileID.trim())
 
   const chooseAndUploadImages = async () => {
     if (uploading.value || maxUploadReached.value) {
@@ -121,6 +170,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
           type: "image",
           size: file.size
         })
+        rememberUploadedFile(uploaded)
         uploadedFiles.push(uploaded)
       }
 
@@ -157,7 +207,11 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
 
     try {
       await deleteCloudFiles([file.fileID])
+      forgetUncommittedUploadedFileIDs([file.fileID])
     } catch (error) {
+      if (isUncommittedUploadedFile(file.fileID)) {
+        queueUncommittedUploadedFilesForCleanup(files.value)
+      }
       errorMessage.value = getFriendlyErrorMessage(error)
       showAppError(errorMessage.value)
     }
@@ -172,6 +226,9 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
     maxUploadReached,
     setFiles,
     chooseAndUploadImages,
-    removeFileAt
+    removeFileAt,
+    markFilesCommitted,
+    queueUncommittedUploadedFilesForCleanup,
+    isUncommittedUploadedFile
   }
 }

@@ -199,7 +199,7 @@
 
 <script setup lang="ts">
 import { shallowRef } from "vue"
-import { onLoad } from "@dcloudio/uni-app"
+import { onLoad, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
@@ -263,7 +263,10 @@ const {
   maxUploadReached,
   setFiles,
   chooseAndUploadImages,
-  removeFileAt
+  removeFileAt,
+  markFilesCommitted,
+  queueUncommittedUploadedFilesForCleanup,
+  isUncommittedUploadedFile
 } = useFileUpload()
 
 const decodeQueryId = (value: unknown): string => {
@@ -289,6 +292,7 @@ const hydrateForm = (nextEntry: EntryRecord) => {
   mood.value = nextEntry.mood
   occurredAt.value = nextEntry.occurredAt
   setFiles(nextEntry.files)
+  markFilesCommitted(nextEntry.files)
   removedFiles.value = []
 }
 
@@ -405,6 +409,7 @@ const startEditing = () => {
 }
 
 const cancelEditing = () => {
+  queueUncommittedUploadedFilesForCleanup(entry.value?.files)
   if (entry.value) {
     hydrateForm(entry.value)
   }
@@ -413,10 +418,18 @@ const cancelEditing = () => {
 
 const removeEditFile = async (index: number) => {
   const file = files.value[index]
-  if (file) {
-    removedFiles.value = [...removedFiles.value, file]
+  if (!file) {
+    return
   }
+
   await removeFileAt(index, false)
+
+  if (isUncommittedUploadedFile(file.fileID)) {
+    queueUncommittedUploadedFilesForCleanup(files.value)
+    return
+  }
+
+  removedFiles.value = [...removedFiles.value, file]
 }
 
 const recoverImage = async (fileID: string) => {
@@ -486,6 +499,7 @@ const saveChanges = async () => {
       files: mergeResolvedTempURLsForFiles(nextEntry.files, files.value)
     }
     entry.value = visibleEntry
+    markFilesCommitted(visibleEntry.files)
     hydrateForm(visibleEntry)
     editing.value = false
     void hydrateImageUrls(nextEntry)
@@ -550,6 +564,14 @@ const deleteCurrentEntry = async () => {
 onLoad((query) => {
   entryId.value = decodeQueryId(query?.id)
   void loadEntry()
+})
+
+onUnload(() => {
+  if (!editing.value) {
+    return
+  }
+
+  queueUncommittedUploadedFilesForCleanup(entry.value?.files)
 })
 </script>
 
