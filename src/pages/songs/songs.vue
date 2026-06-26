@@ -50,7 +50,7 @@
         </app-option-group>
       </view>
 
-      <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter }">
+      <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter, phase }">
         <view class="songs-swap-container">
           <empty-state
             v-if="getFilteredSongs(currentFilter).length === 0"
@@ -65,7 +65,8 @@
               v-for="(song, index) in getFilteredSongs(currentFilter)"
               :key="`${currentFilter}-${song.id}`"
               class="song-card app-rise-stagger"
-              :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
+              :class="{ 'app-card-exit': phase === 'leaving' }"
+              :style="{ animationDelay: phase === 'leaving' ? '0s' : `calc(var(--app-stagger-reveal) * ${index})` }"
               hover-class="song-card--pressed"
               @click="openSong(song.id)"
             >

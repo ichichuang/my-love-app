@@ -28,7 +28,9 @@
       body="可能是云开发慢了一点，请稍后再试。"
     />
 
-    <view v-else-if="!editing" class="detail-page">
+    <app-animated-swap v-else :value="editing" v-slot="{ displayValue: isEditing }">
+      <view class="detail-swap-wrapper">
+        <view v-if="!isEditing" class="detail-page">
       <view class="app-notebook-rings app-reveal-1" aria-hidden="true">
         <view v-for="i in 6" :key="i" class="app-notebook-rings__ring" />
       </view>
@@ -81,9 +83,9 @@
           删除这条回忆
         </wd-button>
       </view>
-    </view>
+        </view>
 
-    <view v-else class="edit-page">
+        <view v-else class="edit-page">
       <view class="app-notebook-rings app-reveal-1" aria-hidden="true">
         <view v-for="i in 6" :key="i" class="app-notebook-rings__ring" />
       </view>
@@ -194,7 +196,9 @@
         </view>
         <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
-    </view>
+        </view>
+      </view>
+    </app-animated-swap>
 
     <wd-message-box />
   </app-shell>

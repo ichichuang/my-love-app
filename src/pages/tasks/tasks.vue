@@ -64,7 +64,7 @@
           </app-option-group>
         </view>
 
-        <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter }">
+        <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter, phase }">
           <view class="tasks-swap-container">
             <empty-state
               v-if="getFilteredTasks(currentFilter).length === 0"
@@ -79,8 +79,11 @@
                 v-for="(task, index) in getFilteredTasks(currentFilter)"
                 :key="`${currentFilter}-${task.id}`"
                 class="task-card app-rise-stagger app-ticket-stump"
-                :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
-                :class="{ 'task-card--done': task.taskDone }"
+                :class="{
+                  'task-card--done': task.taskDone,
+                  'app-card-exit': phase === 'leaving'
+                }"
+                :style="{ animationDelay: phase === 'leaving' ? '0s' : `calc(var(--app-stagger-reveal) * ${index})` }"
                 hover-class="task-card--pressed"
                 @click="openTask(task.id)"
               >

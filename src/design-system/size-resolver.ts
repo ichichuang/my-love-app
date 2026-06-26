@@ -2,6 +2,13 @@ import { resolveDensityScales, scaleToCssVars } from "@/design-system/size-scale
 import { resolveTypographyTokens } from "@/design-system/typography-resolver"
 import type { AppCssVars, ThemeDensity, ThemeFontScale } from "@/design-system/types"
 
+export const motionDurations = {
+  fast: 180,
+  normal: 260,
+  slow: 320,
+  slower: 420
+} as const
+
 export interface ResolvedSizeTokens {
   cssVars: AppCssVars
   wot: {
@@ -155,10 +162,10 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",
-    "--app-duration-fast": "180ms",
-    "--app-duration-normal": "260ms",
-    "--app-duration-slow": "320ms",
-    "--app-duration-slower": "420ms",
+    "--app-duration-fast": `${motionDurations.fast}ms`,
+    "--app-duration-normal": `${motionDurations.normal}ms`,
+    "--app-duration-slow": `${motionDurations.slow}ms`,
+    "--app-duration-slower": `${motionDurations.slower}ms`,
     "--app-duration-instant": "0s",
     "--app-duration-breath": "1600ms",
     "--app-duration-breath-idle": "3200ms",
@@ -168,10 +175,10 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-ease-emphasized": "ease-in-out",
     "--app-ease-out": "cubic-bezier(0.22, 0.61, 0.36, 1)",
     "--app-ease-bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)",
-    "--app-transition-fast": "180ms ease",
-    "--app-transition-normal": "260ms ease",
-    "--app-transition-slow": "320ms ease-in-out",
-    "--app-transition-theme": "background-color 260ms ease, border-color 260ms ease, color 260ms ease, opacity 220ms ease, box-shadow 260ms ease",
+    "--app-transition-fast": `${motionDurations.fast}ms ease`,
+    "--app-transition-normal": `${motionDurations.normal}ms ease`,
+    "--app-transition-slow": `${motionDurations.slow}ms ease-in-out`,
+    "--app-transition-theme": `background-color ${motionDurations.normal}ms ease, border-color ${motionDurations.normal}ms ease, color ${motionDurations.normal}ms ease, opacity 220ms ease, box-shadow ${motionDurations.normal}ms ease`,
     "--app-press-scale": "0.99",
     "--app-press-scale-strong": "0.96",
     "--app-pop-scale": "1.04",

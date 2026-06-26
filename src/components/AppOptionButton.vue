@@ -13,6 +13,7 @@
     @click="handleClick"
   >
     <slot />
+    <view v-if="active && variant === 'default'" class="app-option-button__indicator" aria-hidden="true" />
   </button>
 </template>
 
@@ -46,6 +47,7 @@ const handleClick = () => {
 
 .app-option-button {
   @include pressable;
+  position: relative;
   display: flex;
   min-width: 0;
   width: 100%;
@@ -67,6 +69,18 @@ const handleClick = () => {
     opacity var(--app-transition-fast),
     box-shadow var(--app-transition-normal),
     transform var(--app-transition-fast);
+}
+
+.app-option-button__indicator {
+  position: absolute;
+  top: var(--app-space-1);
+  right: var(--app-space-1);
+  width: var(--app-space-3);
+  height: var(--app-space-3);
+  border-radius: var(--app-radius-round);
+  background: var(--app-primary);
+  box-shadow: 0 0 4rpx var(--app-primary-soft);
+  animation: app-pop-in var(--app-duration-fast) var(--app-ease-bounce) both;
 }
 
 .app-option-button--active {

@@ -21,6 +21,19 @@
   }
 }
 
+// 渐隐下移（用于卡片依次离开）
+@keyframes app-reveal-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(var(--app-fade-offset-y));
+  }
+}
+
 // 仅透明度浮现：用于「会按压」的元素，避免锁住 transform
 @keyframes app-soft-in {
   from {
@@ -176,6 +189,10 @@
 
 .app-rise-stagger {
   animation: app-reveal-up var(--app-duration-normal) var(--app-ease-out) backwards;
+}
+
+.app-card-exit {
+  animation: app-reveal-down var(--app-duration-fast) var(--app-ease-out) both !important;
 }
 
 // --- 工具类：贴纸落定 pop（出现一次，不按压）---

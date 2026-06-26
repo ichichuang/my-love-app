@@ -37,6 +37,7 @@
 <script setup lang="ts">
 import { ref, shallowRef } from "vue"
 import type { CloudFile } from "@/services/cloudbase"
+import { motionDurations } from "@/design-system/size-resolver"
 
 const props = defineProps<{
   files: CloudFile[]
@@ -51,11 +52,14 @@ const emit = defineEmits<{
 const deletingIndex = ref<number | null>(null)
 
 const handleRemove = (index: number) => {
+  if (deletingIndex.value !== null) {
+    return
+  }
   deletingIndex.value = index
   setTimeout(() => {
     emit("remove", index)
     deletingIndex.value = null
-  }, 260) // matches transition duration of app-duration-normal
+  }, motionDurations.normal)
 }
 
 const failedImageUrls = shallowRef<ReadonlySet<string>>(new Set())

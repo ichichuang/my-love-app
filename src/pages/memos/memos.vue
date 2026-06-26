@@ -64,7 +64,7 @@
           <wd-button custom-class="memos-state__button" @click="goMemoEdit">记一条小线索</wd-button>
         </empty-state>
 
-        <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter }">
+        <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter, phase }">
           <view class="memos-swap-container">
             <empty-state
               v-if="getFilteredMemos(currentFilter).length === 0"
@@ -79,8 +79,11 @@
                 v-for="(memo, index) in getFilteredMemos(currentFilter)"
                 :key="`${currentFilter}-${memo.id}`"
                 class="memo-card app-rise-stagger"
-                :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
-                :class="{ 'memo-card--pinned': memo.memoPinned }"
+                :class="{
+                  'memo-card--pinned': memo.memoPinned,
+                  'app-card-exit': phase === 'leaving'
+                }"
+                :style="{ animationDelay: phase === 'leaving' ? '0s' : `calc(var(--app-stagger-reveal) * ${index})` }"
                 hover-class="memo-card--pressed"
                 @click="openMemo(memo.id)"
               >

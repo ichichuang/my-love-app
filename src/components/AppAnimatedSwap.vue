@@ -1,11 +1,12 @@
 <template>
   <view class="app-animated-swap" :class="[phaseClass]">
-    <slot :display-value="displayValue" />
+    <slot :display-value="displayValue" :phase="phase" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from "vue"
+import { motionDurations } from "@/design-system/size-resolver"
 
 const props = defineProps<{
   value: any
@@ -36,9 +37,9 @@ watch(
         timeoutId = setTimeout(() => {
           phase.value = "idle"
           timeoutId = null
-        }, 180) // matches transition duration
+        }, motionDurations.fast)
       })
-    }, 180)
+    }, motionDurations.fast)
   }
 )
 </script>
