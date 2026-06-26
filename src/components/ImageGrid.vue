@@ -95,12 +95,16 @@ const handleImageError = (index: number) => {
   border-radius: var(--app-radius-image);
   background: var(--app-surface-strong);
   box-shadow: var(--app-shadow-image);
+  // 新放进来的小照片像贴纸一样轻轻落定
+  animation: app-pop-in var(--app-duration-normal) var(--app-ease-bounce) both;
 }
 
 .image-grid__image,
 .image-grid__fallback {
   width: 100%;
   height: 100%;
+  // 图片/兜底温柔淡入，不硬切
+  animation: app-soft-in var(--app-duration-normal) var(--app-ease-out);
 }
 
 .image-grid__fallback {
@@ -160,6 +164,7 @@ const handleImageError = (index: number) => {
   background: var(--app-color-overlay-strong);
   color: var(--app-color-on-overlay);
   line-height: var(--app-image-remove-height);
+  transition: transform var(--app-transition-fast), opacity var(--app-transition-fast);
 }
 
 :deep(.image-grid__remove .wd-button__text) {
@@ -169,5 +174,7 @@ const handleImageError = (index: number) => {
 
 :deep(.image-grid__remove.wd-button.is-small.wd-button--active .wd-button__content) {
   opacity: var(--app-muted-opacity);
+  // 按下移除：小药丸轻轻缩一下，点得到、也看得到
+  transform: scale(0.88);
 }
 </style>

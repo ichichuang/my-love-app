@@ -659,13 +659,17 @@ onMounted(async () => {
 .app-pet-navigator--ready {
   pointer-events: auto;
   visibility: visible;
+  // 松手后回到最近边缘时，让位置滑过去（拖拽中再关掉，保证 1:1 跟手）
+  transition: left var(--app-duration-slow) var(--app-ease-out), top var(--app-duration-slow) var(--app-ease-out), opacity var(--app-transition-fast), transform var(--app-transition-fast);
 }
 
 .app-pet-navigator--pressed,
 .app-pet-navigator--touching,
 .app-pet-navigator--dragging {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  transform: scale(var(--app-press-scale-strong));
+  // 交互中位置不做过渡，跟手不延迟
+  transition: opacity var(--app-transition-fast), transform var(--app-transition-fast);
 }
 
 .app-pet-navigator--open {
@@ -704,6 +708,29 @@ onMounted(async () => {
   max-width: none;
 }
 
+// 待机时极轻微的呼吸，给小宠物一点活气（开菜单/触摸/拖拽时停下）
+.app-pet-navigator--ready .app-pet-navigator__image {
+  animation: app-pet-breath var(--app-duration-breath-idle) var(--app-ease-emphasized) infinite;
+}
+
+.app-pet-navigator--open .app-pet-navigator__image,
+.app-pet-navigator--touching .app-pet-navigator__image,
+.app-pet-navigator--dragging .app-pet-navigator__image {
+  animation: none;
+}
+
+// 点一下开菜单时，小宠物俏皮地晃一下
+.app-pet-navigator--open .app-pet-navigator__paper {
+  animation: app-wiggle var(--app-duration-slow) var(--app-ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-pet-navigator--ready .app-pet-navigator__image,
+  .app-pet-navigator--open .app-pet-navigator__paper {
+    animation: none;
+  }
+}
+
 .app-pet-navigator__fallback {
   position: relative;
   z-index: 1;
@@ -717,6 +744,8 @@ onMounted(async () => {
   background:
     linear-gradient(135deg, var(--app-surface-strong), var(--app-field));
   box-shadow: var(--app-shadow-card);
+  // 图片没加载出来时，纸团兜底也轻轻落定，不突兀
+  animation: app-pop-in var(--app-duration-normal) var(--app-ease-bounce) both;
 }
 
 .app-pet-navigator__fallback-mark {
@@ -752,15 +781,20 @@ onMounted(async () => {
     radial-gradient(circle at 86% 20%, var(--app-surface-strong), transparent 48%),
     linear-gradient(180deg, var(--app-field), var(--app-surface));
   box-shadow: var(--app-shadow-md);
+  // 开合用回弹缓动 + 更明显的缩放，像从小宠物身边「啵」一下冒出来；
+  // visibility 仅在关闭方向延迟，让关闭也能看到收回动画。
+  transition: opacity var(--app-transition-fast), transform var(--app-duration-slow) var(--app-ease-bounce), visibility var(--app-duration-instant) linear var(--app-duration-slow);
   opacity: var(--app-space-0);
   pointer-events: none;
-  transform: translateY(var(--app-fade-offset-y)) scale(var(--app-press-scale));
+  transform: translateY(var(--app-fade-offset-y)) scale(var(--app-press-scale-strong));
   visibility: hidden;
 }
 
 .app-pet-bubble--open {
   opacity: var(--app-line-height-none);
   pointer-events: auto;
+  // 打开方向：可见即时生效，立刻看到弹出
+  transition: opacity var(--app-transition-fast), transform var(--app-duration-slow) var(--app-ease-bounce), visibility var(--app-duration-instant);
   transform: none;
   visibility: visible;
 }

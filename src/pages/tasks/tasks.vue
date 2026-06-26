@@ -11,12 +11,12 @@
       <wd-button size="small" plain @click="goTaskEdit">加一件事</wd-button>
     </template>
 
-    <view class="tasks-intro">
+    <view class="tasks-intro app-reveal-1">
       <text class="tasks-intro__title">以后想一起做的事，慢慢勾上</text>
       <text class="tasks-intro__body">不是压力清单，是给未来留的位置。</text>
     </view>
 
-    <view v-if="loading" class="tasks-status">
+    <view v-if="loading" class="tasks-status app-anim-breath">
       <text>正在翻我们的小清单…</text>
     </view>
 
@@ -29,7 +29,7 @@
     </empty-state>
 
     <view v-else class="tasks-content">
-      <view v-if="totalCount > 0" class="tasks-progress">
+      <view v-if="totalCount > 0" class="tasks-progress app-reveal-1">
         <view class="tasks-progress__head">
           <view class="tasks-progress__copy">
             <text class="tasks-progress__title">已经轻轻勾上 {{ doneCount }} / {{ totalCount }}</text>
@@ -76,7 +76,7 @@
           <view
             v-for="task in filteredTasks"
             :key="task.id"
-            class="task-card"
+            class="task-card app-rise"
             :class="{ 'task-card--done': task.taskDone }"
             hover-class="task-card--pressed"
             @click="openTask(task.id)"
@@ -428,6 +428,7 @@ onPullDownRefresh(() => {
   gap: var(--app-space-8);
   padding: var(--app-card-padding);
   overflow: hidden;
+  transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 }
 
 .task-card::before {
@@ -448,7 +449,8 @@ onPullDownRefresh(() => {
 
 .task-card--pressed {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  box-shadow: var(--app-shadow-image);
+  transform: scale(var(--app-press-scale-strong)) rotate(-0.6deg);
 }
 
 .task-card__paper-corner {

@@ -103,6 +103,19 @@ const handleClear = () => {
   background: var(--app-surface);
 }
 
+.app-date-field:active {
+  background: var(--app-surface-strong);
+}
+
+// 挑到日子的瞬间：文字轻轻弹一下，像盖了个小日戳
+.app-date-field:not(.app-date-field--empty) .app-date-field__text {
+  animation: app-tap-pop var(--app-duration-normal) var(--app-ease-bounce);
+}
+
+.app-date-field:not(.app-date-field--empty) .app-date-field__glyph {
+  border-color: var(--app-primary);
+}
+
 .app-date-field--empty .app-date-field__text {
   color: var(--app-text-muted);
 }
@@ -120,6 +133,7 @@ const handleClear = () => {
   line-height: var(--app-input-height);
   white-space: nowrap;
   text-overflow: ellipsis;
+  transition: color var(--app-transition-normal);
 }
 
 .app-date-field__glyph {
@@ -135,7 +149,7 @@ const handleClear = () => {
 }
 
 .app-date-field:active .app-date-field__glyph {
-  transform: scale(0.9) rotate(2deg);
+  transform: scale(0.94) rotate(3deg);
 }
 
 .app-date-field__glyph-ring {
@@ -170,6 +184,12 @@ const handleClear = () => {
   flex-shrink: 0;
   width: var(--app-space-14);
   height: var(--app-space-14);
+  transition: transform var(--app-transition-fast), opacity var(--app-transition-fast);
+}
+
+.app-date-field__clear:active {
+  opacity: var(--app-press-opacity);
+  transform: scale(0.82) rotate(-6deg);
 }
 
 .app-date-field__clear-line {

@@ -8,7 +8,7 @@
   />
   <app-shell nav-title="小珊的树洞" nav-eyebrow="悄悄停靠处" :nav-show-back="false" nav-variant="home">
 
-    <view class="home-hero">
+    <view class="home-hero app-reveal-1">
       <view class="home-hero__top">
         <image class="home-hero__icon" src="/static/logo-couple.png" mode="aspectFit" />
         <view class="home-hero__copy">
@@ -28,13 +28,13 @@
     </view>
 
     <view class="home-dock">
-      <view class="home-dock__head">
+      <view class="home-dock__head app-reveal-2">
         <text class="home-dock__title">夹在回忆本里的小纸签</text>
         <text class="home-dock__body">点一首，勾一件，慢慢收着。</text>
       </view>
 
       <view class="home-note-stack">
-        <view class="home-note home-note--song" hover-class="home-note--pressed" @click="goSongs">
+        <view class="home-note home-note--song app-reveal-soft-3" hover-class="home-note--pressed" @click="goSongs">
           <view class="home-note__mark home-note__mark--song">
             <text>歌</text>
           </view>
@@ -52,7 +52,7 @@
           </wd-button>
         </view>
 
-        <view class="home-note home-note--task" hover-class="home-note--pressed" @click="goTasks">
+        <view class="home-note home-note--task app-reveal-soft-4" hover-class="home-note--pressed" @click="goTasks">
           <view class="home-note__mark home-note__mark--task">
             <text>约</text>
           </view>
@@ -70,7 +70,7 @@
           </wd-button>
         </view>
 
-        <view class="home-note home-note--memo" hover-class="home-note--pressed" @click="goMemos">
+        <view class="home-note home-note--memo app-reveal-soft-5" hover-class="home-note--pressed" @click="goMemos">
           <view class="home-note__mark home-note__mark--memo">
             <text>档</text>
           </view>
@@ -96,7 +96,7 @@
         <text class="home-section__count">{{ items.length }} 条回忆</text>
       </view>
 
-      <view v-if="loading" class="home-loading">
+      <view v-if="loading" class="home-loading app-anim-breath">
         <text>正在慢慢读取…</text>
       </view>
 
@@ -113,6 +113,7 @@
         <entry-card
           v-for="entry in items"
           :key="entry.id"
+          class="app-rise"
           :entry="entry"
           @cover-error="recoverCover"
           @open="openEntry"

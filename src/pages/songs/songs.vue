@@ -11,12 +11,12 @@
       <wd-button size="small" plain @click="goSongEdit">加一首歌</wd-button>
     </template>
 
-    <view class="songs-intro">
+    <view class="songs-intro app-reveal-1">
       <text class="songs-intro__title">想听你唱的歌都放在这里</text>
       <text class="songs-intro__body">先把歌名塞进来，唱不唱不着急。</text>
     </view>
 
-    <view v-if="loading" class="songs-status">
+    <view v-if="loading" class="songs-status app-anim-breath">
       <text>正在翻小歌单…</text>
     </view>
 
@@ -62,7 +62,7 @@
         <view
           v-for="song in filteredSongs"
           :key="song.id"
-          class="song-card"
+          class="song-card app-rise"
           hover-class="song-card--pressed"
           @click="openSong(song.id)"
         >
@@ -380,11 +380,13 @@ onPullDownRefresh(() => {
   flex-direction: column;
   gap: var(--app-space-8);
   padding: var(--app-card-padding);
+  transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 }
 
 .song-card--pressed {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  box-shadow: var(--app-shadow-image);
+  transform: scale(var(--app-press-scale-strong)) rotate(-0.6deg);
 }
 
 .song-card__head {

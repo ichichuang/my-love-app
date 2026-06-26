@@ -8,7 +8,7 @@
   />
   <app-shell nav-title="小样本预览" nav-eyebrow="样本小清单" nav-show-back nav-variant="page">
     <view class="preview">
-      <view class="preview-panel preview-panel--diagnostics">
+      <view class="preview-panel preview-panel--diagnostics app-reveal-1">
         <view class="preview-panel__head">
           <text class="preview-panel__title">本本的小脑瓜</text>
           <text class="preview-panel__note">悄悄瞧一眼当前小本本的运转细节，不看密钥或账号凭据。</text>
@@ -21,7 +21,7 @@
         </view>
       </view>
 
-      <view class="preview-panel">
+      <view class="preview-panel app-reveal-2">
         <view class="preview-panel__head">
           <text class="preview-panel__title">小纸本调色盘</text>
           <text class="preview-panel__note">在这里试一试小纸样的各种样子，改动会悄悄同步到每个角落。</text>
@@ -229,7 +229,7 @@ const PreviewSection = defineComponent({
   },
   setup(props, { slots }) {
     return () =>
-      h("view", { class: "preview-panel" }, [
+      h("view", { class: "preview-panel app-reveal" }, [
         h("view", { class: "preview-panel__head" }, [
           h("text", { class: "preview-panel__title" }, props.title),
           h("text", { class: "preview-panel__note" }, props.note)
@@ -765,7 +765,7 @@ const shadowStyle = (token: string) =>
 
 .preview-motion:active {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  transform: scale(var(--app-press-scale-strong));
 }
 
 .preview-motion__title {

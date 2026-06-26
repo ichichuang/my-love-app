@@ -18,7 +18,7 @@
       <wd-button v-if="entry && !editing" size="small" plain @click="startEditing">编辑</wd-button>
     </template>
 
-    <view v-if="loading" class="status-panel">
+    <view v-if="loading" class="status-panel app-anim-breath">
       <text>正在翻这张小纸条…</text>
     </view>
 
@@ -29,7 +29,7 @@
     />
 
     <view v-else-if="!editing" class="detail-page">
-      <view class="memory-sheet">
+      <view class="memory-sheet app-reveal-1">
         <view class="memory-sheet__fold" />
         <view class="memory-sheet__header">
           <view class="memory-sheet__stub">
@@ -63,7 +63,7 @@
         </view>
       </view>
 
-      <view class="danger-zone">
+      <view class="danger-zone app-reveal-2">
         <view>
           <text class="danger-zone__title">删除这条回忆</text>
           <text class="danger-zone__body">这会删除这条记录和对应照片。</text>
@@ -81,7 +81,7 @@
     </view>
 
     <view v-else class="edit-page">
-      <view class="edit-sheet">
+      <view class="edit-sheet app-reveal-1">
         <view class="edit-sheet__fold" />
         <view class="edit-sheet__header">
           <view>

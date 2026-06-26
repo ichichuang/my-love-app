@@ -12,7 +12,7 @@
     </template>
 
     <view class="memos-page">
-      <view class="memos-intro">
+      <view class="memos-intro app-reveal-1">
         <view class="memos-intro__paper-corner" />
         <view class="memos-intro__head">
           <view class="memos-intro__copy">
@@ -28,7 +28,7 @@
         </view>
       </view>
 
-      <view v-if="loading" class="memos-status">
+      <view v-if="loading" class="memos-status app-anim-breath">
         <text>正在翻她的小线索…</text>
       </view>
 
@@ -76,7 +76,7 @@
           <view
             v-for="memo in filteredMemos"
             :key="memo.id"
-            class="memo-card"
+            class="memo-card app-rise"
             :class="{ 'memo-card--pinned': memo.memoPinned }"
             hover-class="memo-card--pressed"
             @click="openMemo(memo.id)"
@@ -521,6 +521,7 @@ onPullDownRefresh(() => {
   overflow: hidden;
   background:
     linear-gradient(180deg, var(--app-surface), var(--app-surface-strong));
+  transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 }
 
 .memo-card::before {
@@ -539,7 +540,8 @@ onPullDownRefresh(() => {
 
 .memo-card--pressed {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  box-shadow: var(--app-shadow-image);
+  transform: scale(var(--app-press-scale-strong)) rotate(-0.6deg);
 }
 
 .memo-card__title-group {

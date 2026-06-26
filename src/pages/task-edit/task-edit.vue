@@ -18,7 +18,7 @@
       <wd-button size="small" plain :disabled="formDisabled" @click="handleBackNavigation">{{ backActionText }}</wd-button>
     </template>
 
-    <view v-if="loading" class="task-edit-status">
+    <view v-if="loading" class="task-edit-status app-anim-breath">
       <text>正在翻这张小票根…</text>
     </view>
 
@@ -34,7 +34,7 @@
     </empty-state>
 
     <view v-else class="task-edit">
-      <view class="task-ticket" :class="{ 'task-ticket--done': taskDone }">
+      <view class="task-ticket app-reveal-1" :class="{ 'task-ticket--done': taskDone }">
         <view class="task-ticket__perforation" />
         <view class="task-ticket__head">
           <view class="task-ticket__intro">
@@ -123,7 +123,7 @@
           </view>
         </view>
 
-        <view v-if="saved" class="task-saved">
+        <view v-if="saved" class="task-saved app-pop">
           <text class="task-saved__title">已经轻轻收好</text>
           <text class="task-saved__body">这件小事放进清单啦</text>
         </view>

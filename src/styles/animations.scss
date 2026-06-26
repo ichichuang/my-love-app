@@ -1,0 +1,236 @@
+// 第二轮动效：集中定义关键帧与可复用动效工具类。
+// 仅在全局样式层（App.vue -> styles/index.scss）注入，组件/页面只引用类名或动效令牌。
+// 时长与缓动统一走 --app-* 令牌；关键帧内部位移用 rpx/deg 字面值（本目录不参与 raw 值扫描）。
+// 全部克制、柔和、小纸条手感；除加载呼吸与小宠物待机外不做高频循环。
+//
+// 重要：animation-fill-mode: both 会「锁住」该元素的 transform，使 :active / hover-class
+// 的按压变换失效。因此：
+//   - 会按压的元素只能用「仅透明度」或「无 fill」的入场（app-reveal-soft / app-rise / app-tap-pop）。
+//   - 不按压的静态容器才用带位移、带 both 的分组显现（app-reveal-*）。
+
+// 分组依次浮现：透明 + 轻微上移落定（用于不按压的静态容器）
+@keyframes app-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 仅透明度浮现：用于「会按压」的元素，避免锁住 transform
+@keyframes app-soft-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+// 贴纸般落定：缩放回弹（出现一次，不按压）
+@keyframes app-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 选中轻弹：只动缩放、不动透明度、无 fill，结束后交还按压控制权
+@keyframes app-tap-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+// 小印章盖下：旋转 + 缩放落到静止倾角（出现一次）
+@keyframes app-stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-14deg) scale(0.3);
+  }
+
+  55% {
+    opacity: 1;
+    transform: rotate(10deg) scale(1.14);
+  }
+
+  100% {
+    opacity: 1;
+    transform: rotate(8deg) scale(1);
+  }
+}
+
+// 轻轻摇一摇：点一下的俏皮反馈（无 fill）
+@keyframes app-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(-6deg);
+  }
+
+  45% {
+    transform: rotate(5deg);
+  }
+
+  70% {
+    transform: rotate(-3deg);
+  }
+
+  88% {
+    transform: rotate(1deg);
+  }
+}
+
+// 呼吸：加载态用，柔和不打扰
+@keyframes app-breath {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+// 小宠物待机：极轻微的上下浮动呼吸
+@keyframes app-pet-breath {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4rpx) scale(1.015);
+  }
+}
+
+// 手绘涂鸦落定：给空态记号一个温柔入场
+@keyframes app-doodle-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10rpx) rotate(-8deg) scale(0.82);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(2rpx) rotate(4deg) scale(1.05);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+// --- 工具类：分组依次浮现（位移 + 透明度，用于不按压容器）---
+.app-reveal {
+  animation: app-reveal-up var(--app-duration-slow) var(--app-ease-out) both;
+}
+
+@for $i from 1 through 6 {
+  .app-reveal-#{$i} {
+    animation: app-reveal-up var(--app-duration-slow) var(--app-ease-out) both;
+    animation-delay: calc(var(--app-stagger-reveal) * #{$i - 1});
+  }
+}
+
+// --- 工具类：仅透明度的依次浮现（用于会按压的元素，避免锁住 transform）---
+@for $i from 1 through 6 {
+  .app-reveal-soft-#{$i} {
+    animation: app-soft-in var(--app-duration-slow) var(--app-ease-out) both;
+    animation-delay: calc(var(--app-stagger-reveal) * #{$i - 1});
+  }
+}
+
+// --- 工具类：列表卡轻轻浮起（无 fill、无延迟，结束后交还按压控制权）---
+.app-rise {
+  animation: app-reveal-up var(--app-duration-normal) var(--app-ease-out);
+}
+
+// --- 工具类：贴纸落定 pop（出现一次，不按压）---
+.app-pop {
+  animation: app-pop-in var(--app-duration-normal) var(--app-ease-bounce) both;
+}
+
+// --- 工具类：加载呼吸 ---
+.app-anim-breath {
+  animation: app-breath var(--app-duration-breath) var(--app-ease-emphasized) infinite;
+}
+
+// --- 小宠物气泡菜单：打开时菜单项依次落定 ---
+// backwards：延迟期间先停在 0% 帧（隐藏），避免出现「先显示再闪」；
+// 不带 forwards，结束后交还各按钮自身的纸片倾角。
+.app-pet-bubble--open .app-pet-bubble__action-button {
+  animation: app-pop-in var(--app-duration-normal) var(--app-ease-bounce) backwards;
+}
+
+.app-pet-bubble--open .app-pet-bubble__action-button:nth-child(2) {
+  animation-delay: var(--app-stagger-menu);
+}
+
+.app-pet-bubble--open .app-pet-bubble__action-button:nth-child(3) {
+  animation-delay: calc(var(--app-stagger-menu) * 2);
+}
+
+.app-pet-bubble--open .app-pet-bubble__action-button:nth-child(4) {
+  animation-delay: calc(var(--app-stagger-menu) * 3);
+}
+
+.app-pet-bubble--open .app-pet-bubble__action-button:nth-child(5) {
+  animation-delay: calc(var(--app-stagger-menu) * 4);
+}
+
+// 尊重系统的「减少动态效果」：直接落到静止态，不做位移/缩放/循环
+@media (prefers-reduced-motion: reduce) {
+  .app-pet-bubble--open .app-pet-bubble__action-button {
+    animation: none;
+  }
+
+  .app-reveal,
+  .app-reveal-1,
+  .app-reveal-2,
+  .app-reveal-3,
+  .app-reveal-4,
+  .app-reveal-5,
+  .app-reveal-6,
+  .app-reveal-soft-1,
+  .app-reveal-soft-2,
+  .app-reveal-soft-3,
+  .app-reveal-soft-4,
+  .app-reveal-soft-5,
+  .app-reveal-soft-6,
+  .app-rise,
+  .app-pop,
+  .app-anim-breath {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

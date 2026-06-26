@@ -65,6 +65,8 @@ const cellStyle = (palette: RomanticPalette) =>
   overflow: visible;
   transform-origin: center;
   will-change: transform;
+  // 松手时小纸样带一点回弹，像贴纸轻轻弹回原角度
+  transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 }
 
 .theme-picker__cell--active {
@@ -112,7 +114,8 @@ const cellStyle = (palette: RomanticPalette) =>
   color: var(--app-primary);
   font-size: var(--app-font-size-2xs);
   line-height: var(--app-line-height-none);
-  transform: rotate(8deg);
+  // 选中即盖章：从天而降转着落定到 8deg（both 保留静止倾角）
+  animation: app-stamp-in var(--app-duration-slow) var(--app-ease-bounce) both;
 }
 
 .theme-picker__copy {

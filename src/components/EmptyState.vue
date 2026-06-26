@@ -36,6 +36,8 @@ defineProps<{
   padding: var(--app-empty-padding-y) var(--app-empty-padding-x);
   text-align: center;
   overflow: hidden;
+  // 像一张手写小纸条被轻轻放下
+  animation: app-soft-in var(--app-duration-slower) var(--app-ease-out) both;
 }
 
 .empty-state::before {
@@ -58,6 +60,7 @@ defineProps<{
   border-radius: var(--app-radius-image);
   background: var(--app-surface-strong);
   box-shadow: var(--app-shadow-logo);
+  animation: app-pop-in var(--app-duration-slow) var(--app-ease-bounce) both;
 }
 
 .empty-state__mark {
@@ -68,6 +71,8 @@ defineProps<{
   border: var(--app-panel-border-width) solid var(--app-border);
   border-radius: var(--app-radius-round);
   background: var(--app-surface-strong);
+  // 手绘记号轻轻跳着落定
+  animation: app-doodle-in var(--app-duration-slower) var(--app-ease-bounce) both;
 }
 
 .empty-state__line {

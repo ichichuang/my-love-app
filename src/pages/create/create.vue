@@ -19,7 +19,7 @@
     </template>
 
     <view class="create-page">
-      <view class="create-hero">
+      <view class="create-hero app-reveal-1">
         <view class="create-hero__copy">
           <text class="create-hero__kicker">把小事夹进来</text>
           <text class="create-hero__title">写一张小日记纸页</text>
@@ -31,7 +31,7 @@
         </view>
       </view>
 
-      <view class="memory-paper">
+      <view class="memory-paper app-reveal-2">
         <view class="memory-paper__fold" />
         <view class="memory-paper__header">
           <view>

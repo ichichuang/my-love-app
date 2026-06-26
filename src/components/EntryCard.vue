@@ -101,10 +101,14 @@ const handleCoverError = () => {
   gap: var(--app-card-gap);
   padding: var(--app-card-padding);
   overflow: hidden;
+  // 回弹缓动，让松手像贴纸轻轻弹回
+  transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 
   &:active {
     opacity: var(--app-press-opacity);
-    transform: scale(var(--app-press-scale));
+    box-shadow: var(--app-shadow-image);
+    // 按下：轻微缩 + 一点纸张倾角
+    transform: scale(var(--app-press-scale-strong)) rotate(-0.6deg);
   }
 }
 
@@ -190,6 +194,8 @@ const handleCoverError = () => {
   width: var(--app-entry-cover-width);
   height: var(--app-entry-cover-height);
   border-radius: var(--app-radius-image);
+  // 封面/占位温柔淡入，链接解析回来时不硬切
+  animation: app-soft-in var(--app-duration-normal) var(--app-ease-out);
 }
 
 .entry-card__cover {

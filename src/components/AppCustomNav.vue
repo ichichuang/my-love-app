@@ -189,7 +189,12 @@ const handleBack = () => {
 
 .app-custom-nav__icon-button--pressed {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  transform: scale(var(--app-press-scale-strong));
+}
+
+.app-custom-nav__icon-button--pressed .app-custom-nav__arrow {
+  // 按下时小箭头往回靠一下，像轻轻往回翻一页
+  transform: rotate(-8deg) translateX(calc(var(--app-space-1) * -1));
 }
 
 .app-custom-nav__icon-button--home {
@@ -214,6 +219,7 @@ const handleBack = () => {
   height: var(--app-space-10);
   color: var(--app-text);
   transform: rotate(-8deg);
+  transition: transform var(--app-transition-fast);
 }
 
 .app-custom-nav__arrow-line,

@@ -334,18 +334,30 @@ export const motionVarNames = [
   "--app-duration-fast",
   "--app-duration-normal",
   "--app-duration-slow",
+  "--app-duration-slower",
+  "--app-duration-instant",
+  "--app-duration-breath",
+  "--app-duration-breath-idle",
+  "--app-stagger-reveal",
+  "--app-stagger-menu",
   "--app-ease-standard",
   "--app-ease-emphasized",
+  "--app-ease-out",
+  "--app-ease-bounce",
   "--app-transition-fast",
   "--app-transition-normal",
   "--app-transition-slow",
   "--app-transition-theme",
   "--app-press-scale",
+  "--app-press-scale-strong",
+  "--app-pop-scale",
   "--app-press-opacity",
   "--app-muted-opacity",
   "--app-decor-opacity",
   "--app-disabled-opacity",
-  "--app-fade-offset-y"
+  "--app-fade-offset-y",
+  "--app-lift-translate-y",
+  "--app-rotate-stamp"
 ] as const
 
 export type MotionVarName = (typeof motionVarNames)[number]

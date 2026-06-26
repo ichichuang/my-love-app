@@ -8,12 +8,12 @@
   />
   <app-shell nav-title="小纸样本" nav-eyebrow="悄悄设置" nav-show-back :nav-variant="'page'">
     <view class="settings">
-      <view class="settings-heading">
+      <view class="settings-heading app-reveal-1">
         <text class="settings-heading__eyebrow">只在这台手机悄悄生效</text>
         <text class="settings-heading__title">今天的小纸样</text>
       </view>
 
-      <view class="settings-section">
+      <view class="settings-section app-reveal-2">
         <view class="settings-section__head">
           <text class="settings-section__title">白天夜里的样子</text>
           <text class="settings-section__hint">跟随系统 / 浅色 / 深色</text>
@@ -33,7 +33,7 @@
         </app-option-group>
       </view>
 
-      <view class="settings-section">
+      <view class="settings-section app-reveal-3">
         <view class="settings-section__head">
           <text class="settings-section__title">小纸样颜色</text>
           <text class="settings-section__hint">六套，像小纸样卡</text>
@@ -45,7 +45,7 @@
         />
       </view>
 
-      <view class="settings-section">
+      <view class="settings-section app-reveal-4">
         <view class="settings-section__head">
           <text class="settings-section__title">小纸条间距</text>
           <text class="settings-section__hint">舒适 / 紧凑</text>
@@ -68,7 +68,7 @@
         </app-option-group>
       </view>
 
-      <view class="settings-section">
+      <view class="settings-section app-reveal-5">
         <view class="settings-section__head">
           <text class="settings-section__title">字要多大</text>
           <text class="settings-section__hint">标准 / 偏大</text>
@@ -101,7 +101,7 @@
         </view>
       </view>
 
-      <view class="settings-section settings-section--muted">
+      <view class="settings-section settings-section--muted app-reveal-6">
         <view class="settings-section__head">
           <text class="settings-section__title">小角落</text>
         </view>
@@ -279,6 +279,7 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   width: var(--app-space-20);
   border-radius: var(--app-radius-pill);
   background: var(--app-primary);
+  transition: width var(--app-transition-normal);
 }
 
 .font-card__rail-fill--large {
@@ -294,6 +295,7 @@ const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "
   border-radius: var(--app-radius-round);
   background: var(--app-surface);
   border: var(--app-border-width-focus) solid var(--app-primary);
+  transition: left var(--app-transition-normal);
 }
 
 .font-card__rail-dot--large {

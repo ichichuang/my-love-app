@@ -14,7 +14,7 @@
     :nav-auto-back="false"
     @back="handleBackNavigation"
   >
-    <view v-if="loading" class="memo-edit-status">
+    <view v-if="loading" class="memo-edit-status app-anim-breath">
       <text>正在翻这张小线索…</text>
     </view>
 
@@ -30,7 +30,7 @@
     </empty-state>
 
     <view v-else class="memo-edit">
-      <view class="memo-note" :class="{ 'memo-note--pinned': memoPinned }">
+      <view class="memo-note app-reveal-1" :class="{ 'memo-note--pinned': memoPinned }">
         <view class="memo-note__paper-corner" />
         <view class="memo-note__head">
           <view class="memo-note__intro">
@@ -118,7 +118,7 @@
           </app-option-group>
         </view>
 
-        <view v-if="saved" class="memo-saved">
+        <view v-if="saved" class="memo-saved app-pop">
           <text class="memo-saved__title">已经轻轻收好</text>
           <text class="memo-saved__body">这张小线索已经放回小线索本里了。</text>
         </view>

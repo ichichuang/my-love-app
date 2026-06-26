@@ -158,18 +158,30 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-duration-fast": "180ms",
     "--app-duration-normal": "260ms",
     "--app-duration-slow": "320ms",
+    "--app-duration-slower": "420ms",
+    "--app-duration-instant": "0s",
+    "--app-duration-breath": "1600ms",
+    "--app-duration-breath-idle": "3200ms",
+    "--app-stagger-reveal": "70ms",
+    "--app-stagger-menu": "45ms",
     "--app-ease-standard": "ease",
     "--app-ease-emphasized": "ease-in-out",
+    "--app-ease-out": "cubic-bezier(0.22, 0.61, 0.36, 1)",
+    "--app-ease-bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)",
     "--app-transition-fast": "180ms ease",
     "--app-transition-normal": "260ms ease",
     "--app-transition-slow": "320ms ease-in-out",
     "--app-transition-theme": "background-color 260ms ease, border-color 260ms ease, color 260ms ease, opacity 220ms ease, box-shadow 260ms ease",
     "--app-press-scale": "0.99",
+    "--app-press-scale-strong": "0.96",
+    "--app-pop-scale": "1.04",
     "--app-press-opacity": "0.82",
     "--app-muted-opacity": "0.78",
     "--app-decor-opacity": "0.7",
     "--app-disabled-opacity": "0.3",
-    "--app-fade-offset-y": spacing.md
+    "--app-fade-offset-y": spacing.md,
+    "--app-lift-translate-y": isCompact ? "-4rpx" : "-6rpx",
+    "--app-rotate-stamp": "-4deg"
   } satisfies AppCssVars
 }
 

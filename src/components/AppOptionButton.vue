@@ -67,11 +67,13 @@ const handleClick = () => {
   background: var(--app-surface-strong);
   color: var(--app-primary);
   box-shadow: var(--app-shadow-focus);
+  // 选中像盖一下小印章：轻轻弹一下再落定（无 fill，按压仍然生效）
+  animation: app-tap-pop var(--app-duration-normal) var(--app-ease-bounce);
 }
 
 .app-option-button--pressed {
   opacity: var(--app-press-opacity);
-  transform: scale(var(--app-press-scale));
+  transform: scale(var(--app-press-scale-strong));
 }
 
 .app-option-button--disabled {

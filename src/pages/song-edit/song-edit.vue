@@ -18,7 +18,7 @@
       <wd-button size="small" plain :disabled="formDisabled" @click="handleBackNavigation">{{ backActionText }}</wd-button>
     </template>
 
-    <view v-if="loading" class="song-edit-status">
+    <view v-if="loading" class="song-edit-status app-anim-breath">
       <text>正在翻这首歌…</text>
     </view>
 
@@ -34,7 +34,7 @@
     </empty-state>
 
     <view v-else class="song-edit">
-      <view class="song-note">
+      <view class="song-note app-reveal-1">
         <view class="song-note__head">
           <view class="song-note__intro">
             <text class="song-note__kicker">点歌便签</text>
@@ -146,7 +146,7 @@
           </view>
         </view>
 
-        <view v-if="saved" class="song-saved">
+        <view v-if="saved" class="song-saved app-pop">
           <text>已经轻轻收好</text>
         </view>
 

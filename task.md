@@ -280,3 +280,74 @@
 - [ ] 仓库无 AppSecret / appsecret。
 - [ ] 仓库无 UnoCSS。
 - [ ] 重点手动回归：相册取消、9 张满额、弱网删除、文件删除失败、保存后返回、系统返回、大字号、紧凑模式、窄屏、深色模式。
+
+---
+
+# 第二轮：动效与微交互美化（Round 2 Motion Pass）
+
+**目标：** 在不改任何业务逻辑（CloudBase、数据形状、路由语义、保存/删除、未保存离页、保存导航锁、上传清理、鉴权、存储格式、产品边界）的前提下，只做交互打磨与动效质量提升，让 `小珊的树洞` 更鲜活、可爱、俏皮、有纸感的手感反馈。
+
+## 动画库评估（mp-weixin 兼容性与体积风险）
+
+- **结论：拒绝引入 GSAP，且不试装。**
+- 原因：
+  - mp-weixin 无 DOM / `window` / `document`，GSAP 的核心价值（操作 DOM）不适用。
+  - 用 GSAP 只能补间 JS 对象，再每帧通过响应式 / `setData` 写回视图——这正是小程序最严重的性能反模式（高频 setData）。
+  - `ScrollTrigger` / `Draggable` / `Observer` 依赖 DOM，明确不兼容微信小程序运行时。
+  - 体积：gsap core ≈ 70KB，tree-shaking 不友好，对主包预算不划算。
+  - mp-weixin 的惯用、GPU 合成、无 setData 往返的方案是 WXSS transition / keyframes，本项目既有动效已全部走这条路。
+- **采用方案：** 令牌化 CSS transition + 全局 `@keyframes`（`src/styles/animations.scss`）+ Vue 状态驱动类名 + Wot UI 既有动效。无新增依赖，`package.json` / `pnpm-lock.yaml` 不变。
+
+## 设计系统新增动效令牌（集中注册，过 `scan:design-tokens`）
+
+新增 7 个语义动效令牌，登记于 `token-registry.ts` 的 `motionVarNames`，运行时由 `size-resolver.ts` 输出，首帧兜底在 `styles/tokens/motion.scss`：
+
+- `--app-duration-slower`：更舒展的入场时长。
+- `--app-ease-out`：柔和减速缓动（入场）。
+- `--app-ease-bounce`：轻微回弹缓动（贴纸感 pop）。
+- `--app-press-scale-strong`：更明显的按压缩放（卡片/按钮）。
+- `--app-pop-scale`：选中/确认的轻微放大峰值。
+- `--app-lift-translate-y`：卡片轻抬位移。
+- `--app-rotate-stamp`：小印章倾角。
+
+## 任务清单
+
+- [x] 设计系统：新增并注册 7 个动效令牌（registry + size-resolver + motion.scss）。
+- [x] 全局：`src/styles/animations.scss` 关键帧与工具类（入场分组显现、贴纸 pop、印章、wiggle、呼吸、涂鸦入场），并接入 `index.scss`；加 `prefers-reduced-motion` 兜底。
+- [x] 首页 `index`：问候 / 快捷纸卡 / 时间线 / 小宠物 分组错峰入场；加载呼吸。
+- [x] `EntryCard` 与列表卡：按压更明显、轻抬、纸感微倾、贴纸回弹、封面淡入。
+- [x] `AppPetNavigator`：气泡回弹开合（含关闭动画）、点击 wiggle、拖拽释放吸附过渡、菜单项错峰、兜底徽标动效、轻微待机呼吸。
+- [x] `AppDateField`：触发按压更柔、空↔已选过渡（文字落定弹一下、glyph 着色）、清除按钮反馈。
+- [x] `AppOptionButton`：选中盖章 pop、按压更明显（色板选中印章在 `ThemeSwatchPicker`）。`AppOptionGroup` 既有响应式策略保留。
+- [x] `ImageGrid`：新增 pop、图片/兜底淡入、移除按钮按压缩放反馈。（1/4/9 列数布局保持现状以不改既定视觉结构，仅做动效节奏；见已知取舍。）
+- [x] 空 / 加载 / 错误态：`EmptyState` 手写纸条显现 + 涂鸦记号轻跳；各页加载态加 `app-anim-breath` 呼吸。
+- [x] 保存 / 删除 / 离页反馈：仅视觉——保存成功小票根（`*-saved`）pop 落定；保存/删除按钮 loading 沿用 Wot；MessageBox 入场沿用 Wot 内置（不深改其内部，避免脆弱深选择器）。
+- [x] 设置页：标题与各分区错峰入场；字号预览轨道填充/圆点平滑滑动；选项盖章 pop、色板印章。
+- [x] 设计预览页：分区入场更顺、令牌预览随主题平滑过渡（保留 owner/dev 定位）。
+- [x] 验证：`scan:ui-copy`、`scan:design-tokens`、`type-check`、`type-check:strict`、`build:mp-weixin`、`git diff --check`、原生控件/反馈 API/`window|document` grep 全部通过；构建产物仍含 envId 与 AppID；`package.json`/`pnpm-lock.yaml` 未变。
+
+## 已知取舍与待真机确认
+
+- ImageGrid 维持 3 列布局（未按 1/4/9 改列数），以免改变详情/新增页既定视觉结构；本轮只补增删/兜底/按压动效。
+- Wot `MessageBox` / `Toast` 入场沿用组件内置动效；未用深选择器强改其内部，符合「避免脆弱 Wot 内部选择器」约束。
+- 小宠物待机呼吸为低频（3.2s）、低幅（≈2px + 1.5% 缩放）循环，符合设计规范「轻微 pet breathing」；如不需可删 `.app-pet-navigator--ready .app-pet-navigator__image` 动画。
+- `prefers-reduced-motion` 为渐进增强：H5/开发者工具生效；mp-weixin 端支持有限但不报错，且动效本身已克制短促。
+- 未接入真机 / 微信开发者工具自动化，运行时观感（关键帧在低端机的流畅度、`transition` 内 `var()` 时延位）需真机回归确认。
+
+# 第二轮收尾：动效时长令牌化（Final Polish）
+
+**范围：** 仅把第二轮动效遗留的硬编码时长/延迟收敛为集中注册的语义动效令牌；无新动画、无 UI 重设计、无业务 / CloudBase 查询 / 仓储 / 路由 / 保存删除 / 未保存离页 / 上传清理逻辑改动；无依赖变更，`package.json` / `pnpm-lock.yaml` 未动。原 7 个令牌之外新增 5 个，同样登记于 `token-registry.ts` 的 `motionVarNames`，运行时由 `size-resolver.ts` 输出、`styles/tokens/motion.scss` 首帧兜底；不散落页面级 `--app-*` 变量。
+
+- `--app-duration-instant`（`0s`）：可见性瞬切（`visibility` 不插值）。替换 `AppPetNavigator.vue` 气泡开 / 合 `transition` 中的两处 `visibility 0s`。
+- `--app-duration-breath`（`1600ms`）：加载态呼吸周期。替换 `animations.scss` `.app-anim-breath` 的 `1600ms`。
+- `--app-duration-breath-idle`（`3200ms`）：小宠物待机呼吸周期。替换 `AppPetNavigator.vue` `app-pet-breath` 的 `3200ms`。
+- `--app-stagger-reveal`（`70ms`）：分组依次浮现的单步节拍。替换 `animations.scss` 两处 `@for` 的 `#{($i - 1) * 70}ms` → `calc(var(--app-stagger-reveal) * #{$i - 1})`。
+- `--app-stagger-menu`（`45ms`）：气泡菜单项错峰单步。替换 `animations.scss` 菜单项 `45 / 90 / 135 / 180ms` → `var(--app-stagger-menu)` 与 `calc(var(--app-stagger-menu) * 2|3|4)`。
+
+**改动文件：** `src/design-system/token-registry.ts`、`src/design-system/size-resolver.ts`、`src/styles/tokens/motion.scss`、`src/components/AppPetNavigator.vue`、`src/styles/animations.scss`。
+
+**验证：** `scan:ui-copy`、`scan:design-tokens`、`type-check`、`type-check:strict`、`build:mp-weixin`、`git diff --check` 全过；原生控件 / 反馈 API / DOM-only 全局 / 原始 ms 时长常量 grep 复核——`src/pages`、`src/components`、`src/styles/animations.scss` 消费侧零原始时长常量，仅 `motion.scss` 与 `primitive.scss` 的令牌定义点保留字面量（单一真源，符合预期）。产物中 `3200ms→3.2s`、`1600ms→1.6s` 为压缩器等价归一，`calc(var(--app-stagger-*) * N)` 正常落地。
+
+## 非 UI 后续（独立项，本轮不处理）
+
+- **CloudBase 复合索引告警（后端 / 索引配置，非 UI）：** `love_entries` 查询建议建立 `coupleId + updatedAt` 复合索引以消除运行时索引告警。属数据库索引 / 配置范畴；本轮 UI 打磨不触碰仓储逻辑或数据库规则，留作独立后端跟进项。
