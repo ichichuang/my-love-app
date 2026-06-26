@@ -8,7 +8,7 @@
   />
   <app-shell nav-title="小珊的树洞" nav-eyebrow="悄悄停靠处" :nav-show-back="false" nav-variant="home">
 
-    <view class="home-hero app-reveal-1">
+    <view class="home-hero app-reveal-1 app-paper-stack">
       <view class="home-hero__top">
         <image class="home-hero__icon" src="/static/logo-couple.png" mode="aspectFit" />
         <view class="home-hero__copy">
@@ -35,6 +35,7 @@
 
       <view class="home-note-stack">
         <view class="home-note home-note--song app-reveal-soft-3" hover-class="home-note--pressed" @click="goSongs">
+          <view class="app-paper-tape app-paper-tape--top-right app-paper-tape--accent" />
           <view class="home-note__mark home-note__mark--song">
             <text>歌</text>
           </view>
@@ -53,6 +54,7 @@
         </view>
 
         <view class="home-note home-note--task app-reveal-soft-4" hover-class="home-note--pressed" @click="goTasks">
+          <view class="app-paper-tape app-paper-tape--top-left" />
           <view class="home-note__mark home-note__mark--task">
             <text>约</text>
           </view>
@@ -71,6 +73,7 @@
         </view>
 
         <view class="home-note home-note--memo app-reveal-soft-5" hover-class="home-note--pressed" @click="goMemos">
+          <view class="app-paper-tape app-paper-tape--top-right app-paper-tape--accent" />
           <view class="home-note__mark home-note__mark--memo">
             <text>档</text>
           </view>

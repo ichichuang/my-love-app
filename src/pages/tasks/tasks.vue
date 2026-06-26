@@ -76,18 +76,21 @@
           <view
             v-for="task in filteredTasks"
             :key="task.id"
-            class="task-card app-rise"
+            class="task-card app-rise app-ticket-stump"
             :class="{ 'task-card--done': task.taskDone }"
             hover-class="task-card--pressed"
             @click="openTask(task.id)"
           >
+            <view class="app-ticket-stump__punch app-ticket-stump__punch--left" />
+            <view class="app-ticket-stump__punch app-ticket-stump__punch--right" />
             <view class="task-card__paper-corner" />
             <view class="task-card__head">
               <view class="task-card__title-group">
                 <text class="task-card__status" :class="task.statusClass">{{ task.statusLabel }}</text>
                 <text class="task-card__title">{{ task.title }}</text>
               </view>
-              <text class="task-card__stamp">{{ task.stampText }}</text>
+              <view v-if="task.taskDone" class="app-stamp-mark app-stamp-mark--success">约定达成</view>
+              <text v-else class="task-card__stamp">{{ task.stampText }}</text>
             </view>
 
             <text v-if="task.content" class="task-card__content">{{ task.content }}</text>

@@ -66,6 +66,7 @@
           hover-class="song-card--pressed"
           @click="openSong(song.id)"
         >
+          <view class="app-paper-tape app-paper-tape--top-right" />
           <view class="song-card__head">
             <view class="song-card__title-group">
               <text class="song-card__title">{{ song.title }}</text>

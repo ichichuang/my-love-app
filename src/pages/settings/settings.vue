@@ -101,6 +101,8 @@
         </view>
       </view>
 
+      <view class="app-handdrawn-divider app-reveal-5" aria-hidden="true" />
+
       <view class="settings-section settings-section--muted app-reveal-6">
         <view class="settings-section__head">
           <text class="settings-section__title">小角落</text>

@@ -16,7 +16,7 @@
       @click="emit('selectPalette', palette.id)"
     >
       <view class="theme-picker__content">
-        <view v-if="palette.id === paletteId" class="theme-picker__stamp">已选</view>
+        <view v-if="palette.id === paletteId" class="theme-picker__stamp app-stamp-mark app-stamp-mark--primary">已选</view>
         <view class="theme-picker__copy">
           <text class="theme-picker__name">{{ palette.name }}</text>
           <text class="theme-picker__description">{{ palette.description }}</text>

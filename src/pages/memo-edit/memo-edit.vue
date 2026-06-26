@@ -32,6 +32,7 @@
     <view v-else class="memo-edit">
       <view class="memo-note app-reveal-1" :class="{ 'memo-note--pinned': memoPinned }">
         <view class="memo-note__paper-corner" />
+        <view class="app-drawer-handle" aria-hidden="true" />
         <view class="memo-note__head">
           <view class="memo-note__intro">
             <text class="memo-note__kicker">{{ introKicker }}</text>

@@ -1,0 +1,199 @@
+// Visual decorations for the paper-note scene system
+@import "./variables.scss";
+
+// 1. 胶带纸样式 (Paper tape)
+.app-paper-tape {
+  position: absolute;
+  width: 76rpx;
+  height: 26rpx;
+  background: var(--app-primary-soft);
+  border-left: 2rpx dashed var(--app-border-muted);
+  border-right: 2rpx dashed var(--app-border-muted);
+  opacity: 0.65;
+  z-index: 4;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.04);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+
+  &--top-left {
+    top: -12rpx;
+    left: 24rpx;
+    transform: rotate(-12deg);
+  }
+
+  &--top-right {
+    top: -12rpx;
+    right: 24rpx;
+    transform: rotate(12deg);
+  }
+
+  &--accent {
+    background: var(--app-accent-soft);
+  }
+}
+
+// 2. 铁圈线圈样式 (Notebook spiral rings)
+.app-notebook-rings {
+  display: flex;
+  justify-content: space-around;
+  padding: 0 var(--app-space-8);
+  margin-bottom: calc(var(--app-space-4) * -1);
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
+
+  &__ring {
+    width: 14rpx;
+    height: 38rpx;
+    border: var(--app-panel-border-width) solid var(--app-border);
+    border-radius: var(--app-radius-pill);
+    background: linear-gradient(to right, var(--app-border-muted), var(--app-surface-strong), var(--app-border-muted));
+    box-shadow: var(--app-shadow-sm);
+  }
+}
+
+// 3. 笔记本本横格与边栏线样式 (Notebook ruled page with red margin)
+.app-notebook-page {
+  position: relative;
+  padding-left: var(--app-space-12) !important;
+  background-image: linear-gradient(var(--app-divider) 2rpx, transparent 2rpx) !important;
+  background-size: 100% 48rpx !important;
+
+  &::before {
+    position: absolute;
+    content: "";
+    top: 0;
+    bottom: 0;
+    left: var(--app-space-9);
+    width: 2rpx;
+    border-left: 2rpx solid var(--app-color-red-person-soft);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+// 4. 纸张堆叠质感 (Stacked paper layers)
+.app-paper-stack {
+  position: relative;
+
+  &::before,
+  &::after {
+    position: absolute;
+    content: "";
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: var(--app-panel-border-width) solid var(--app-border);
+    border-radius: var(--app-radius-card);
+    pointer-events: none;
+    transition: transform var(--app-transition-normal), opacity var(--app-transition-normal);
+  }
+
+  &::before {
+    background: var(--app-surface-strong);
+    z-index: -1;
+    transform: rotate(-1.5deg) translate(-2rpx, 4rpx);
+    opacity: 0.9;
+  }
+
+  &::after {
+    background: var(--app-surface);
+    z-index: -2;
+    transform: rotate(1.2deg) translate(4rpx, 2rpx);
+    opacity: 0.7;
+  }
+}
+
+// 5. 档案夹抽屉把手 slot 装饰 (Index card drawer handle)
+.app-drawer-handle {
+  width: 72rpx;
+  height: 14rpx;
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-bg-deep);
+  margin: var(--app-space-2) auto 0;
+  opacity: 0.75;
+  box-shadow: inset 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+// 6. 双线手绘印章样式 (Double-lined stamps)
+.app-stamp-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx double var(--app-accent);
+  color: var(--app-accent);
+  font-size: var(--app-font-size-2xs);
+  font-weight: var(--app-font-weight-semibold);
+  font-family: var(--app-font-family-display);
+  padding: var(--app-space-1) var(--app-space-3);
+  border-radius: var(--app-radius-sm);
+  transform: rotate(var(--app-rotate-stamp));
+  opacity: 0.75;
+  background: transparent;
+  letter-spacing: 2rpx;
+  pointer-events: none;
+
+  &--success {
+    border-color: var(--app-success);
+    color: var(--app-success);
+  }
+
+  &--primary {
+    border-color: var(--app-primary);
+    color: var(--app-primary);
+  }
+}
+
+// 7. 约定票根边缘切口虚线样式 (Ticket stump edge layout)
+.app-ticket-stump {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    position: absolute;
+    content: "";
+    bottom: var(--app-space-1);
+    left: var(--app-space-2);
+    right: var(--app-space-2);
+    height: 8rpx;
+    background-image: radial-gradient(circle, transparent 4rpx, var(--app-border) 4rpx);
+    background-size: 16rpx 8rpx;
+    background-repeat: repeat-x;
+    opacity: 0.55;
+  }
+
+  // 左右打孔切口
+  &__punch {
+    position: absolute;
+    top: 50%;
+    width: 24rpx;
+    height: 24rpx;
+    background: var(--app-bg);
+    border: var(--app-panel-border-width) solid var(--app-border);
+    border-radius: var(--app-radius-round);
+    margin-top: -12rpx;
+    z-index: 2;
+
+    &--left {
+      left: -14rpx;
+    }
+    &--right {
+      right: -14rpx;
+    }
+  }
+}
+
+// 8. 手绘感的小波格/圆点分割线
+.app-handdrawn-divider {
+  width: 180rpx;
+  height: var(--app-space-2);
+  border: none;
+  background-image: radial-gradient(circle, var(--app-border-muted) 3rpx, transparent 3rpx);
+  background-size: 20rpx 20rpx;
+  background-repeat: repeat-x;
+  opacity: var(--app-decor-opacity);
+  margin: var(--app-space-4) auto;
+}

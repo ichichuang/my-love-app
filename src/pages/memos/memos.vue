@@ -111,6 +111,7 @@
                 </wd-button>
               </view>
             </view>
+            <view class="app-drawer-handle" aria-hidden="true" />
           </view>
         </view>
       </view>

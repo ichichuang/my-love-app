@@ -12,6 +12,7 @@
     </view>
     <text class="empty-state__title">{{ title }}</text>
     <text class="empty-state__body">{{ body }}</text>
+    <view class="app-handdrawn-divider" aria-hidden="true" />
     <slot />
   </view>
 </template>

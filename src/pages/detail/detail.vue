@@ -29,7 +29,10 @@
     />
 
     <view v-else-if="!editing" class="detail-page">
-      <view class="memory-sheet app-reveal-1">
+      <view class="app-notebook-rings app-reveal-1" aria-hidden="true">
+        <view v-for="i in 6" :key="i" class="app-notebook-rings__ring" />
+      </view>
+      <view class="memory-sheet app-reveal-1 app-notebook-page">
         <view class="memory-sheet__fold" />
         <view class="memory-sheet__header">
           <view class="memory-sheet__stub">
@@ -81,7 +84,10 @@
     </view>
 
     <view v-else class="edit-page">
-      <view class="edit-sheet app-reveal-1">
+      <view class="app-notebook-rings app-reveal-1" aria-hidden="true">
+        <view v-for="i in 6" :key="i" class="app-notebook-rings__ring" />
+      </view>
+      <view class="edit-sheet app-reveal-1 app-notebook-page">
         <view class="edit-sheet__fold" />
         <view class="edit-sheet__header">
           <view>

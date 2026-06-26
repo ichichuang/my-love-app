@@ -35,6 +35,8 @@
 
     <view v-else class="song-edit">
       <view class="song-note app-reveal-1">
+        <view class="app-paper-tape app-paper-tape--top-left app-paper-tape--accent" />
+        <view class="app-paper-tape app-paper-tape--top-right" />
         <view class="song-note__head">
           <view class="song-note__intro">
             <text class="song-note__kicker">点歌便签</text>

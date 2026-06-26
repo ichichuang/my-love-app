@@ -31,7 +31,10 @@
         </view>
       </view>
 
-      <view class="memory-paper app-reveal-2">
+      <view class="app-notebook-rings app-reveal-2" aria-hidden="true">
+        <view v-for="i in 6" :key="i" class="app-notebook-rings__ring" />
+      </view>
+      <view class="memory-paper app-reveal-2 app-notebook-page">
         <view class="memory-paper__fold" />
         <view class="memory-paper__header">
           <view>

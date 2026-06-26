@@ -34,7 +34,9 @@
     </empty-state>
 
     <view v-else class="task-edit">
-      <view class="task-ticket app-reveal-1" :class="{ 'task-ticket--done': taskDone }">
+      <view class="task-ticket app-reveal-1 app-ticket-stump" :class="{ 'task-ticket--done': taskDone }">
+        <view class="app-ticket-stump__punch app-ticket-stump__punch--left" />
+        <view class="app-ticket-stump__punch app-ticket-stump__punch--right" />
         <view class="task-ticket__perforation" />
         <view class="task-ticket__head">
           <view class="task-ticket__intro">
