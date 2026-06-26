@@ -50,55 +50,60 @@
         </app-option-group>
       </view>
 
-      <empty-state
-        v-if="filteredSongs.length === 0"
-        title="这个分类暂时还空着"
-        body="换个分类看看，或者先加一首想听的。"
-      >
-        <wd-button custom-class="songs-state__button" @click="goSongEdit">加一首歌</wd-button>
-      </empty-state>
+      <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter }">
+        <view class="songs-swap-container">
+          <empty-state
+            v-if="getFilteredSongs(currentFilter).length === 0"
+            title="这个分类暂时还空着"
+            body="换个分类看看，或者先加一首想听的。"
+          >
+            <wd-button custom-class="songs-state__button" @click="goSongEdit">加一首歌</wd-button>
+          </empty-state>
 
-      <view v-else class="song-list">
-        <view
-          v-for="song in filteredSongs"
-          :key="song.id"
-          class="song-card app-rise"
-          hover-class="song-card--pressed"
-          @click="openSong(song.id)"
-        >
-          <view class="app-paper-tape app-paper-tape--top-right" />
-          <view class="song-card__head">
-            <view class="song-card__title-group">
-              <text class="song-card__title">{{ song.title }}</text>
-              <text v-if="song.artist" class="song-card__artist">{{ song.artist }}</text>
-            </view>
-
-            <view class="song-card__tags">
-              <text class="song-card__tag" :class="song.statusClass">{{ song.statusLabel }}</text>
-              <text class="song-card__tag song-card__tag--priority">小愿望：{{ song.priorityLabel }}</text>
-            </view>
-          </view>
-
-          <text v-if="song.content" class="song-card__content">{{ song.content }}</text>
-          <text v-if="song.sungAtLabel" class="song-card__sung-at">{{ song.sungAtLabel }}唱过</text>
-
-          <view class="song-card__actions" @click.stop>
-            <wd-button
-              v-for="action in getStatusActions(song.songStatus)"
-              :key="action.value"
-              size="small"
-              plain
-              :type="action.type"
-              :loading="isStatusActionLoading(song.id, action.value)"
-              :disabled="isSongStatusUpdating(song.id)"
-              custom-class="song-card__action"
-              @click.stop="changeSongStatus(song.id, action.value)"
+          <view v-else class="song-list">
+            <view
+              v-for="(song, index) in getFilteredSongs(currentFilter)"
+              :key="`${currentFilter}-${song.id}`"
+              class="song-card app-rise-stagger"
+              :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
+              hover-class="song-card--pressed"
+              @click="openSong(song.id)"
             >
-              {{ action.label }}
-            </wd-button>
+              <view class="app-paper-tape app-paper-tape--top-right" />
+              <view class="song-card__head">
+                <view class="song-card__title-group">
+                  <text class="song-card__title">{{ song.title }}</text>
+                  <text v-if="song.artist" class="song-card__artist">{{ song.artist }}</text>
+                </view>
+
+                <view class="song-card__tags">
+                  <text class="song-card__tag" :class="song.statusClass">{{ song.statusLabel }}</text>
+                  <text class="song-card__tag song-card__tag--priority">小愿望：{{ song.priorityLabel }}</text>
+                </view>
+              </view>
+
+              <text v-if="song.content" class="song-card__content">{{ song.content }}</text>
+              <text v-if="song.sungAtLabel" class="song-card__sung-at">{{ song.sungAtLabel }}唱过</text>
+
+              <view class="song-card__actions" @click.stop>
+                <wd-button
+                  v-for="action in getStatusActions(song.songStatus)"
+                  :key="action.value"
+                  size="small"
+                  plain
+                  :type="action.type"
+                  :loading="isStatusActionLoading(song.id, action.value)"
+                  :disabled="isSongStatusUpdating(song.id)"
+                  custom-class="song-card__action"
+                  @click.stop="changeSongStatus(song.id, action.value)"
+                >
+                  {{ action.label }}
+                </wd-button>
+              </view>
+            </view>
           </view>
         </view>
-      </view>
+      </app-animated-swap>
     </view>
   </app-shell>
 </template>
@@ -242,6 +247,13 @@ const filteredSongs = computed(() => {
 
   return decoratedSongs.value.filter((song) => song.songStatus === activeFilter.value)
 })
+
+const getFilteredSongs = (filterVal: FilterValue) => {
+  if (filterVal === "all") {
+    return decoratedSongs.value
+  }
+  return decoratedSongs.value.filter((song) => song.songStatus === filterVal)
+}
 
 const hasError = computed(() => errorMessage.value.length > 0 && songs.value.length === 0)
 

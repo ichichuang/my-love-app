@@ -60,6 +60,13 @@ const handleClick = () => {
   font: var(--app-font-button);
   line-height: var(--app-line-height-normal);
   text-align: center;
+  transition:
+    background-color var(--app-transition-normal),
+    border-color var(--app-transition-normal),
+    color var(--app-transition-normal),
+    opacity var(--app-transition-fast),
+    box-shadow var(--app-transition-normal),
+    transform var(--app-transition-fast);
 }
 
 .app-option-button--active {

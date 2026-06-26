@@ -114,9 +114,10 @@
 
       <view v-else class="home-list">
         <entry-card
-          v-for="entry in items"
+          v-for="(entry, index) in items"
           :key="entry.id"
-          class="app-rise"
+          class="app-rise-stagger"
+          :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
           :entry="entry"
           @cover-error="recoverCover"
           @open="openEntry"

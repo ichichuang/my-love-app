@@ -96,6 +96,11 @@ const handleClear = () => {
   @include pressable;
   justify-content: space-between;
   gap: var(--app-space-5);
+  transition:
+    background-color var(--app-transition-normal),
+    border-color var(--app-transition-normal),
+    box-shadow var(--app-transition-normal),
+    transform var(--app-transition-fast);
 }
 
 .app-date-field:not(.app-date-field--empty) {
@@ -145,7 +150,10 @@ const handleClear = () => {
   border-radius: var(--app-radius-sm);
   background: var(--app-surface);
   transform: rotate(-3deg);
-  transition: transform var(--app-transition-fast);
+  transition:
+    transform var(--app-transition-fast),
+    border-color var(--app-transition-normal),
+    background-color var(--app-transition-normal);
 }
 
 .app-date-field:active .app-date-field__glyph {
@@ -185,6 +193,7 @@ const handleClear = () => {
   width: var(--app-space-14);
   height: var(--app-space-14);
   transition: transform var(--app-transition-fast), opacity var(--app-transition-fast);
+  animation: app-pop-in var(--app-duration-fast) var(--app-ease-bounce) both;
 }
 
 .app-date-field__clear:active {

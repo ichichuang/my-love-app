@@ -64,59 +64,64 @@
           </app-option-group>
         </view>
 
-        <empty-state
-          v-if="filteredTasks.length === 0"
-          title="这个小分类暂时空着"
-          body="换个分类看看，或者再写下一件想一起做的小事。"
-        >
-          <wd-button custom-class="tasks-state__button" @click="goTaskEdit">加一件事</wd-button>
-        </empty-state>
+        <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter }">
+          <view class="tasks-swap-container">
+            <empty-state
+              v-if="getFilteredTasks(currentFilter).length === 0"
+              title="这个小分类暂时空着"
+              body="换个分类看看，或者再写下一件想一起做的小事。"
+            >
+              <wd-button custom-class="tasks-state__button" @click="goTaskEdit">加一件事</wd-button>
+            </empty-state>
 
-        <view v-else class="task-list">
-          <view
-            v-for="task in filteredTasks"
-            :key="task.id"
-            class="task-card app-rise app-ticket-stump"
-            :class="{ 'task-card--done': task.taskDone }"
-            hover-class="task-card--pressed"
-            @click="openTask(task.id)"
-          >
-            <view class="app-ticket-stump__punch app-ticket-stump__punch--left" />
-            <view class="app-ticket-stump__punch app-ticket-stump__punch--right" />
-            <view class="task-card__paper-corner" />
-            <view class="task-card__head">
-              <view class="task-card__title-group">
-                <text class="task-card__status" :class="task.statusClass">{{ task.statusLabel }}</text>
-                <text class="task-card__title">{{ task.title }}</text>
-              </view>
-              <view v-if="task.taskDone" class="app-stamp-mark app-stamp-mark--success">约定达成</view>
-              <text v-else class="task-card__stamp">{{ task.stampText }}</text>
-            </view>
-
-            <text v-if="task.content" class="task-card__content">{{ task.content }}</text>
-
-            <view v-if="task.taskDueDateLabel || task.taskCompletedAtLabel" class="task-card__meta">
-              <text v-if="task.taskDueDateLabel" class="task-card__meta-item">{{ task.taskDueDateLabel }}</text>
-              <text v-if="task.taskCompletedAtLabel" class="task-card__meta-item task-card__meta-item--done">
-                {{ task.taskCompletedAtLabel }}
-              </text>
-            </view>
-
-            <view class="task-card__actions" @click.stop>
-              <wd-button
-                size="small"
-                plain
-                :type="task.actionType"
-                :loading="isTaskToggling(task.id)"
-                :disabled="isTaskToggling(task.id)"
-                custom-class="task-card__action"
-                @click.stop="toggleTask(task)"
+            <view v-else class="task-list">
+              <view
+                v-for="(task, index) in getFilteredTasks(currentFilter)"
+                :key="`${currentFilter}-${task.id}`"
+                class="task-card app-rise-stagger app-ticket-stump"
+                :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
+                :class="{ 'task-card--done': task.taskDone }"
+                hover-class="task-card--pressed"
+                @click="openTask(task.id)"
               >
-                {{ task.actionLabel }}
-              </wd-button>
+                <view class="app-ticket-stump__punch app-ticket-stump__punch--left" />
+                <view class="app-ticket-stump__punch app-ticket-stump__punch--right" />
+                <view class="task-card__paper-corner" />
+                <view class="task-card__head">
+                  <view class="task-card__title-group">
+                    <text class="task-card__status" :class="task.statusClass">{{ task.statusLabel }}</text>
+                    <text class="task-card__title">{{ task.title }}</text>
+                  </view>
+                  <view v-if="task.taskDone" class="app-stamp-mark app-stamp-mark--success">约定达成</view>
+                  <text v-else class="task-card__stamp">{{ task.stampText }}</text>
+                </view>
+
+                <text v-if="task.content" class="task-card__content">{{ task.content }}</text>
+
+                <view v-if="task.taskDueDateLabel || task.taskCompletedAtLabel" class="task-card__meta">
+                  <text v-if="task.taskDueDateLabel" class="task-card__meta-item">{{ task.taskDueDateLabel }}</text>
+                  <text v-if="task.taskCompletedAtLabel" class="task-card__meta-item task-card__meta-item--done">
+                    {{ task.taskCompletedAtLabel }}
+                  </text>
+                </view>
+
+                <view class="task-card__actions" @click.stop>
+                  <wd-button
+                    size="small"
+                    plain
+                    :type="task.actionType"
+                    :loading="isTaskToggling(task.id)"
+                    :disabled="isTaskToggling(task.id)"
+                    custom-class="task-card__action"
+                    @click.stop="toggleTask(task)"
+                  >
+                    {{ task.actionLabel }}
+                  </wd-button>
+                </view>
+              </view>
             </view>
           </view>
-        </view>
+        </app-animated-swap>
       </template>
     </view>
   </app-shell>
@@ -238,6 +243,16 @@ const filteredTasks = computed(() => {
 
   return decoratedTasks.value
 })
+
+const getFilteredTasks = (filterVal: FilterValue) => {
+  if (filterVal === "done") {
+    return decoratedTasks.value.filter((task) => task.taskDone)
+  }
+  if (filterVal === "undone") {
+    return decoratedTasks.value.filter((task) => !task.taskDone)
+  }
+  return decoratedTasks.value
+}
 
 const hasError = computed(() => errorMessage.value.length > 0 && tasks.value.length === 0)
 

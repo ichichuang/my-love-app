@@ -660,7 +660,7 @@ onMounted(async () => {
   pointer-events: auto;
   visibility: visible;
   // 松手后回到最近边缘时，让位置滑过去（拖拽中再关掉，保证 1:1 跟手）
-  transition: left var(--app-duration-slow) var(--app-ease-out), top var(--app-duration-slow) var(--app-ease-out), opacity var(--app-transition-fast), transform var(--app-transition-fast);
+  transition: left var(--app-duration-slow) var(--app-ease-bounce), top var(--app-duration-slow) var(--app-ease-bounce), opacity var(--app-transition-fast), transform var(--app-transition-fast);
 }
 
 .app-pet-navigator--pressed,
@@ -856,6 +856,7 @@ onMounted(async () => {
   box-shadow: var(--app-shadow-none);
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(45deg);
+  transition: left var(--app-duration-slow) var(--app-ease-bounce), top var(--app-duration-slow) var(--app-ease-bounce);
 }
 
 .app-pet-bubble__tail::before,

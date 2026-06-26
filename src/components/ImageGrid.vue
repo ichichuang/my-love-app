@@ -1,6 +1,11 @@
 <template>
   <view v-if="files.length > 0" class="image-grid">
-    <view v-for="(file, index) in files" :key="file.fileID" class="image-grid__item">
+    <view
+      v-for="(file, index) in files"
+      :key="file.fileID"
+      class="image-grid__item"
+      :class="{ 'image-grid__item--deleting': deletingIndex === index }"
+    >
       <image
         v-if="isImageUsable(file)"
         class="image-grid__image"
@@ -21,7 +26,7 @@
         type="info"
         custom-class="image-grid__remove"
         hover-stop-propagation
-        @click.stop="emit('remove', index)"
+        @click.stop="handleRemove(index)"
       >
         移除
       </wd-button>
@@ -30,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from "vue"
+import { ref, shallowRef } from "vue"
 import type { CloudFile } from "@/services/cloudbase"
 
 const props = defineProps<{
@@ -42,6 +47,16 @@ const emit = defineEmits<{
   remove: [index: number]
   "image-error": [fileID: string]
 }>()
+
+const deletingIndex = ref<number | null>(null)
+
+const handleRemove = (index: number) => {
+  deletingIndex.value = index
+  setTimeout(() => {
+    emit("remove", index)
+    deletingIndex.value = null
+  }, 260) // matches transition duration of app-duration-normal
+}
 
 const failedImageUrls = shallowRef<ReadonlySet<string>>(new Set())
 
@@ -97,6 +112,13 @@ const handleImageError = (index: number) => {
   box-shadow: var(--app-shadow-image);
   // 新放进来的小照片像贴纸一样轻轻落定
   animation: app-pop-in var(--app-duration-normal) var(--app-ease-bounce) both;
+}
+
+.image-grid__item--deleting {
+  animation: none !important;
+  opacity: 0;
+  transform: scale(0.7) rotate(-5deg);
+  transition: opacity var(--app-duration-normal) var(--app-ease-out), transform var(--app-duration-normal) var(--app-ease-out);
 }
 
 .image-grid__image,

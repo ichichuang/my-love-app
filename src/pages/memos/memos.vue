@@ -64,56 +64,61 @@
           <wd-button custom-class="memos-state__button" @click="goMemoEdit">记一条小线索</wd-button>
         </empty-state>
 
-        <empty-state
-          v-else-if="filteredMemos.length === 0"
-          title="这个小标签还空着"
-          body="换个标签看看，或者先记下一条新的小线索。"
-        >
-          <wd-button custom-class="memos-state__button" @click="goMemoEdit">记一条小线索</wd-button>
-        </empty-state>
+        <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter }">
+          <view class="memos-swap-container">
+            <empty-state
+              v-if="getFilteredMemos(currentFilter).length === 0"
+              title="这个小标签还空着"
+              body="换个标签看看，或者先记下一条新的小线索。"
+            >
+              <wd-button custom-class="memos-state__button" @click="goMemoEdit">记一条小线索</wd-button>
+            </empty-state>
 
-        <view v-else class="memo-list">
-          <view
-            v-for="memo in filteredMemos"
-            :key="memo.id"
-            class="memo-card app-rise"
-            :class="{ 'memo-card--pinned': memo.memoPinned }"
-            hover-class="memo-card--pressed"
-            @click="openMemo(memo.id)"
-          >
-            <view class="memo-card__paper-corner" />
-            <view class="memo-card__head">
-              <view class="memo-card__title-group">
-                <text class="memo-card__category">{{ memo.categoryLabel }}</text>
-                <text class="memo-card__title">{{ memo.title }}</text>
+            <view v-else class="memo-list">
+              <view
+                v-for="(memo, index) in getFilteredMemos(currentFilter)"
+                :key="`${currentFilter}-${memo.id}`"
+                class="memo-card app-rise-stagger"
+                :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
+                :class="{ 'memo-card--pinned': memo.memoPinned }"
+                hover-class="memo-card--pressed"
+                @click="openMemo(memo.id)"
+              >
+                <view class="memo-card__paper-corner" />
+                <view class="memo-card__head">
+                  <view class="memo-card__title-group">
+                    <text class="memo-card__category">{{ memo.categoryLabel }}</text>
+                    <text class="memo-card__title">{{ memo.title }}</text>
+                  </view>
+                  <text class="memo-card__stamp" :class="{ 'memo-card__stamp--pinned': memo.memoPinned }">
+                    {{ memo.stampText }}
+                  </text>
+                </view>
+
+                <text v-if="memo.content" class="memo-card__content">{{ memo.content }}</text>
+
+                <view class="memo-card__foot">
+                  <text v-if="memo.dateLabel" class="memo-card__date">{{ memo.dateLabel }}</text>
+
+                  <view class="memo-card__actions" @click.stop>
+                    <wd-button
+                      size="small"
+                      plain
+                      :type="memo.memoPinned ? 'primary' : 'default'"
+                      :loading="isMemoPinUpdating(memo.id)"
+                      :disabled="isMemoPinUpdating(memo.id)"
+                      custom-class="memo-card__action"
+                      @click.stop="changeMemoPinned(memo)"
+                    >
+                      {{ memo.actionLabel }}
+                    </wd-button>
+                  </view>
+                </view>
+                <view class="app-drawer-handle" aria-hidden="true" />
               </view>
-              <text class="memo-card__stamp" :class="{ 'memo-card__stamp--pinned': memo.memoPinned }">
-                {{ memo.stampText }}
-              </text>
             </view>
-
-            <text v-if="memo.content" class="memo-card__content">{{ memo.content }}</text>
-
-            <view class="memo-card__foot">
-              <text v-if="memo.dateLabel" class="memo-card__date">{{ memo.dateLabel }}</text>
-
-              <view class="memo-card__actions" @click.stop>
-                <wd-button
-                  size="small"
-                  plain
-                  :type="memo.memoPinned ? 'primary' : 'default'"
-                  :loading="isMemoPinUpdating(memo.id)"
-                  :disabled="isMemoPinUpdating(memo.id)"
-                  custom-class="memo-card__action"
-                  @click.stop="changeMemoPinned(memo)"
-                >
-                  {{ memo.actionLabel }}
-                </wd-button>
-              </view>
-            </view>
-            <view class="app-drawer-handle" aria-hidden="true" />
           </view>
-        </view>
+        </app-animated-swap>
       </view>
     </view>
   </app-shell>
@@ -248,6 +253,13 @@ const filteredMemos = computed(() => {
 
   return decoratedMemos.value.filter((memo) => memo.memoCategory === activeFilter.value)
 })
+
+const getFilteredMemos = (filterVal: FilterValue) => {
+  if (filterVal === "all") {
+    return decoratedMemos.value
+  }
+  return decoratedMemos.value.filter((memo) => memo.memoCategory === filterVal)
+}
 
 const hasError = computed(() => errorMessage.value.length > 0 && memos.value.length === 0)
 
