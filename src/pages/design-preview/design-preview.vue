@@ -6,12 +6,12 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell nav-title="小样本预览" nav-eyebrow="开发校验" nav-show-back nav-variant="page">
+  <app-shell nav-title="小样本预览" nav-eyebrow="样本小清单" nav-show-back nav-variant="page">
     <view class="preview">
       <view class="preview-panel preview-panel--diagnostics">
         <view class="preview-panel__head">
-          <text class="preview-panel__title">运行诊断</text>
-          <text class="preview-panel__note">只显示主题运行状态，不展示密钥或账号凭据。</text>
+          <text class="preview-panel__title">本本的小脑瓜</text>
+          <text class="preview-panel__note">悄悄瞧一眼当前小本本的运转细节，不看密钥或账号凭据。</text>
         </view>
         <view class="preview-diagnostics">
           <view v-for="item in diagnostics" :key="item.key" class="preview-diagnostic">
@@ -23,8 +23,8 @@
 
       <view class="preview-panel">
         <view class="preview-panel__head">
-          <text class="preview-panel__title">实时主题控制</text>
-          <text class="preview-panel__note">此处复用设置页控件，变更会立即影响本页和组件主题。</text>
+          <text class="preview-panel__title">小纸本调色盘</text>
+          <text class="preview-panel__note">在这里试一试小纸样的各种样子，改动会悄悄同步到每个角落。</text>
         </view>
         <view class="preview-control-group">
           <text class="preview-control-group__label">外观模式</text>
@@ -315,15 +315,15 @@ const shadowSamples = [
 ] as const
 
 const diagnostics = computed(() => [
-  { key: "mode", caption: "当前选择", value: theme.mode },
-  { key: "resolvedMode", caption: "解析模式", value: theme.resolvedMode },
-  { key: "systemTheme", caption: "系统模式", value: theme.systemTheme },
-  { key: "paletteId", caption: "配色编号", value: theme.paletteId },
-  { key: "density", caption: "界面密度", value: theme.density },
-  { key: "fontScale", caption: "字号档位", value: theme.fontScale },
-  { key: "providerKey", caption: "组件刷新键", value: theme.providerKey ? "已启用" : "未启用" },
-  { key: "runtimeCss", caption: "变量注入", value: theme.appCssVars["--app-bg"] ? "已启用" : "未启用" },
-  { key: "wotThemeVars", caption: "组件变量", value: Object.keys(theme.wotThemeVars).length > 0 ? "已启用" : "未启用" }
+  { key: "mode", caption: "我们选的模式", value: theme.mode },
+  { key: "resolvedMode", caption: "白天黑夜解析", value: theme.resolvedMode },
+  { key: "systemTheme", caption: "系统白天黑夜", value: theme.systemTheme },
+  { key: "paletteId", caption: "小纸样色号", value: theme.paletteId },
+  { key: "density", caption: "小纸条松紧", value: theme.density },
+  { key: "fontScale", caption: "字迹大小", value: theme.fontScale },
+  { key: "providerKey", caption: "小组件刷新状态", value: theme.providerKey ? "已启用" : "未启用" },
+  { key: "runtimeCss", caption: "小本本墨水注入", value: theme.appCssVars["--app-bg"] ? "已启用" : "未启用" },
+  { key: "wotThemeVars", caption: "主题墨水同步", value: Object.keys(theme.wotThemeVars).length > 0 ? "已启用" : "未启用" }
 ])
 
 const cssVars = makeCssVars

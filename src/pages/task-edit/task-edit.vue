@@ -92,20 +92,15 @@
             />
           </view>
 
-          <view id="task-date-field" class="task-field">
+          <view class="task-field">
             <text class="task-field__prompt">想什么时候去做？</text>
-            <text class="task-field__hint">空着也没关系，写了就用 2026-01-01 这样。</text>
-            <wd-input
+            <text class="task-field__hint">空着也没关系，想好了再挑个日子。</text>
+            <app-date-field
               v-model="taskDueDate"
-              no-border
-              :disabled="formDisabled"
               placeholder="可以先空着"
-              :placeholder-style="placeholderStyle"
-              :maxlength="10"
-              custom-class="task-field__input-root"
-              custom-input-class="task-field__input-inner"
-              @focus="focusField('#task-date-field')"
-              @keyboardheightchange="syncKeyboardHeight"
+              title="挑个日子"
+              clearable
+              :disabled="formDisabled"
             />
           </view>
 
@@ -177,7 +172,7 @@ import {
   type TaskDraft,
   type TaskRecord
 } from "@/services/repositories/tasks"
-import { isValidCalendarDate } from "@/utils/date"
+import { normalizeCalendarDate } from "@/utils/date"
 
 const tasksRoute = "/pages/tasks/tasks"
 const placeholderStyle = "color: var(--app-text-muted)"
@@ -412,11 +407,7 @@ const saveTask = async () => {
     return
   }
 
-  const trimmedDate = taskDueDate.value.trim()
-  if (trimmedDate && !isValidCalendarDate(trimmedDate)) {
-    showAppWarning("日期先写成 2026-01-01 这样")
-    return
-  }
+  const trimmedDate = normalizeCalendarDate(taskDueDate.value)
 
   saving.value = true
   saved.value = false

@@ -6,7 +6,18 @@
     :background-color-bottom="theme.nativeChromeTheme.backgroundColorBottom"
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
-  <app-shell nav-title="写进小本本" nav-eyebrow="新的回忆" nav-show-back nav-variant="page">
+  <app-shell
+    nav-title="写进小本本"
+    nav-eyebrow="新的回忆"
+    nav-show-back
+    nav-variant="page"
+    :nav-auto-back="false"
+    @back="handleBackNavigation"
+  >
+    <template #nav-actions>
+      <wd-button size="small" plain :disabled="saving" @click="handleBackNavigation">先不写了</wd-button>
+    </template>
+
     <view class="create-page">
       <view class="create-hero">
         <view class="create-hero__copy">
@@ -62,19 +73,9 @@
         </view>
 
         <view class="paper-tag-row">
-          <view id="create-date-field" class="paper-field paper-field--tag">
+          <view class="paper-field paper-field--tag">
             <text class="paper-field__question">今天是哪一天？</text>
-            <wd-input
-              v-model="occurredAt"
-              no-border
-              placeholder="例如 2026-06-11"
-              :placeholder-style="placeholderStyle"
-              :maxlength="10"
-              custom-class="paper-field__input-root"
-              custom-input-class="paper-field__input-inner"
-              @focus="focusField('#create-date-field')"
-              @keyboardheightchange="syncKeyboardHeight"
-            />
+            <app-date-field v-model="occurredAt" placeholder="挑一个日子" />
           </view>
 
           <view id="create-mood-field" class="paper-field paper-field--tag">
@@ -132,15 +133,18 @@
         <view class="keyboard-spacer" :style="keyboardSpacerStyle" aria-hidden="true" />
       </view>
     </view>
+
+    <wd-message-box />
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
-import { onUnload } from "@dcloudio/uni-app"
+import { computed, shallowRef, watch } from "vue"
+import { onBackPress, onUnload } from "@dcloudio/uni-app"
+import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
-import { showAppError, showAppWarning } from "@/composables/useAppToast"
+import { showAppError, showAppToast, showAppWarning } from "@/composables/useAppToast"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import {
@@ -149,9 +153,10 @@ import {
   setResolvedTempURLForFile
 } from "@/services/cloud-file-resolver"
 import { createEntry } from "@/services/repositories/entries"
-import { isValidCalendarDate } from "@/utils/date"
+import { normalizeCalendarDate } from "@/utils/date"
 
 const theme = useNativeChromeSync()
+const message = useMessage()
 const today = new Date()
 const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
 const placeholderStyle = "color: var(--app-text-muted);"
@@ -178,6 +183,78 @@ const {
   markFilesCommitted,
   queueUncommittedUploadedFilesForCleanup
 } = useFileUpload()
+
+const draftDirty = shallowRef(false)
+watch(
+  [title, content, mood, occurredAt],
+  () => {
+    draftDirty.value = true
+  },
+  {
+    flush: "sync"
+  }
+)
+const hasUnsavedDraft = computed(
+  () => !saveSucceeded.value && (draftDirty.value || files.value.length > 0)
+)
+const discardDraftConfirmOptions = {
+  title: "这张纸条还没收好",
+  msg: "离开后，这次没保存的内容不会留下。",
+  cancelButtonText: "继续写",
+  confirmButtonText: "不保存离开",
+  confirmButtonProps: {
+    plain: true,
+    type: "error" as const
+  },
+  cancelButtonProps: {
+    plain: true,
+    type: "info" as const
+  }
+}
+const isLeaveConfirming = shallowRef(false)
+
+const leaveCreate = () => {
+  if (getCurrentPages().length > 1) {
+    uni.navigateBack()
+    return
+  }
+
+  uni.redirectTo({
+    url: "/pages/index/index"
+  })
+}
+
+const confirmDiscardDraft = async (): Promise<boolean> => {
+  if (isLeaveConfirming.value) {
+    return false
+  }
+
+  isLeaveConfirming.value = true
+  try {
+    await message.confirm(discardDraftConfirmOptions)
+    return true
+  } catch {
+    return false
+  } finally {
+    isLeaveConfirming.value = false
+  }
+}
+
+const handleBackNavigation = async () => {
+  if (saving.value) {
+    showAppToast("正在轻轻收好，先等它一下下")
+    return
+  }
+
+  if (!hasUnsavedDraft.value) {
+    leaveCreate()
+    return
+  }
+
+  if (await confirmDiscardDraft()) {
+    leaveCreate()
+  }
+}
 
 const recoverImage = async (fileID: string) => {
   const fallbackFiles = removeResolvedTempURLFromFiles(files.value, fileID)
@@ -209,8 +286,7 @@ const saveEntry = async () => {
   const titleToSave = title.value.trim()
   const contentToSave = content.value.trim()
   const moodToSave = mood.value.trim() || "温柔"
-  const dateInput = occurredAt.value.trim()
-  const dateToSave = dateInput || todayString
+  const dateToSave = normalizeCalendarDate(occurredAt.value) || todayString
 
   if (!titleToSave) {
     showAppWarning("先给这条小回忆起个名字")
@@ -219,11 +295,6 @@ const saveEntry = async () => {
 
   if (!contentToSave && files.value.length === 0) {
     showAppWarning("写一句话，或者放一张照片进去")
-    return
-  }
-
-  if (dateInput && !isValidCalendarDate(dateInput)) {
-    showAppWarning("日期先写成 2026-06-11 这样")
     return
   }
 
@@ -249,8 +320,26 @@ const saveEntry = async () => {
   }
 }
 
+onBackPress((options) => {
+  if (options.from === "navigateBack") {
+    return false
+  }
+
+  if (saving.value) {
+    showAppToast("正在轻轻收好，先等它一下下")
+    return true
+  }
+
+  if (!hasUnsavedDraft.value) {
+    return false
+  }
+
+  void handleBackNavigation()
+  return true
+})
+
 onUnload(() => {
-  if (saveSucceeded.value) {
+  if (saving.value || saveSucceeded.value) {
     return
   }
 

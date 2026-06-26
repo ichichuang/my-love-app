@@ -108,7 +108,7 @@
         <view class="appendix">
           <view class="appendix-row appendix-row--quiet">
             <view class="appendix-row__main">
-              <text class="appendix-row__icon">云</text>
+              <text class="appendix-row__icon">☁️</text>
               <text class="appendix-row__label">云端小仓库</text>
             </view>
             <text class="appendix-row__value">{{ cloudEnvLabel }}</text>
@@ -130,9 +130,9 @@ import type { ThemeDensity, ThemeFontScale, ThemeMode } from "@/stores/theme"
 const theme = useNativeChromeSync()
 
 const modeOptions: Array<{ icon: string; label: string; value: ThemeMode }> = [
-  { icon: "▣", label: "跟随系统", value: "system" },
-  { icon: "☼", label: "浅色", value: "light" },
-  { icon: "☾", label: "深色", value: "dark" }
+  { icon: "🎐", label: "跟随系统", value: "system" },
+  { icon: "☀️", label: "浅色", value: "light" },
+  { icon: "🌙", label: "深色", value: "dark" }
 ]
 
 const densityOptions: Array<{
@@ -141,8 +141,8 @@ const densityOptions: Array<{
   note: string
   value: ThemeDensity
 }> = [
-  { icon: "▦", label: "舒适", note: "行间松弛", value: "comfortable" },
-  { icon: "☰", label: "紧凑", note: "更密更近", value: "compact" }
+  { icon: "☁️", label: "舒适", note: "行间松弛", value: "comfortable" },
+  { icon: "🎀", label: "紧凑", note: "更密更近", value: "compact" }
 ]
 
 const fontScaleOptions: Array<{

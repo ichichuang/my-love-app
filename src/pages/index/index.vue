@@ -472,7 +472,7 @@ watch(items, (nextItems) => {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--app-space-8);
   align-items: center;
-  padding: var(--app-space-9);
+  padding: var(--app-card-padding);
   overflow: hidden;
   background: var(--app-field);
 }

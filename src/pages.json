@@ -8,6 +8,7 @@
       "^app-custom-nav$": "@/components/AppCustomNav.vue",
       "^app-option-button$": "@/components/AppOptionButton.vue",
       "^app-option-group$": "@/components/AppOptionGroup.vue",
+      "^app-date-field$": "@/components/AppDateField.vue",
       "^empty-state$": "@/components/EmptyState.vue",
       "^entry-card$": "@/components/EntryCard.vue",
       "^image-grid$": "@/components/ImageGrid.vue",

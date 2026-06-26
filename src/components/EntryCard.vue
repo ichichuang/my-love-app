@@ -99,7 +99,7 @@ const handleCoverError = () => {
   display: grid;
   grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr);
   gap: var(--app-card-gap);
-  padding: var(--app-space-9);
+  padding: var(--app-card-padding);
   overflow: hidden;
 
   &:active {

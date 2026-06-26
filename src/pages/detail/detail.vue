@@ -34,7 +34,7 @@
         <view class="memory-sheet__header">
           <view class="memory-sheet__stub">
             <text class="memory-sheet__stub-label">日期小票根</text>
-            <text class="memory-sheet__date">{{ entry.occurredAt }}</text>
+            <text class="memory-sheet__date">{{ occurredAtDisplay }}</text>
           </view>
           <text class="memory-sheet__mood">{{ entry.mood || "温柔" }}</text>
         </view>
@@ -123,19 +123,9 @@
         </view>
 
         <view class="paper-tag-row">
-          <view id="detail-date-field" class="paper-field paper-field--tag">
+          <view class="paper-field paper-field--tag">
             <text class="paper-field__question">今天是哪一天？</text>
-            <wd-input
-              v-model="occurredAt"
-              no-border
-              placeholder="例如 2026-06-11"
-              :placeholder-style="placeholderStyle"
-              :maxlength="10"
-              custom-class="paper-field__input-root"
-              custom-input-class="paper-field__input-inner"
-              @focus="focusField('#detail-date-field')"
-              @keyboardheightchange="syncKeyboardHeight"
-            />
+            <app-date-field v-model="occurredAt" placeholder="挑一个日子" />
           </view>
 
           <view id="detail-mood-field" class="paper-field paper-field--tag">
@@ -232,7 +222,7 @@ import {
   updateEntry,
   type EntryRecord
 } from "@/services/repositories/entries"
-import { isValidCalendarDate } from "@/utils/date"
+import { formatChineseDate, normalizeCalendarDate } from "@/utils/date"
 
 const indexRoute = "/pages/index/index"
 const placeholderStyle = "color: var(--app-text-muted);"
@@ -259,6 +249,10 @@ const title = shallowRef("")
 const content = shallowRef("")
 const mood = shallowRef("")
 const occurredAt = shallowRef("")
+const occurredAtDisplay = computed(() => {
+  const value = entry.value?.occurredAt ?? ""
+  return formatChineseDate(value) || value
+})
 const imageRecoveryFileKeys = new Set<string>()
 let imageHydrationRun = 0
 
@@ -563,15 +557,15 @@ const saveChanges = async () => {
   const titleToSave = title.value.trim()
   const contentToSave = content.value.trim()
   const moodToSave = mood.value.trim() || "温柔"
-  const dateToSave = occurredAt.value.trim()
+  const dateToSave = normalizeCalendarDate(occurredAt.value)
 
   if (!titleToSave) {
     showAppWarning("先给这条小回忆起个名字")
     return
   }
 
-  if (!dateToSave || !isValidCalendarDate(dateToSave)) {
-    showAppWarning("日期先写成 2026-06-11 这样")
+  if (!dateToSave) {
+    showAppWarning("先挑一个日子吧")
     return
   }
 

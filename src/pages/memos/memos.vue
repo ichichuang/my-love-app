@@ -41,13 +41,6 @@
       </empty-state>
 
       <view v-else class="memos-content">
-        <view v-if="memos.length > 0" class="memos-filters">
-          <view class="memos-filters__head">
-            <text class="memos-filters__title">翻翻哪一叠小纸条</text>
-            <text class="memos-filters__body">想找喜欢、避雷，还是礼物线索，就点一下小标签。</text>
-          </view>
-
-        </view>
 
         <view v-if="memos.length > 0" class="memos-filter-strip" :style="stickySectionStyle">
           <app-option-group :columns="3" responsive="auto">
@@ -368,15 +361,13 @@ onPullDownRefresh(() => {
 }
 
 .memos-intro,
-.memos-filters,
 .memos-status,
 .memos-filter-strip,
 .memo-card {
   @include panel;
 }
 
-.memos-intro,
-.memos-filters {
+.memos-intro {
   position: relative;
   gap: var(--app-card-gap);
   padding: var(--app-card-padding);
@@ -506,21 +497,13 @@ onPullDownRefresh(() => {
   gap: var(--app-form-gap);
 }
 
-.memos-filters {
-  gap: var(--app-space-7);
-  background:
-    linear-gradient(180deg, var(--app-surface), var(--app-surface-strong));
-}
-
 .memos-filter-strip {
   @include sticky-section;
   padding: var(--app-space-5);
   background: var(--app-surface);
 }
 
-.memos-filters__head {
-  gap: var(--app-space-3);
-}
+
 
 .memos-filter-button {
   min-height: var(--app-control-height-sm);

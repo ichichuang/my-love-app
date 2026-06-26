@@ -34,3 +34,39 @@ export const normalizeCalendarDate = (value: string): string => {
   const trimmed = value.trim()
   return isValidCalendarDate(trimmed) ? trimmed : ""
 }
+
+export const formatChineseDate = (value: string): string => {
+  const match = calendarDatePattern.exec(value.trim())
+  if (!match) {
+    return ""
+  }
+
+  return `${Number(match[1])}年${Number(match[2])}月${Number(match[3])}日`
+}
+
+export const calendarDateToTimestamp = (value: string): number => {
+  const match = calendarDatePattern.exec(value.trim())
+  if (!match) {
+    return Number.NaN
+  }
+
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime()
+}
+
+export const timestampToCalendarDate = (timestamp: number): string => {
+  if (!Number.isFinite(timestamp)) {
+    return ""
+  }
+
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) {
+    return ""
+  }
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+export const todayCalendarDate = (): string => timestampToCalendarDate(Date.now())

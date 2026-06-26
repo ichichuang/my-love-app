@@ -18,10 +18,16 @@
     >
       <view class="app-pet-navigator__paper">
         <image
+          v-show="!petImageFailed"
           class="app-pet-navigator__image"
           src="/static/pet/pet-idle.png"
           mode="aspectFit"
+          @load="handlePetImageLoad"
+          @error="handlePetImageError"
         />
+        <view v-if="petImageFailed" class="app-pet-navigator__fallback" aria-hidden="true">
+          <text class="app-pet-navigator__fallback-mark">珊</text>
+        </view>
       </view>
     </view>
 
@@ -123,6 +129,7 @@ const zeroSize = { width: 0, height: 0 } satisfies ElementSize
 const instance = getCurrentInstance()
 const menuOpen = ref(false)
 const petReady = ref(false)
+const petImageFailed = ref(false)
 const touching = ref(false)
 const dragging = ref(false)
 const dragState = ref<DragState | null>(null)
@@ -608,6 +615,14 @@ const handlePetTouchCancel = () => {
   resetTouchState()
 }
 
+const handlePetImageLoad = () => {
+  petImageFailed.value = false
+}
+
+const handlePetImageError = () => {
+  petImageFailed.value = true
+}
+
 onMounted(async () => {
   await nextTick()
   await refreshLayout()
@@ -687,6 +702,29 @@ onMounted(async () => {
   width: calc(100% + var(--app-space-8));
   height: calc(100% + var(--app-space-8));
   max-width: none;
+}
+
+.app-pet-navigator__fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-round);
+  background:
+    linear-gradient(135deg, var(--app-surface-strong), var(--app-field));
+  box-shadow: var(--app-shadow-card);
+}
+
+.app-pet-navigator__fallback-mark {
+  color: var(--app-primary);
+  font-family: var(--app-font-family-display);
+  font-size: var(--app-font-size-6xl);
+  font-weight: var(--app-font-weight-semibold);
+  line-height: var(--app-line-height-none);
 }
 
 .app-pet-backdrop {
