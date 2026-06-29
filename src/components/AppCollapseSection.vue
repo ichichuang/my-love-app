@@ -7,12 +7,14 @@
     }"
     :style="style"
   >
-    <slot v-if="isRendered" />
+    <view v-show="isRendered" class="app-collapse-section__inner">
+      <slot />
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from "vue"
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue"
 import { motionDurations } from "@/design-system/size-resolver"
 
 const props = withDefaults(
@@ -33,50 +35,72 @@ const style = computed(() => {
   }
 })
 
-let timeoutId: any = null
+let enterTimerId: ReturnType<typeof setTimeout> | null = null
+let leaveTimerId: ReturnType<typeof setTimeout> | null = null
+
+const clearTimers = () => {
+  if (enterTimerId) {
+    clearTimeout(enterTimerId)
+    enterTimerId = null
+  }
+
+  if (leaveTimerId) {
+    clearTimeout(leaveTimerId)
+    leaveTimerId = null
+  }
+}
 
 watch(
   () => props.expanded,
   (nextExpanded) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-      timeoutId = null
-    }
+    clearTimers()
 
     if (nextExpanded) {
       isRendered.value = true
       nextTick(() => {
-        setTimeout(() => {
+        enterTimerId = setTimeout(() => {
           isActive.value = true
+          enterTimerId = null
         }, motionDurations.tickDelay)
       })
     } else {
       isActive.value = false
-      timeoutId = setTimeout(() => {
+      leaveTimerId = setTimeout(() => {
         isRendered.value = false
-        timeoutId = null
+        leaveTimerId = null
       }, motionDurations.slower)
     }
   },
   { immediate: false }
 )
+
+onBeforeUnmount(clearTimers)
 </script>
 
 <style lang="scss" scoped>
 .app-collapse-section {
-  display: block;
+  display: grid;
   width: 100%;
+  grid-template-rows: 0fr;
   overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-1 * var(--app-space-8)));
+  visibility: hidden;
   transition:
-    max-height var(--app-collapse-duration) var(--app-ease-out),
+    grid-template-rows var(--app-collapse-duration) var(--app-ease-out),
     opacity var(--app-collapse-duration) var(--app-ease-out),
     transform var(--app-collapse-duration) var(--app-ease-out),
-    visibility var(--app-collapse-duration) var(--app-ease-out);
-  will-change: max-height, opacity, transform;
+    visibility var(--app-duration-instant) linear var(--app-collapse-duration);
+  will-change: grid-template-rows, opacity, transform;
+}
+
+.app-collapse-section__inner {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-collapse-section--collapsed {
-  max-height: var(--app-space-0);
   opacity: 0;
   transform: translateY(calc(-1 * var(--app-space-8)));
   visibility: hidden;
@@ -84,10 +108,15 @@ watch(
 }
 
 .app-collapse-section--expanded {
-  max-height: calc(var(--app-space-64) * 6); /* Safe upper bound ~1560rpx */
+  grid-template-rows: 1fr;
   opacity: 1;
   transform: translateY(var(--app-space-0));
   visibility: visible;
   pointer-events: auto;
+  transition:
+    grid-template-rows var(--app-collapse-duration) var(--app-ease-out),
+    opacity var(--app-collapse-duration) var(--app-ease-out),
+    transform var(--app-collapse-duration) var(--app-ease-out),
+    visibility var(--app-duration-instant);
 }
 </style>

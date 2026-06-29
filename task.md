@@ -363,3 +363,18 @@
 - [x] Verify picker styling fragility, scope selectors, and document constraints.
 - [x] Verify collapse, animated swap, and image grid behaviors.
 - [x] Complete build and scanner validations.
+
+# 第四轮：运行时 UI 失败修复（Runtime Repair Pass）
+
+**目标：** 只修复真机确认的运行时 UI 正确性问题，不新增装饰、不重设计页面、不改业务逻辑、CloudBase、数据形状、路由语义、保存/删除、上传清理、鉴权或产品边界。
+
+- [x] 日期选择器根因确认：当前 `AppDateField` 仍使用 `wd-datetime-picker` 且 `root-portal=false`，会落在页面纸张/相册/保存按钮等局部 stacking context 内；全局 Wot picker override 也过宽。
+- [x] 日期选择器架构修复：保持 `AppDateField` 公共 API 不变，内部改为 app-owned `wd-popup` + `wd-datetime-picker-view`，使用 `root-portal=true`，并把 app CSS vars 注入弹层根，统一 create/detail/task-edit。
+- [x] Wot picker override 收敛：移除 `decorations.scss` 中 broad `.wd-datetime-picker__*` / `.wd-picker__*` / `.wd-picker-view*` 全局选择器，改由 `AppDateField` 内部局部样式承载。
+- [x] 折叠根因确认：当前 `AppCollapseSection` 使用固定 max-height、延迟 unmount 和未跟踪展开 timer，快速切换可能出现空白、反向状态或内容裁切。
+- [x] 折叠组件修复：让内容保持挂载，使用 mounted/visible 双状态、清理 timer、token 化 transition，并在收起后禁用交互与可见性。
+- [x] 键盘行为复查：保留单一 `useKeyboardAvoidance`，避免无键盘或上方小字段触发 aggressive scroll；仅在键盘已打开且字段会被遮挡时做最小滚动。
+- [x] Layer audit：确认装饰 pointer-events 与 z-index 不高于 picker/toast/message-box。
+- [x] Required validation：`pnpm scan:ui-copy`、`pnpm scan:design-tokens`、`pnpm type-check`、`pnpm type-check:strict`、`pnpm build:mp-weixin`、`git diff --check`。
+- [x] Forbidden-pattern searches：原生控件/反馈 API、DOM-only globals、GSAP、raw z-index/timing、依赖变更、AppDateField 外直接 `wd-datetime-picker` / `wd-popup`。
+- [ ] Runtime QA：微信开发者工具或真机验证 create/detail/task-edit 日期弹层，song/task 折叠，create/song/task/memo/detail 键盘，Toast/MessageBox，深色/大字/紧凑/窄屏。

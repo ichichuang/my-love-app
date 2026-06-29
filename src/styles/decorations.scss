@@ -120,6 +120,7 @@
   margin: var(--app-space-2) auto 0;
   opacity: 0.75;
   box-shadow: inset 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+  pointer-events: none;
 }
 
 // 6. 双线手绘印章样式 (Double-lined stamps)
@@ -167,6 +168,7 @@
     background-size: 16rpx 8rpx;
     background-repeat: repeat-x;
     opacity: 0.55;
+    pointer-events: none;
   }
 
   // 左右打孔切口
@@ -201,66 +203,9 @@
   background-repeat: repeat-x;
   opacity: var(--app-decor-opacity);
   margin: var(--app-space-4) auto;
+  pointer-events: none;
 }
 
-// 9. Wot Picker Custom Styling for Paper-Note Tone
-// NOTE: Wot datetime picker does not support custom popup classes.
-// Overriding these global internal classes (.wd-datetime-picker__popup, .wd-picker__popup, etc.)
-// is fragile but unavoidable for consistent theme styling. Selector specificity is kept low.
-.wd-datetime-picker__popup,
-.wd-picker__popup {
-  border-radius: var(--app-radius-card) var(--app-radius-card) 0 0 !important;
-  background-color: var(--app-bg) !important;
-  border-top: var(--app-panel-border-width) solid var(--app-border-strong) !important;
-  overflow: hidden !important;
-}
-
-.wd-datetime-picker__toolbar,
-.wd-picker__toolbar {
-  background-color: var(--app-color-bg-page-soft) !important;
-  border-bottom: var(--app-border-width-focus) dashed var(--app-border) !important;
-  height: 96rpx !important; // Exception: Wot toolbar standard height
-  padding: 0 var(--app-space-4) !important;
-}
-
-.wd-datetime-picker__title,
-.wd-picker__title {
-  color: var(--app-text) !important;
-  font-weight: var(--app-font-weight-semibold) !important;
-  font-size: var(--app-font-size-lg) !important;
-}
-
-.wd-datetime-picker__action,
-.wd-picker__action {
-  font-weight: var(--app-font-weight-medium) !important;
-  font-size: var(--app-font-size-md) !important;
-
-  &.wd-datetime-picker__action--cancel,
-  &.wd-picker__action--cancel {
-    color: var(--app-text-muted) !important;
-  }
-
-  &:not(.wd-datetime-picker__action--cancel):not(.wd-picker__action--cancel) {
-    color: var(--app-primary) !important;
-  }
-}
-
-.wd-picker-view {
-  background-color: var(--app-bg) !important;
-}
-
-.wd-picker-view-column {
-  color: var(--app-text) !important;
-  font-size: var(--app-font-size-lg) !important;
-}
-
-.wd-picker-view__roller {
-  background-color: var(--app-color-bg-page-soft) !important;
-  border-top: var(--app-border-width-focus) dashed var(--app-primary-soft) !important;
-  border-bottom: var(--app-border-width-focus) dashed var(--app-primary-soft) !important;
-  opacity: 0.9 !important; // Exception: Wot picker focus visual overlay opacity
-}
-
-.wd-picker-view__mask {
-  background: linear-gradient(to bottom, var(--app-bg) 0%, transparent 40%, transparent 60%, var(--app-bg) 100%) !important;
-}
+// 9. Picker styling is intentionally owned by AppDateField.
+// Avoid global Wot picker internal selectors here; portaled picker sheets need
+// component-local app token injection to keep dark mode and density in sync.

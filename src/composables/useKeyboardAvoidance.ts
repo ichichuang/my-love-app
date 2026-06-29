@@ -1,4 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, shallowRef } from "vue"
+import { motionDurations } from "@/design-system/size-resolver"
 import { useCustomNavMetrics } from "@/composables/useCustomNavMetrics"
 
 type KeyboardHeightResult = Pick<UniNamespace.OnKeyboardHeightChangeResult, "height">
@@ -13,54 +14,84 @@ const normalizeHeight = (height: unknown): number => {
 
 export const useKeyboardAvoidance = () => {
   const keyboardHeight = shallowRef(0)
+  const pendingFocusSelector = shallowRef("")
   const { metrics } = useCustomNavMetrics()
+  let focusTimerId: ReturnType<typeof setTimeout> | null = null
 
-  const syncKeyboardHeight = (result: KeyboardHeightResult) => {
-    keyboardHeight.value = normalizeHeight(result.height)
+  const clearFocusTimer = () => {
+    if (focusTimerId) {
+      clearTimeout(focusTimerId)
+      focusTimerId = null
+    }
   }
 
   const keyboardSpacerStyle = computed(() => ({
     height: keyboardHeight.value > 0 ? `${keyboardHeight.value}px` : "0"
   }))
 
-  const focusField = (selector: string) => {
-    setTimeout(() => {
-      const query = uni.createSelectorQuery()
-      query.select(selector).boundingClientRect()
-      query.selectViewport().scrollOffset(() => {})
-      query.exec((res) => {
-        if (!res || !res[0]) return
+  const scrollFocusedFieldIntoView = (selector: string) => {
+    if (keyboardHeight.value <= 0) {
+      return
+    }
 
-        const rect = res[0] as UniNamespace.NodeInfo
-        const scroll = (res[1] || { scrollTop: 0 }) as { scrollTop: number }
+    const query = uni.createSelectorQuery()
+    query.select(selector).boundingClientRect()
+    query.selectViewport().scrollOffset(() => {})
+    query.exec((res) => {
+      if (!res || !res[0]) return
 
-        const sysInfo = uni.getSystemInfoSync()
-        const windowHeight = sysInfo.windowHeight
+      const rect = res[0] as UniNamespace.NodeInfo
+      const scroll = (res[1] || { scrollTop: 0 }) as { scrollTop: number }
 
-        const navHeight = Math.ceil(metrics.value.customNavHeight + metrics.value.capsuleGap)
-        const visibleBottom = windowHeight - keyboardHeight.value
+      const sysInfo = uni.getSystemInfoSync()
+      const windowHeight = sysInfo.windowHeight
 
-        const topEdge = rect.top ?? 0
-        const bottomEdge = rect.bottom ?? 0
-        const scrollTop = scroll.scrollTop ?? 0
+      const visibleBottom = windowHeight - keyboardHeight.value
+      const bottomEdge = rect.bottom ?? 0
+      const scrollTop = scroll.scrollTop ?? 0
+      const margin = Math.ceil(metrics.value.capsuleGap)
 
-        const margin = 20
+      if (bottomEdge <= visibleBottom - margin) {
+        return
+      }
 
-        if (bottomEdge > visibleBottom - margin) {
-          const scrollDistance = bottomEdge - visibleBottom + margin
-          uni.pageScrollTo({
-            scrollTop: scrollTop + scrollDistance,
-            duration: 180
-          })
-        } else if (topEdge < navHeight + margin) {
-          const scrollDistance = topEdge - navHeight - margin
-          uni.pageScrollTo({
-            scrollTop: scrollTop + scrollDistance,
-            duration: 180
-          })
-        }
+      const scrollDistance = bottomEdge - visibleBottom + margin
+      if (scrollDistance <= 0) {
+        return
+      }
+
+      uni.pageScrollTo({
+        scrollTop: scrollTop + scrollDistance,
+        duration: motionDurations.fast
       })
-    }, 150)
+    })
+  }
+
+  const scheduleFocusScroll = (selector: string, delay: number) => {
+    clearFocusTimer()
+    focusTimerId = setTimeout(() => {
+      focusTimerId = null
+      scrollFocusedFieldIntoView(selector)
+    }, delay)
+  }
+
+  const syncKeyboardHeight = (result: KeyboardHeightResult) => {
+    keyboardHeight.value = normalizeHeight(result.height)
+
+    if (keyboardHeight.value <= 0) {
+      pendingFocusSelector.value = ""
+      clearFocusTimer()
+      return
+    }
+
+    if (pendingFocusSelector.value) {
+      scheduleFocusScroll(pendingFocusSelector.value, motionDurations.paintDelay)
+    }
+  }
+
+  const focusField = (selector: string) => {
+    pendingFocusSelector.value = selector
+    scheduleFocusScroll(selector, motionDurations.slow)
   }
 
   onMounted(() => {
@@ -68,6 +99,7 @@ export const useKeyboardAvoidance = () => {
   })
 
   onBeforeUnmount(() => {
+    clearFocusTimer()
     uni.offKeyboardHeightChange(syncKeyboardHeight)
   })
 
