@@ -4,7 +4,7 @@
       v-for="(file, index) in files"
       :key="file.fileID"
       class="image-grid__item"
-      :class="{ 'image-grid__item--deleting': deletingIndex === index }"
+      :class="{ 'image-grid__item--deleting': deletingFileID === file.fileID }"
     >
       <image
         v-if="isImageUsable(file)"
@@ -49,16 +49,21 @@ const emit = defineEmits<{
   "image-error": [fileID: string]
 }>()
 
-const deletingIndex = ref<number | null>(null)
+const deletingFileID = ref<string | null>(null)
 
 const handleRemove = (index: number) => {
-  if (deletingIndex.value !== null) {
+  const file = props.files[index]
+  if (!file || deletingFileID.value !== null) {
     return
   }
-  deletingIndex.value = index
+  const fileID = file.fileID
+  deletingFileID.value = fileID
   setTimeout(() => {
-    emit("remove", index)
-    deletingIndex.value = null
+    const currentIndex = props.files.findIndex((f) => f.fileID === fileID)
+    if (currentIndex !== -1) {
+      emit("remove", currentIndex)
+    }
+    deletingFileID.value = null
   }, motionDurations.normal)
 }
 

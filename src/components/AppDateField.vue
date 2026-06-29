@@ -8,6 +8,8 @@
     confirm-button-text="就这天"
     cancel-button-text="再想想"
     custom-class="app-date-field__picker"
+    root-portal
+    :z-index="1050"
     @confirm="handleConfirm"
   >
     <view

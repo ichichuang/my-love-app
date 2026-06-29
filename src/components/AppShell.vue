@@ -33,7 +33,9 @@
         <slot />
       </view>
 
-      <wd-toast />
+      <root-portal>
+        <wd-toast />
+      </root-portal>
     </view>
   </wd-config-provider>
 </template>

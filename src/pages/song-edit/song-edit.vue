@@ -69,6 +69,7 @@
           <wd-button
             size="small"
             plain
+            :icon="detailsExpanded ? 'arrow-up' : 'arrow-down'"
             :disabled="formDisabled"
             custom-class="song-detail-toggle"
             @click="toggleDetails"
@@ -77,76 +78,78 @@
           </wd-button>
         </view>
 
-        <view v-if="detailsExpanded" class="song-note__details">
-          <view id="song-artist-field" class="song-field">
-            <text class="song-field__prompt">是谁的版本？</text>
-            <wd-input
-              v-model="artist"
-              no-border
-              :disabled="formDisabled"
-              placeholder="是哪个版本呀？"
-              :placeholder-style="placeholderStyle"
-              :maxlength="48"
-              custom-class="song-field__input-root"
-              custom-input-class="song-field__input-inner"
-              @focus="focusField('#song-artist-field')"
-              @keyboardheightchange="syncKeyboardHeight"
-            />
-          </view>
-
-          <view id="song-content-field" class="song-field">
-            <text class="song-field__prompt">为什么想听？</text>
-            <wd-textarea
-              v-model="content"
-              no-border
-              :disabled="formDisabled"
-              placeholder="为什么想听这首？"
-              :placeholder-style="placeholderStyle"
-              :maxlength="240"
-              custom-class="song-field__textarea-root"
-              custom-textarea-container-class="song-field__textarea-box"
-              custom-textarea-class="song-field__textarea-inner"
-              @focus="focusField('#song-content-field')"
-              @keyboardheightchange="syncKeyboardHeight"
-            />
-          </view>
-
-          <view class="song-note__section">
-            <view class="song-note__section-head">
-              <text class="song-note__section-title">心愿贴纸</text>
-              <text class="song-note__section-note">像小印章一样贴一下</text>
-            </view>
-            <app-option-group :columns="3" responsive="auto">
-              <app-option-button
-                v-for="option in priorityOptions"
-                :key="option.value"
-                :active="songPriority === option.value"
+        <app-collapse-section :expanded="detailsExpanded">
+          <view class="song-note__details">
+            <view id="song-artist-field" class="song-field">
+              <text class="song-field__prompt">是谁的版本？</text>
+              <wd-input
+                v-model="artist"
+                no-border
                 :disabled="formDisabled"
-                @click="setSongPriority(option.value)"
-              >
-                <text class="song-choice__label">{{ option.label }}</text>
-              </app-option-button>
-            </app-option-group>
-          </view>
-
-          <view class="song-note__section">
-            <view class="song-note__section-head">
-              <text class="song-note__section-title">小歌单状态</text>
-              <text class="song-note__section-note">只在小歌单里轻轻标记</text>
+                placeholder="是哪个版本呀？"
+                :placeholder-style="placeholderStyle"
+                :maxlength="48"
+                custom-class="song-field__input-root"
+                custom-input-class="song-field__input-inner"
+                @focus="focusField('#song-artist-field')"
+                @keyboardheightchange="syncKeyboardHeight"
+              />
             </view>
-            <app-option-group :columns="3" responsive="auto">
-              <app-option-button
-                v-for="option in statusOptions"
-                :key="option.value"
-                :active="songStatus === option.value"
+
+            <view id="song-content-field" class="song-field">
+              <text class="song-field__prompt">为什么想听？</text>
+              <wd-textarea
+                v-model="content"
+                no-border
                 :disabled="formDisabled"
-                @click="setSongStatus(option.value)"
-              >
-                <text class="song-choice__label">{{ option.label }}</text>
-              </app-option-button>
-            </app-option-group>
+                placeholder="为什么想听这首？"
+                :placeholder-style="placeholderStyle"
+                :maxlength="240"
+                custom-class="song-field__textarea-root"
+                custom-textarea-container-class="song-field__textarea-box"
+                custom-textarea-class="song-field__textarea-inner"
+                @focus="focusField('#song-content-field')"
+                @keyboardheightchange="syncKeyboardHeight"
+              />
+            </view>
+
+            <view class="song-note__section">
+              <view class="song-note__section-head">
+                <text class="song-note__section-title">心愿贴纸</text>
+                <text class="song-note__section-note">像小印章一样贴一下</text>
+              </view>
+              <app-option-group :columns="3" responsive="auto">
+                <app-option-button
+                  v-for="option in priorityOptions"
+                  :key="option.value"
+                  :active="songPriority === option.value"
+                  :disabled="formDisabled"
+                  @click="setSongPriority(option.value)"
+                >
+                  <text class="song-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
+
+            <view class="song-note__section">
+              <view class="song-note__section-head">
+                <text class="song-note__section-title">小歌单状态</text>
+                <text class="song-note__section-note">只在小歌单里轻轻标记</text>
+              </view>
+              <app-option-group :columns="3" responsive="auto">
+                <app-option-button
+                  v-for="option in statusOptions"
+                  :key="option.value"
+                  :active="songStatus === option.value"
+                  :disabled="formDisabled"
+                  @click="setSongStatus(option.value)"
+                >
+                  <text class="song-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
           </view>
-        </view>
+        </app-collapse-section>
 
         <view v-if="saved" class="song-saved app-pop">
           <text>已经轻轻收好</text>
@@ -172,7 +175,7 @@
       </view>
     </view>
 
-    <wd-message-box />
+    <wd-message-box root-portal />
   </app-shell>
 </template>
 
@@ -716,6 +719,12 @@ onBackPress((options) => {
 :deep(.song-detail-toggle) {
   color: var(--app-primary);
   box-shadow: var(--app-shadow-none);
+  transition: transform var(--app-transition-fast), opacity var(--app-transition-fast);
+}
+
+:deep(.song-detail-toggle:active) {
+  transform: scale(0.96);
+  opacity: var(--app-press-opacity);
 }
 
 .song-note__details {

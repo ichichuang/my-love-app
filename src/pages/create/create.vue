@@ -137,7 +137,7 @@
       </view>
     </view>
 
-    <wd-message-box />
+    <wd-message-box root-portal />
   </app-shell>
 </template>
 

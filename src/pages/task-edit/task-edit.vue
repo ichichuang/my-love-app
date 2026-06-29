@@ -68,6 +68,7 @@
           <wd-button
             size="small"
             plain
+            :icon="detailsExpanded ? 'arrow-up' : 'arrow-down'"
             :disabled="formDisabled"
             custom-class="task-detail-toggle"
             @click="toggleDetails"
@@ -76,54 +77,56 @@
           </wd-button>
         </view>
 
-        <view v-if="detailsExpanded" class="task-ticket__details">
-          <view id="task-content-field" class="task-field">
-            <text class="task-field__prompt">想留点什么小备注？</text>
-            <wd-textarea
-              v-model="content"
-              no-border
-              :disabled="formDisabled"
-              placeholder="留一点小备注"
-              :placeholder-style="placeholderStyle"
-              :maxlength="240"
-              custom-class="task-field__textarea-root"
-              custom-textarea-container-class="task-field__textarea-box"
-              custom-textarea-class="task-field__textarea-inner"
-              @focus="focusField('#task-content-field')"
-              @keyboardheightchange="syncKeyboardHeight"
-            />
-          </view>
-
-          <view class="task-field">
-            <text class="task-field__prompt">想什么时候去做？</text>
-            <text class="task-field__hint">空着也没关系，想好了再挑个日子。</text>
-            <app-date-field
-              v-model="taskDueDate"
-              placeholder="可以先空着"
-              title="挑个日子"
-              clearable
-              :disabled="formDisabled"
-            />
-          </view>
-
-          <view class="task-ticket__section">
-            <view class="task-ticket__section-head">
-              <text class="task-ticket__section-title">现在状态</text>
-              <text class="task-ticket__section-note">只在小清单里轻轻标记</text>
-            </view>
-            <app-option-group :columns="2" responsive="auto">
-              <app-option-button
-                v-for="option in statusOptions"
-                :key="option.label"
-                :active="taskDone === option.value"
+        <app-collapse-section :expanded="detailsExpanded">
+          <view class="task-ticket__details">
+            <view id="task-content-field" class="task-field">
+              <text class="task-field__prompt">想留点什么小备注？</text>
+              <wd-textarea
+                v-model="content"
+                no-border
                 :disabled="formDisabled"
-                @click="setTaskDone(option.value)"
-              >
-                <text class="task-choice__label">{{ option.label }}</text>
-              </app-option-button>
-            </app-option-group>
+                placeholder="留一点小备注"
+                :placeholder-style="placeholderStyle"
+                :maxlength="240"
+                custom-class="task-field__textarea-root"
+                custom-textarea-container-class="task-field__textarea-box"
+                custom-textarea-class="task-field__textarea-inner"
+                @focus="focusField('#task-content-field')"
+                @keyboardheightchange="syncKeyboardHeight"
+              />
+            </view>
+
+            <view class="task-field">
+              <text class="task-field__prompt">想什么时候去做？</text>
+              <text class="task-field__hint">空着也没关系，想好了再挑个日子。</text>
+              <app-date-field
+                v-model="taskDueDate"
+                placeholder="可以先空着"
+                title="挑个日子"
+                clearable
+                :disabled="formDisabled"
+              />
+            </view>
+
+            <view class="task-ticket__section">
+              <view class="task-ticket__section-head">
+                <text class="task-ticket__section-title">现在状态</text>
+                <text class="task-ticket__section-note">只在小清单里轻轻标记</text>
+              </view>
+              <app-option-group :columns="2" responsive="auto">
+                <app-option-button
+                  v-for="option in statusOptions"
+                  :key="option.label"
+                  :active="taskDone === option.value"
+                  :disabled="formDisabled"
+                  @click="setTaskDone(option.value)"
+                >
+                  <text class="task-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
           </view>
-        </view>
+        </app-collapse-section>
 
         <view v-if="saved" class="task-saved app-pop">
           <text class="task-saved__title">已经轻轻收好</text>
@@ -150,7 +153,7 @@
       </view>
     </view>
 
-    <wd-message-box />
+    <wd-message-box root-portal />
   </app-shell>
 </template>
 
@@ -684,6 +687,12 @@ onBackPress((options) => {
 :deep(.task-detail-toggle) {
   color: var(--app-accent);
   box-shadow: var(--app-shadow-none);
+  transition: transform var(--app-transition-fast), opacity var(--app-transition-fast);
+}
+
+:deep(.task-detail-toggle:active) {
+  transform: scale(0.96);
+  opacity: var(--app-press-opacity);
 }
 
 :deep(.task-delete-button) {

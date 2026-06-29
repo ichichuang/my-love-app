@@ -453,7 +453,8 @@ export const intentionalDynamicComponentVarNames = [
   "--app-option-swatch-primary",
   "--app-option-swatch-accent",
   "--app-option-swatch-glow",
-  "--app-option-swatch-foreground"
+  "--app-option-swatch-foreground",
+  "--app-collapse-duration"
 ] as const
 
 export type IntentionalDynamicComponentVarName = (typeof intentionalDynamicComponentVarNames)[number]

@@ -26,20 +26,25 @@ watch(
       clearTimeout(timeoutId)
     }
 
-    phase.value = "leaving"
-
-    // Delay duration matches var(--app-duration-fast)
-    timeoutId = setTimeout(() => {
-      displayValue.value = newVal
-      phase.value = "entering"
-
-      nextTick(() => {
+    if (phase.value === "idle") {
+      phase.value = "leaving"
+      timeoutId = setTimeout(() => {
+        displayValue.value = newVal
+        phase.value = "entering"
         timeoutId = setTimeout(() => {
           phase.value = "idle"
           timeoutId = null
-        }, motionDurations.fast)
-      })
-    }, motionDurations.fast)
+        }, 50) // Wait for entering state to paint (approx 3 frames at 60fps)
+      }, motionDurations.fast)
+    } else {
+      // Rapid switching: update value immediately to prevent stale text/flicker
+      displayValue.value = newVal
+      phase.value = "entering"
+      timeoutId = setTimeout(() => {
+        phase.value = "idle"
+        timeoutId = null
+      }, 50)
+    }
   }
 )
 </script>
