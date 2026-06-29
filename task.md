@@ -351,3 +351,15 @@
 ## 非 UI 后续（独立项，本轮不处理）
 
 - **CloudBase 复合索引告警（后端 / 索引配置，非 UI）：** `love_entries` 查询建议建立 `coupleId + updatedAt` 复合索引以消除运行时索引告警。属数据库索引 / 配置范畴；本轮 UI 打磨不触碰仓储逻辑或数据库规则，留作独立后端跟进项。
+
+# 第三轮：最终运行时 UI 修复与源清理（Round 3 Final Pass）
+
+**目标：** 完成最终运行时 UI 修复和代码清理，验证并巩固日期选择器层级、动效时长令牌化、样式审计与 Wot overrides 维护。
+
+- [x] Verify picker overlay level (`:root-portal="true"` and `:z-index="1050"` in `AppDateField.vue`, and `:root-portal="true"` in pages for `wd-message-box`).
+- [x] Tokenize `30ms` (`motionDurations.tickDelay`) and `50ms` (`motionDurations.paintDelay`) inside `AppCollapseSection.vue` and `AppAnimatedSwap.vue`.
+- [x] Audit `decorations.scss` to use standard tokens where possible and document intentional exceptions for paper-note shapes.
+- [x] Centralize z-index mapping by registering `--app-z-index-nav`, `--app-z-index-pet`, and `--app-z-index-picker` in `token-registry.ts` and size resolvers.
+- [x] Verify picker styling fragility, scope selectors, and document constraints.
+- [x] Verify collapse, animated swap, and image grid behaviors.
+- [x] Complete build and scanner validations.

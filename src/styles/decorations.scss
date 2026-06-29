@@ -1,17 +1,21 @@
-// Visual decorations for the paper-note scene system
+// INTENTIONAL DESIGN-SYSTEM EXCEPTIONS FOR PHYSICAL PAPER-NOTE GEOMETRY:
+// One-off visual shape values representing real-world paper craft details
+// (e.g. notebook spiral rings, paper tape, ticket edge cutouts, drawer handles)
+// are documented exceptions and are not meant to be tokenized as layout scale keys.
+
 @import "./variables.scss";
 
 // 1. 胶带纸样式 (Paper tape)
 .app-paper-tape {
   position: absolute;
-  width: 76rpx;
-  height: 26rpx;
+  width: 76rpx; // Exception: tape size
+  height: 26rpx; // Exception: tape size
   background: var(--app-primary-soft);
-  border-left: 2rpx dashed var(--app-border-muted);
-  border-right: 2rpx dashed var(--app-border-muted);
+  border-left: var(--app-border-width-focus) dashed var(--app-border-muted);
+  border-right: var(--app-border-width-focus) dashed var(--app-border-muted);
   opacity: 0.65;
   z-index: 4;
-  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--app-shadow-sm);
   pointer-events: none;
   mix-blend-mode: multiply;
 
@@ -56,8 +60,8 @@
 .app-notebook-page {
   position: relative;
   padding-left: var(--app-space-12) !important;
-  background-image: linear-gradient(var(--app-divider) 2rpx, transparent 2rpx) !important;
-  background-size: 100% 48rpx !important;
+  background-image: linear-gradient(var(--app-divider) var(--app-border-width-focus), transparent var(--app-border-width-focus)) !important;
+  background-size: 100% 48rpx !important; // Exception: notebook line height
 
   &::before {
     position: absolute;
@@ -65,8 +69,8 @@
     top: 0;
     bottom: 0;
     left: var(--app-space-9);
-    width: 2rpx;
-    border-left: 2rpx solid var(--app-color-red-person-soft);
+    width: var(--app-border-width-focus);
+    border-left: var(--app-border-width-focus) solid var(--app-color-red-person-soft);
     opacity: 0.55;
     pointer-events: none;
     z-index: 1;
@@ -200,9 +204,12 @@
 }
 
 // 9. Wot Picker Custom Styling for Paper-Note Tone
+// NOTE: Wot datetime picker does not support custom popup classes.
+// Overriding these global internal classes (.wd-datetime-picker__popup, .wd-picker__popup, etc.)
+// is fragile but unavoidable for consistent theme styling. Selector specificity is kept low.
 .wd-datetime-picker__popup,
 .wd-picker__popup {
-  border-radius: var(--app-radius-card) var(--app-radius-card) 0px 0px !important;
+  border-radius: var(--app-radius-card) var(--app-radius-card) 0 0 !important;
   background-color: var(--app-bg) !important;
   border-top: var(--app-panel-border-width) solid var(--app-border-strong) !important;
   overflow: hidden !important;
@@ -211,8 +218,8 @@
 .wd-datetime-picker__toolbar,
 .wd-picker__toolbar {
   background-color: var(--app-color-bg-page-soft) !important;
-  border-bottom: 2rpx dashed var(--app-border) !important;
-  height: 96rpx !important;
+  border-bottom: var(--app-border-width-focus) dashed var(--app-border) !important;
+  height: 96rpx !important; // Exception: Wot toolbar standard height
   padding: 0 var(--app-space-4) !important;
 }
 
@@ -249,9 +256,9 @@
 
 .wd-picker-view__roller {
   background-color: var(--app-color-bg-page-soft) !important;
-  border-top: 2rpx dashed var(--app-primary-soft) !important;
-  border-bottom: 2rpx dashed var(--app-primary-soft) !important;
-  opacity: 0.9 !important;
+  border-top: var(--app-border-width-focus) dashed var(--app-primary-soft) !important;
+  border-bottom: var(--app-border-width-focus) dashed var(--app-primary-soft) !important;
+  opacity: 0.9 !important; // Exception: Wot picker focus visual overlay opacity
 }
 
 .wd-picker-view__mask {

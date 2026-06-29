@@ -5,6 +5,8 @@ page {
   --app-duration-instant: 0s;
   --app-duration-breath: 1600ms;
   --app-duration-breath-idle: 3200ms;
+  --app-duration-paint-delay: 50ms;
+  --app-duration-tick-delay: 30ms;
   --app-stagger-reveal: 70ms;
   --app-stagger-menu: 45ms;
   --app-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);

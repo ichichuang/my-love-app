@@ -34,7 +34,7 @@ watch(
         timeoutId = setTimeout(() => {
           phase.value = "idle"
           timeoutId = null
-        }, 50) // Wait for entering state to paint (approx 3 frames at 60fps)
+        }, motionDurations.paintDelay) // Wait for entering state to paint (approx 3 frames at 60fps)
       }, motionDurations.fast)
     } else {
       // Rapid switching: update value immediately to prevent stale text/flicker
@@ -43,7 +43,7 @@ watch(
       timeoutId = setTimeout(() => {
         phase.value = "idle"
         timeoutId = null
-      }, 50)
+      }, motionDurations.paintDelay)
     }
   }
 )

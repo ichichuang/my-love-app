@@ -338,6 +338,8 @@ export const motionVarNames = [
   "--app-duration-instant",
   "--app-duration-breath",
   "--app-duration-breath-idle",
+  "--app-duration-paint-delay",
+  "--app-duration-tick-delay",
   "--app-stagger-reveal",
   "--app-stagger-menu",
   "--app-ease-standard",
@@ -412,7 +414,10 @@ export const componentVarNames = [
   "--app-swatch-height",
   "--app-swatch-gradient-size",
   "--app-swatch-custom-button-width",
-  "--app-cloud-value-width"
+  "--app-cloud-value-width",
+  "--app-z-index-nav",
+  "--app-z-index-pet",
+  "--app-z-index-picker"
 ] as const
 
 export type ComponentVarName = (typeof componentVarNames)[number]

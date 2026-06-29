@@ -48,7 +48,7 @@ watch(
       nextTick(() => {
         setTimeout(() => {
           isActive.value = true
-        }, 30)
+        }, motionDurations.tickDelay)
       })
     } else {
       isActive.value = false

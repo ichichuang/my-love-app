@@ -118,7 +118,7 @@ const handleBack = () => {
 .app-custom-nav {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--app-z-index-nav);
   width: 100%;
 }
 

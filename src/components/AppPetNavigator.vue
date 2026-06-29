@@ -643,7 +643,7 @@ onMounted(async () => {
   position: fixed;
   top: var(--app-space-0);
   left: var(--app-space-0);
-  z-index: 50;
+  z-index: var(--app-z-index-pet);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -759,7 +759,7 @@ onMounted(async () => {
 .app-pet-backdrop {
   position: fixed;
   inset: var(--app-space-0);
-  z-index: 48;
+  z-index: calc(var(--app-z-index-pet) - 2);
 }
 
 .app-pet-bubble {
@@ -767,7 +767,7 @@ onMounted(async () => {
   position: fixed;
   top: var(--app-space-0);
   left: var(--app-space-0);
-  z-index: 49;
+  z-index: calc(var(--app-z-index-pet) - 1);
   display: flex;
   flex-direction: column;
   width: calc(var(--app-space-64) + var(--app-space-20));

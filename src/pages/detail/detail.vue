@@ -200,7 +200,7 @@
       </view>
     </app-animated-swap>
 
-    <wd-message-box root-portal />
+    <wd-message-box :root-portal="true" />
   </app-shell>
 </template>
 

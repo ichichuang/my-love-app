@@ -6,7 +6,9 @@ export const motionDurations = {
   fast: 180,
   normal: 260,
   slow: 320,
-  slower: 420
+  slower: 420,
+  paintDelay: 50,
+  tickDelay: 30
 } as const
 
 export interface ResolvedSizeTokens {
@@ -159,6 +161,9 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-swatch-custom-button-width": isCompact ? "136rpx" : "148rpx",
 
     "--app-cloud-value-width": "420rpx",
+    "--app-z-index-nav": "10",
+    "--app-z-index-pet": "50",
+    "--app-z-index-picker": "1050",
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",
@@ -169,6 +174,8 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-duration-instant": "0s",
     "--app-duration-breath": "1600ms",
     "--app-duration-breath-idle": "3200ms",
+    "--app-duration-paint-delay": `${motionDurations.paintDelay}ms`,
+    "--app-duration-tick-delay": `${motionDurations.tickDelay}ms`,
     "--app-stagger-reveal": "70ms",
     "--app-stagger-menu": "45ms",
     "--app-ease-standard": "ease",
