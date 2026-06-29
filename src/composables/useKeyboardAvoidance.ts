@@ -25,12 +25,42 @@ export const useKeyboardAvoidance = () => {
 
   const focusField = (selector: string) => {
     setTimeout(() => {
-      uni.pageScrollTo({
-        selector,
-        offsetTop: -Math.ceil(metrics.value.customNavHeight + metrics.value.capsuleGap),
-        duration: 180
+      const query = uni.createSelectorQuery()
+      query.select(selector).boundingClientRect()
+      query.selectViewport().scrollOffset(() => {})
+      query.exec((res) => {
+        if (!res || !res[0]) return
+
+        const rect = res[0] as UniNamespace.NodeInfo
+        const scroll = (res[1] || { scrollTop: 0 }) as { scrollTop: number }
+
+        const sysInfo = uni.getSystemInfoSync()
+        const windowHeight = sysInfo.windowHeight
+
+        const navHeight = Math.ceil(metrics.value.customNavHeight + metrics.value.capsuleGap)
+        const visibleBottom = windowHeight - keyboardHeight.value
+
+        const topEdge = rect.top ?? 0
+        const bottomEdge = rect.bottom ?? 0
+        const scrollTop = scroll.scrollTop ?? 0
+
+        const margin = 20
+
+        if (bottomEdge > visibleBottom - margin) {
+          const scrollDistance = bottomEdge - visibleBottom + margin
+          uni.pageScrollTo({
+            scrollTop: scrollTop + scrollDistance,
+            duration: 180
+          })
+        } else if (topEdge < navHeight + margin) {
+          const scrollDistance = topEdge - navHeight - margin
+          uni.pageScrollTo({
+            scrollTop: scrollTop + scrollDistance,
+            duration: 180
+          })
+        }
       })
-    }, 80)
+    }, 150)
   }
 
   onMounted(() => {

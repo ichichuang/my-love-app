@@ -47,6 +47,7 @@
           <wd-input
             v-model="title"
             no-border
+            :adjust-position="false"
             :disabled="formDisabled"
             placeholder="比如：她喜欢的花"
             :placeholder-style="placeholderStyle"
@@ -68,6 +69,7 @@
             <wd-textarea
               v-model="content"
               no-border
+              :adjust-position="false"
               :disabled="formDisabled"
               placeholder="比如：小雏菊，比玫瑰更喜欢一点。"
               :placeholder-style="placeholderStyle"

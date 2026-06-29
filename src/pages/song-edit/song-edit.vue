@@ -52,6 +52,7 @@
             <wd-input
               v-model="title"
               no-border
+              :adjust-position="false"
               :disabled="formDisabled"
               placeholder="歌名先写这里"
               :placeholder-style="placeholderStyle"
@@ -85,6 +86,7 @@
               <wd-input
                 v-model="artist"
                 no-border
+                :adjust-position="false"
                 :disabled="formDisabled"
                 placeholder="是哪个版本呀？"
                 :placeholder-style="placeholderStyle"
@@ -101,6 +103,7 @@
               <wd-textarea
                 v-model="content"
                 no-border
+                :adjust-position="false"
                 :disabled="formDisabled"
                 placeholder="为什么想听这首？"
                 :placeholder-style="placeholderStyle"

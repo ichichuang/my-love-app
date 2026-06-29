@@ -49,6 +49,7 @@
           <wd-input
             v-model="title"
             no-border
+            :adjust-position="false"
             placeholder="比如：一起散步的夜晚"
             :placeholder-style="placeholderStyle"
             :maxlength="48"
@@ -64,6 +65,7 @@
           <wd-textarea
             v-model="content"
             no-border
+            :adjust-position="false"
             placeholder="写一点不想忘记的小事"
             :placeholder-style="placeholderStyle"
             :maxlength="1200"
@@ -86,6 +88,7 @@
             <wd-input
               v-model="mood"
               no-border
+              :adjust-position="false"
               placeholder="温柔"
               :placeholder-style="placeholderStyle"
               :maxlength="16"

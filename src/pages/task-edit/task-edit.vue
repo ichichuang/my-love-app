@@ -53,6 +53,7 @@
           <wd-input
             v-model="title"
             no-border
+            :adjust-position="false"
             :disabled="formDisabled"
             placeholder="比如：一起去看一场日落"
             :placeholder-style="placeholderStyle"
@@ -84,6 +85,7 @@
               <wd-textarea
                 v-model="content"
                 no-border
+                :adjust-position="false"
                 :disabled="formDisabled"
                 placeholder="留一点小备注"
                 :placeholder-style="placeholderStyle"
