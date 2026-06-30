@@ -82,21 +82,19 @@
           <view class="task-ticket__details">
             <view class="task-field">
               <text class="task-field__prompt">想留点什么小备注？</text>
-              <view id="task-content-field" class="task-field__textarea-hitarea" @tap="requestTaskContentTextareaFocus">
+              <view id="task-content-field" class="task-field__textarea-hitarea">
                 <wd-textarea
                   v-model="content"
                   no-border
                   :adjust-position="false"
                   :disabled="formDisabled"
-                  :focus="taskContentTextareaFocused"
                   placeholder="留一点小备注"
                   :placeholder-style="placeholderStyle"
                   :maxlength="240"
                   custom-class="task-field__textarea-root"
                   custom-textarea-container-class="task-field__textarea-box"
                   custom-textarea-class="task-field__textarea-inner"
-                  @focus="handleTaskContentTextareaFocus"
-                  @blur="blurTaskContentTextarea"
+                  @focus="focusField('#task-content-field')"
                   @keyboardheightchange="syncKeyboardHeight"
                 />
               </view>
@@ -164,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, shallowRef, watch } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -190,30 +188,6 @@ const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
-const taskContentTextareaFocused = shallowRef(false)
-
-const requestTaskContentTextareaFocus = () => {
-  if (formDisabled.value) {
-    return
-  }
-
-  taskContentTextareaFocused.value = false
-  nextTick(() => {
-    taskContentTextareaFocused.value = true
-    focusField("#task-content-field")
-  })
-}
-
-const handleTaskContentTextareaFocus = () => {
-  if (!formDisabled.value) {
-    taskContentTextareaFocused.value = true
-    focusField("#task-content-field")
-  }
-}
-
-const blurTaskContentTextarea = () => {
-  taskContentTextareaFocused.value = false
-}
 
 const taskId = shallowRef("")
 const hasLoadError = shallowRef(false)

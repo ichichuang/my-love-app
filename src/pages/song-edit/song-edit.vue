@@ -100,21 +100,19 @@
 
             <view class="song-field">
               <text class="song-field__prompt">为什么想听？</text>
-              <view id="song-content-field" class="song-field__textarea-hitarea" @tap="requestSongContentTextareaFocus">
+              <view id="song-content-field" class="song-field__textarea-hitarea">
                 <wd-textarea
                   v-model="content"
                   no-border
                   :adjust-position="false"
                   :disabled="formDisabled"
-                  :focus="songContentTextareaFocused"
                   placeholder="为什么想听这首？"
                   :placeholder-style="placeholderStyle"
                   :maxlength="240"
                   custom-class="song-field__textarea-root"
                   custom-textarea-container-class="song-field__textarea-box"
                   custom-textarea-class="song-field__textarea-inner"
-                  @focus="handleSongContentTextareaFocus"
-                  @blur="blurSongContentTextarea"
+                  @focus="focusField('#song-content-field')"
                   @keyboardheightchange="syncKeyboardHeight"
                 />
               </view>
@@ -187,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, shallowRef, watch } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -216,30 +214,6 @@ const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
-const songContentTextareaFocused = shallowRef(false)
-
-const requestSongContentTextareaFocus = () => {
-  if (formDisabled.value) {
-    return
-  }
-
-  songContentTextareaFocused.value = false
-  nextTick(() => {
-    songContentTextareaFocused.value = true
-    focusField("#song-content-field")
-  })
-}
-
-const handleSongContentTextareaFocus = () => {
-  if (!formDisabled.value) {
-    songContentTextareaFocused.value = true
-    focusField("#song-content-field")
-  }
-}
-
-const blurSongContentTextarea = () => {
-  songContentTextareaFocused.value = false
-}
 
 const songId = shallowRef("")
 const hasLoadError = shallowRef(false)

@@ -65,21 +65,19 @@
             <text class="memo-note__section-note">空着也没关系，先把标题收好就行。</text>
           </view>
 
-          <view id="memo-content-field" class="memo-field" @tap="focusMemoContentTextarea">
+          <view id="memo-content-field" class="memo-field">
             <wd-textarea
               v-model="content"
               no-border
               :adjust-position="false"
               :disabled="formDisabled"
-              :focus="memoContentTextareaFocused"
               placeholder="比如：小雏菊，比玫瑰更喜欢一点。"
               :placeholder-style="placeholderStyle"
               :maxlength="240"
               custom-class="memo-field__textarea-root"
               custom-textarea-container-class="memo-field__textarea-box"
               custom-textarea-class="memo-field__textarea-inner"
-              @focus="focusMemoContentTextarea"
-              @blur="blurMemoContentTextarea"
+              @focus="focusField('#memo-content-field')"
               @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
@@ -185,20 +183,6 @@ const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
-const memoContentTextareaFocused = shallowRef(false)
-
-const focusMemoContentTextarea = () => {
-  if (formDisabled.value) {
-    return
-  }
-
-  memoContentTextareaFocused.value = true
-  focusField("#memo-content-field")
-}
-
-const blurMemoContentTextarea = () => {
-  memoContentTextareaFocused.value = false
-}
 
 const memoCategoryOrder: MemoCategory[] = ["favorite", "profile", "avoid", "gift", "date", "note"]
 

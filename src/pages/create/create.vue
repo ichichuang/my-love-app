@@ -62,20 +62,18 @@
 
         <view class="paper-field">
           <text class="paper-field__question">想留下哪句话？</text>
-          <view id="create-content-field" class="paper-field__textarea-hitarea" @tap="requestCreateContentTextareaFocus">
+          <view id="create-content-field" class="paper-field__textarea-hitarea">
             <wd-textarea
               v-model="content"
               no-border
               :adjust-position="false"
-              :focus="createContentTextareaFocused"
               placeholder="写一点不想忘记的小事"
               :placeholder-style="placeholderStyle"
               :maxlength="1200"
               custom-class="paper-field__textarea-root"
               custom-textarea-container-class="paper-field__textarea-box"
               custom-textarea-class="paper-field__textarea-inner"
-              @focus="handleCreateContentTextareaFocus"
-              @blur="blurCreateContentTextarea"
+              @focus="focusField('#create-content-field')"
               @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
@@ -149,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, shallowRef, watch } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onBackPress, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
@@ -179,24 +177,6 @@ const saving = shallowRef(false)
 const saveSucceeded = shallowRef(false)
 const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "轻轻收好"))
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
-const createContentTextareaFocused = shallowRef(false)
-
-const requestCreateContentTextareaFocus = () => {
-  createContentTextareaFocused.value = false
-  nextTick(() => {
-    createContentTextareaFocused.value = true
-    focusField("#create-content-field")
-  })
-}
-
-const handleCreateContentTextareaFocus = () => {
-  createContentTextareaFocused.value = true
-  focusField("#create-content-field")
-}
-
-const blurCreateContentTextarea = () => {
-  createContentTextareaFocused.value = false
-}
 
 const imageRecoveryFileIDs = new Set<string>()
 const {

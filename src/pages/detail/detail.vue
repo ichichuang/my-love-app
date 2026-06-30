@@ -117,20 +117,18 @@
 
         <view class="paper-field">
           <text class="paper-field__question">想留下哪句话？</text>
-          <view id="detail-content-field" class="paper-field__textarea-hitarea" @tap="requestDetailContentTextareaFocus">
+          <view id="detail-content-field" class="paper-field__textarea-hitarea">
             <wd-textarea
               v-model="content"
               no-border
               :adjust-position="false"
-              :focus="detailContentTextareaFocused"
               placeholder="写一点不想忘记的小事"
               :placeholder-style="placeholderStyle"
               :maxlength="1200"
               custom-class="paper-field__textarea-root"
               custom-textarea-container-class="paper-field__textarea-box"
               custom-textarea-class="paper-field__textarea-inner"
-              @focus="handleDetailContentTextareaFocus"
-              @blur="blurDetailContentTextarea"
+              @focus="focusField('#detail-content-field')"
               @keyboardheightchange="syncKeyboardHeight"
             />
           </view>
@@ -212,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, shallowRef } from "vue"
+import { computed, shallowRef } from "vue"
 import { onBackPress, onLoad, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -252,24 +250,6 @@ const saving = shallowRef(false)
 const deleting = shallowRef(false)
 const removedFiles = shallowRef<CloudFile[]>([])
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
-const detailContentTextareaFocused = shallowRef(false)
-
-const requestDetailContentTextareaFocus = () => {
-  detailContentTextareaFocused.value = false
-  nextTick(() => {
-    detailContentTextareaFocused.value = true
-    focusField("#detail-content-field")
-  })
-}
-
-const handleDetailContentTextareaFocus = () => {
-  detailContentTextareaFocused.value = true
-  focusField("#detail-content-field")
-}
-
-const blurDetailContentTextarea = () => {
-  detailContentTextareaFocused.value = false
-}
 const {
   record: entry,
   loading,

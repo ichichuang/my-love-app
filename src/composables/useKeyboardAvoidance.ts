@@ -25,8 +25,11 @@ export const useKeyboardAvoidance = () => {
     }
   }
 
+  // mp-weixin/iOS native textarea can lose focus if the page mutates layout
+  // with setData while the keyboard is opening. Keep the spacer mounted but
+  // visually inert; visibility is handled by targeted pageScrollTo instead.
   const keyboardSpacerStyle = computed(() => ({
-    height: keyboardHeight.value > 0 ? `${keyboardHeight.value}px` : "0"
+    height: "0"
   }))
 
   const scrollFocusedFieldIntoView = (selector: string) => {
