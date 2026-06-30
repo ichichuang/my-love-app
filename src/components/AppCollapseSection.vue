@@ -78,45 +78,43 @@ onBeforeUnmount(clearTimers)
 </script>
 
 <style lang="scss" scoped>
+// 关键：不使用 display:grid + grid-template-rows:0fr↔1fr。
+// mp-weixin 不支持 grid-template-rows 过渡，且原生 input/textarea 在 grid 1fr 轨道
+// 配合 overflow:hidden 时会落入零高/被裁切的盒模型，导致点击无法聚焦、键盘不弹。
+// 改用 max-height + opacity + visibility 的稳定方案：展开态内容在常规流中、
+// 不被裁剪，原生输入框可正常聚焦；收起态 display:none（v-show）彻底移出交互。
 .app-collapse-section {
-  display: grid;
   width: 100%;
-  grid-template-rows: 0fr;
+  max-height: 0;
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(calc(-1 * var(--app-space-8)));
   visibility: hidden;
   transition:
-    grid-template-rows var(--app-collapse-duration) var(--app-ease-out),
+    max-height var(--app-collapse-duration) var(--app-ease-out),
     opacity var(--app-collapse-duration) var(--app-ease-out),
-    transform var(--app-collapse-duration) var(--app-ease-out),
     visibility var(--app-duration-instant) linear var(--app-collapse-duration);
-  will-change: grid-template-rows, opacity, transform;
+  will-change: max-height, opacity;
 }
 
 .app-collapse-section__inner {
-  min-height: 0;
-  overflow: hidden;
+  width: 100%;
 }
 
 .app-collapse-section--collapsed {
   opacity: 0;
-  transform: translateY(calc(-1 * var(--app-space-8)));
   visibility: hidden;
   pointer-events: none;
 }
 
 .app-collapse-section--expanded {
-  grid-template-rows: 1fr;
+  max-height: var(--app-collapse-max-height);
   opacity: 1;
-  transform: translateY(var(--app-space-0));
   visibility: visible;
   pointer-events: auto;
   transition:
-    grid-template-rows var(--app-collapse-duration) var(--app-ease-out),
+    max-height var(--app-collapse-duration) var(--app-ease-out),
     opacity var(--app-collapse-duration) var(--app-ease-out),
-    transform var(--app-collapse-duration) var(--app-ease-out),
     visibility var(--app-duration-instant);
 }
 </style>

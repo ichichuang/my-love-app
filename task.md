@@ -378,3 +378,32 @@
 - [x] Required validation：`pnpm scan:ui-copy`、`pnpm scan:design-tokens`、`pnpm type-check`、`pnpm type-check:strict`、`pnpm build:mp-weixin`、`git diff --check`。
 - [x] Forbidden-pattern searches：原生控件/反馈 API、DOM-only globals、GSAP、raw z-index/timing、依赖变更、AppDateField 外直接 `wd-datetime-picker` / `wd-popup`。
 - [ ] Runtime QA：微信开发者工具或真机验证 create/detail/task-edit 日期弹层，song/task 折叠，create/song/task/memo/detail 键盘，Toast/MessageBox，深色/大字/紧凑/窄屏。
+
+# 第五轮：键盘失焦根因修复与折叠动效修复（Round 5 Keyboard + Collapse Root-Cause Repair）
+
+**目标：** 只修复真机确认的「部分表单/textarea 点击不弹键盘」P0 问题，并连带修好折叠区动效断裂；不改业务逻辑、CloudBase、数据形状、路由语义、保存/删除、未保存离页、保存导航锁、上传清理、鉴权、存储格式、产品边界；不新增依赖。
+
+## 根因
+- `AppCollapseSection` 使用 `display:grid` + `grid-template-rows:0fr↔1fr` + `overflow:hidden` + `min-height:0` 包裹原生 `wd-input`/`wd-textarea`。mp-weixin 不支持 `grid-template-rows` 过渡，且原生 input/textarea 在 grid 1fr 轨道 + `overflow:hidden` 盒模型下落入零高/被裁切状态，点击无法聚焦 → 键盘不弹。
+- 受影响字段（均在折叠区内）：song-edit「是谁的版本」artist 输入框、「为什么想听」reason textarea；task-edit「想留点什么小备注」note textarea。
+- 非折叠字段（create/detail/memo 的 title/content/mood）使用 `:adjust-position="false"` + `useKeyboardAvoidance`，仅影响滚动、不阻断聚焦，键盘正常。
+
+## 修复
+- [x] `AppCollapseSection.vue`：移除 grid/grid-template-rows/min-height:0/inner overflow:hidden/transform，改用 `max-height` + `opacity` + `visibility` + `pointer-events` 稳定过渡；展开态内容在常规流中、不被裁切，原生输入框可聚焦；收起态由 v-show(display:none) 彻底移出交互。
+- [x] 新增并注册 `--app-collapse-max-height` 组件令牌（token-registry + size-resolver + tokens/component.scss 兜底），紧凑 1400rpx / 标准 1600rpx，为大字号与窄屏降列留余量。
+- [x] 保留 `useKeyboardAvoidance` 不变（已确认只在聚焦后做最小滚动，不阻断键盘）。
+- [x] 保留 AppDateField `wd-popup` + `wd-datetime-picker-view` + `root-portal=true` + `--app-z-index-picker`(1050) 不变；Toast(100000)/MessageBox(root-portal) 仍最顶层。
+- [x] 动效层沿用令牌化 CSS transition + `@keyframes` 的 GSAP-like 自有层；折叠由 grid-rows 瞬切改为 max-height 平滑过渡。
+
+## GSAP 决策
+- [x] 复核：`package.json`/`pnpm-lock.yaml` 无 gsap，源码无 gsap 引用。沿用第二轮结论：拒绝 GSAP（mp-weixin 无 DOM/window，GSAP 核心价值不适用；逐帧 setData 写回是性能反模式；ScrollTrigger/Draggable/Observer 依赖 DOM；core ≈70KB）。继续使用 GSAP-like 自有动效层，无新增依赖。
+
+## 验证
+- [x] `pnpm scan:ui-copy` 通过
+- [x] `pnpm scan:design-tokens` 通过
+- [x] `pnpm type-check` 通过
+- [x] `pnpm type-check:strict` 通过
+- [x] `pnpm build:mp-weixin` 通过（产物含 envId `love-d4g006mox4b78e5c6`、AppID `wx04b0ef4f0de5c5c5`，无 AppSecret，无 UnoCSS）
+- [x] `git diff --check` 通过
+- [x] 禁用项复扫通过：无原生反馈 API、无 DOM-only 全局、无 gsap、折叠组件无原始时长常量、AppDateField 外无直接 wd-popup/wd-datetime-picker、package.json/pnpm-lock 未变
+- [ ] Runtime QA：微信开发者工具或真机验证 song-edit/task-edit 折叠区内输入框点击弹键盘、折叠展开顺滑、create/detail/memo 键盘、日期弹层不透页、Toast/MessageBox 最顶、深色/大字/紧凑/窄屏。

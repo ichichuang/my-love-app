@@ -109,6 +109,9 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-entry-card-min-height": isCompact ? "156rpx" : "168rpx",
     "--app-safe-action-bottom-gap": isCompact ? "144rpx" : "156rpx",
     "--app-textarea-min-height": isCompact ? "232rpx" : "260rpx",
+    // 折叠区展开态保守高度上限：容纳歌曲/任务详情（含 textarea + 选项组），
+    // 且为大字号、窄屏降列留余量；超出时由外层 overflow:hidden 兜底，不裁剪已展开的原生输入框
+    "--app-collapse-max-height": isCompact ? "1400rpx" : "1600rpx",
 
     "--app-shell-header-gap": spacing.xl,
     "--app-shell-header-bottom": isCompact ? "26rpx" : "30rpx",

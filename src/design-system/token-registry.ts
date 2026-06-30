@@ -376,6 +376,7 @@ export const componentVarNames = [
   "--app-entry-card-min-height",
   "--app-safe-action-bottom-gap",
   "--app-textarea-min-height",
+  "--app-collapse-max-height",
   "--app-shell-header-gap",
   "--app-shell-header-bottom",
   "--app-shell-header-top",
