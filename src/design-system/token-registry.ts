@@ -325,7 +325,8 @@ export const shadowVarNames = [
   "--app-shadow-button",
   "--app-shadow-image",
   "--app-shadow-logo",
-  "--app-shadow-focus"
+  "--app-shadow-focus",
+  "--app-shadow-focus-inset"
 ] as const
 
 export type ShadowVarName = (typeof shadowVarNames)[number]
@@ -402,6 +403,7 @@ export const componentVarNames = [
   "--app-image-remove-height",
   "--app-image-remove-padding-x",
   "--app-option-group-gap",
+  "--app-option-group-safe-inset",
   "--app-option-group-auto-min-width",
   "--app-option-group-swatch-min-width",
   "--app-paper-tag-field-min-width",

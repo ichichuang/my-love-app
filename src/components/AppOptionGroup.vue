@@ -28,6 +28,8 @@ const responsiveClass = computed(() => `app-option-group--${props.responsive}`)
 .app-option-group {
   display: grid;
   min-width: 0;
+  padding: var(--app-option-group-safe-inset);
+  overflow: visible;
   grid-template-columns: repeat(var(--app-option-group-columns), minmax(0, 1fr));
   gap: var(--app-option-group-gap);
 }

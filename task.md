@@ -407,3 +407,17 @@
 - [x] `git diff --check` 通过
 - [x] 禁用项复扫通过：无原生反馈 API、无 DOM-only 全局、无 gsap、折叠组件无原始时长常量、AppDateField 外无直接 wd-popup/wd-datetime-picker、package.json/pnpm-lock 未变
 - [ ] Runtime QA：微信开发者工具或真机验证 song-edit/task-edit 折叠区内输入框点击弹键盘、折叠展开顺滑、create/detail/memo 键盘、日期弹层不透页、Toast/MessageBox 最顶、深色/大字/紧凑/窄屏。
+
+# 第六轮：选项高亮裁切与 textarea 聚焦修复（P0/P1 Runtime Repair）
+
+**目标：** 只修复真机确认的选项选中态被裁切、以及大块可见 textarea 点击不稳定弹键盘问题；不新增依赖、不改业务逻辑、不改 CloudBase / 路由 / 保存删除 / 上传清理 / 鉴权 / 产品边界。
+
+- [x] 确认 `AppOptionButton` 选中态使用外扩 `box-shadow`，在折叠区、票根/纸页等 `overflow:hidden` 容器内会被父级裁切。
+- [x] 将选中态高亮改为内部 ring，并给 option group 保留安全内距，避免依赖父级 overflow 可见性。
+- [x] 确认 Wot `wd-textarea` 的可见容器不等同于原生 textarea 完整点击热区，且 textarea 组件本身不从根容器 click 主动聚焦。
+- [x] 给 create/detail/song/task/memo 的大 textarea 增加 wrapper tap -> Wot `focus` 的安全聚焦路径，并在 blur 后复位。
+- [x] 让 Wot textarea value 容器与原生 textarea 填满可见纸页输入区域。
+- [x] 给纸页折角、虚线、票根孔、贴纸线等纯装饰层补充 `pointer-events:none`。
+- [x] 源码验证：`scan:ui-copy`、`scan:design-tokens`、`type-check`、`type-check:strict`、`build:mp-weixin`、`git diff --check`。
+- [x] 禁用项复扫：原生业务控件/反馈 API、DOM-only 全局、GSAP/依赖变更、raw z-index/timing、AppDateField 外直接 picker/popup。
+- [ ] Runtime QA：微信开发者工具或真机验证 create/song/task/memo/detail/settings 的高亮、textarea/input 键盘、折叠、日期弹层、Toast/MessageBox。

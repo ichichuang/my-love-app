@@ -48,6 +48,7 @@ const handleClick = () => {
 .app-option-button {
   @include pressable;
   position: relative;
+  box-sizing: border-box;
   display: flex;
   min-width: 0;
   width: 100%;
@@ -61,6 +62,7 @@ const handleClick = () => {
   color: var(--app-text);
   font: var(--app-font-button);
   line-height: var(--app-line-height-normal);
+  box-shadow: var(--app-shadow-none);
   text-align: center;
   transition:
     background-color var(--app-transition-normal),
@@ -79,7 +81,7 @@ const handleClick = () => {
   height: var(--app-space-3);
   border-radius: var(--app-radius-round);
   background: var(--app-primary);
-  box-shadow: 0 0 4rpx var(--app-primary-soft);
+  box-shadow: var(--app-shadow-none);
   animation: app-pop-in var(--app-duration-fast) var(--app-ease-bounce) both;
 }
 
@@ -87,7 +89,7 @@ const handleClick = () => {
   border-color: var(--app-primary);
   background: var(--app-surface-strong);
   color: var(--app-primary);
-  box-shadow: var(--app-shadow-focus);
+  box-shadow: var(--app-shadow-focus-inset);
   // 选中像盖一下小印章：轻轻弹一下再落定（无 fill，按压仍然生效）
   animation: app-tap-pop var(--app-duration-normal) var(--app-ease-bounce);
 }

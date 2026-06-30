@@ -143,6 +143,7 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-image-remove-padding-x": isCompact ? "12rpx" : "14rpx",
 
     "--app-option-group-gap": isCompact ? "12rpx" : "14rpx",
+    "--app-option-group-safe-inset": isCompact ? "6rpx" : "8rpx",
     "--app-option-group-auto-min-width": isLargeFont
       ? (isCompact ? "212rpx" : "224rpx")
       : (isCompact ? "172rpx" : "184rpx"),
@@ -170,6 +171,7 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",
+    "--app-shadow-focus-inset": "inset 0 0 0 var(--app-border-width-focus) var(--app-color-border-focus-ring)",
     "--app-duration-fast": `${motionDurations.fast}ms`,
     "--app-duration-normal": `${motionDurations.normal}ms`,
     "--app-duration-slow": `${motionDurations.slow}ms`,

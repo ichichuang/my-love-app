@@ -53,6 +53,12 @@
   width: 100%;
 }
 
+@mixin wot-paper-textarea-value {
+  @include wot-paper-control-value;
+  display: flex;
+  min-height: var(--app-textarea-min-height);
+}
+
 @mixin wot-paper-input-inner {
   min-height: var(--app-input-height);
   color: var(--app-text);
@@ -69,12 +75,20 @@
 @mixin wot-paper-textarea-root {
   @include field;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   min-height: var(--app-textarea-min-height);
   padding: var(--app-field-padding-x);
   overflow: hidden;
 }
 
 @mixin wot-paper-textarea-inner {
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+  height: var(--app-textarea-min-height);
   min-height: var(--app-textarea-min-height);
   color: var(--app-text);
   font-size: var(--app-font-size-xl);

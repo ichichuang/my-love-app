@@ -60,21 +60,25 @@
           />
         </view>
 
-        <view id="create-content-field" class="paper-field">
+        <view class="paper-field">
           <text class="paper-field__question">想留下哪句话？</text>
-          <wd-textarea
-            v-model="content"
-            no-border
-            :adjust-position="false"
-            placeholder="写一点不想忘记的小事"
-            :placeholder-style="placeholderStyle"
-            :maxlength="1200"
-            custom-class="paper-field__textarea-root"
-            custom-textarea-container-class="paper-field__textarea-box"
-            custom-textarea-class="paper-field__textarea-inner"
-            @focus="focusField('#create-content-field')"
-            @keyboardheightchange="syncKeyboardHeight"
-          />
+          <view id="create-content-field" class="paper-field__textarea-hitarea" @tap="requestCreateContentTextareaFocus">
+            <wd-textarea
+              v-model="content"
+              no-border
+              :adjust-position="false"
+              :focus="createContentTextareaFocused"
+              placeholder="写一点不想忘记的小事"
+              :placeholder-style="placeholderStyle"
+              :maxlength="1200"
+              custom-class="paper-field__textarea-root"
+              custom-textarea-container-class="paper-field__textarea-box"
+              custom-textarea-class="paper-field__textarea-inner"
+              @focus="handleCreateContentTextareaFocus"
+              @blur="blurCreateContentTextarea"
+              @keyboardheightchange="syncKeyboardHeight"
+            />
+          </view>
         </view>
 
         <view class="paper-tag-row">
@@ -145,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch } from "vue"
+import { computed, nextTick, shallowRef, watch } from "vue"
 import { onBackPress, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
@@ -175,6 +179,24 @@ const saving = shallowRef(false)
 const saveSucceeded = shallowRef(false)
 const saveButtonText = computed(() => (saving.value ? "正在轻轻收好" : "轻轻收好"))
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
+const createContentTextareaFocused = shallowRef(false)
+
+const requestCreateContentTextareaFocus = () => {
+  createContentTextareaFocused.value = false
+  nextTick(() => {
+    createContentTextareaFocused.value = true
+    focusField("#create-content-field")
+  })
+}
+
+const handleCreateContentTextareaFocus = () => {
+  createContentTextareaFocused.value = true
+  focusField("#create-content-field")
+}
+
+const blurCreateContentTextarea = () => {
+  createContentTextareaFocused.value = false
+}
 
 const imageRecoveryFileIDs = new Set<string>()
 const {
@@ -386,6 +408,7 @@ onUnload(() => {
   content: "";
   opacity: var(--app-decor-opacity);
   transform: rotate(-7deg);
+  pointer-events: none;
 }
 
 .create-hero__copy {
@@ -418,6 +441,7 @@ onUnload(() => {
   right: var(--app-card-padding);
   display: flex;
   gap: var(--app-space-4);
+  pointer-events: none;
 }
 
 .create-hero__mark {
@@ -456,6 +480,7 @@ onUnload(() => {
   border-top: var(--app-panel-border-width) dashed var(--app-divider);
   content: "";
   opacity: var(--app-decor-opacity);
+  pointer-events: none;
 }
 
 .memory-paper::before {
@@ -477,6 +502,7 @@ onUnload(() => {
   border-bottom-left-radius: var(--app-radius-md);
   background: var(--app-primary-soft);
   opacity: var(--app-decor-opacity);
+  pointer-events: none;
 }
 
 .memory-paper__header {
@@ -524,8 +550,7 @@ onUnload(() => {
   font: var(--app-font-section-title);
 }
 
-:deep(.paper-field__input-root),
-:deep(.paper-field__textarea-root) {
+:deep(.paper-field__input-root) {
   @include wot-paper-input-root;
 }
 
@@ -533,14 +558,22 @@ onUnload(() => {
   @include wot-paper-textarea-root;
 }
 
+.paper-field__textarea-hitarea {
+  display: block;
+  width: 100%;
+}
+
 :deep(.paper-field__input-root--title) {
   background: var(--app-surface);
 }
 
 :deep(.paper-field__input-root .wd-input__body),
-:deep(.paper-field__input-root .wd-input__value),
-:deep(.paper-field__textarea-root .wd-textarea__value) {
+:deep(.paper-field__input-root .wd-input__value) {
   @include wot-paper-control-value;
+}
+
+:deep(.paper-field__textarea-root .wd-textarea__value) {
+  @include wot-paper-textarea-value;
 }
 
 :deep(.paper-field__input-inner) {

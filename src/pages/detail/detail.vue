@@ -115,21 +115,25 @@
           />
         </view>
 
-        <view id="detail-content-field" class="paper-field">
+        <view class="paper-field">
           <text class="paper-field__question">想留下哪句话？</text>
-          <wd-textarea
-            v-model="content"
-            no-border
-            :adjust-position="false"
-            placeholder="写一点不想忘记的小事"
-            :placeholder-style="placeholderStyle"
-            :maxlength="1200"
-            custom-class="paper-field__textarea-root"
-            custom-textarea-container-class="paper-field__textarea-box"
-            custom-textarea-class="paper-field__textarea-inner"
-            @focus="focusField('#detail-content-field')"
-            @keyboardheightchange="syncKeyboardHeight"
-          />
+          <view id="detail-content-field" class="paper-field__textarea-hitarea" @tap="requestDetailContentTextareaFocus">
+            <wd-textarea
+              v-model="content"
+              no-border
+              :adjust-position="false"
+              :focus="detailContentTextareaFocused"
+              placeholder="写一点不想忘记的小事"
+              :placeholder-style="placeholderStyle"
+              :maxlength="1200"
+              custom-class="paper-field__textarea-root"
+              custom-textarea-container-class="paper-field__textarea-box"
+              custom-textarea-class="paper-field__textarea-inner"
+              @focus="handleDetailContentTextareaFocus"
+              @blur="blurDetailContentTextarea"
+              @keyboardheightchange="syncKeyboardHeight"
+            />
+          </view>
         </view>
 
         <view class="paper-tag-row">
@@ -208,7 +212,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
+import { computed, nextTick, shallowRef } from "vue"
 import { onBackPress, onLoad, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -248,6 +252,24 @@ const saving = shallowRef(false)
 const deleting = shallowRef(false)
 const removedFiles = shallowRef<CloudFile[]>([])
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
+const detailContentTextareaFocused = shallowRef(false)
+
+const requestDetailContentTextareaFocus = () => {
+  detailContentTextareaFocused.value = false
+  nextTick(() => {
+    detailContentTextareaFocused.value = true
+    focusField("#detail-content-field")
+  })
+}
+
+const handleDetailContentTextareaFocus = () => {
+  detailContentTextareaFocused.value = true
+  focusField("#detail-content-field")
+}
+
+const blurDetailContentTextarea = () => {
+  detailContentTextareaFocused.value = false
+}
 const {
   record: entry,
   loading,
@@ -732,6 +754,7 @@ onUnload(() => {
   border-top: var(--app-panel-border-width) dashed var(--app-divider);
   content: "";
   opacity: var(--app-decor-opacity);
+  pointer-events: none;
 }
 
 .memory-sheet::before,
@@ -756,6 +779,7 @@ onUnload(() => {
   border-bottom-left-radius: var(--app-radius-md);
   background: var(--app-primary-soft);
   opacity: var(--app-decor-opacity);
+  pointer-events: none;
 }
 
 .memory-sheet__header,
@@ -920,8 +944,7 @@ onUnload(() => {
   font: var(--app-font-section-title);
 }
 
-:deep(.paper-field__input-root),
-:deep(.paper-field__textarea-root) {
+:deep(.paper-field__input-root) {
   @include wot-paper-input-root;
 }
 
@@ -929,14 +952,22 @@ onUnload(() => {
   @include wot-paper-textarea-root;
 }
 
+.paper-field__textarea-hitarea {
+  display: block;
+  width: 100%;
+}
+
 :deep(.paper-field__input-root--title) {
   background: var(--app-surface);
 }
 
 :deep(.paper-field__input-root .wd-input__body),
-:deep(.paper-field__input-root .wd-input__value),
-:deep(.paper-field__textarea-root .wd-textarea__value) {
+:deep(.paper-field__input-root .wd-input__value) {
   @include wot-paper-control-value;
+}
+
+:deep(.paper-field__textarea-root .wd-textarea__value) {
+  @include wot-paper-textarea-value;
 }
 
 :deep(.paper-field__input-inner) {

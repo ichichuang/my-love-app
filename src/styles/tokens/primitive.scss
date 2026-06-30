@@ -110,6 +110,7 @@ page {
   --app-shadow-lg: 0 24rpx 80rpx var(--app-shadow-color-card);
   --app-shadow-xl: 0 28rpx 96rpx var(--app-shadow-color-dark);
   --app-shadow-focus: 0 0 0 4rpx var(--app-color-primary);
+  --app-shadow-focus-inset: inset 0 0 0 2rpx var(--app-color-primary);
 
   --app-duration-fast: 180ms;
   --app-duration-normal: 260ms;

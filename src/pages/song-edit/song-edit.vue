@@ -98,22 +98,26 @@
               />
             </view>
 
-            <view id="song-content-field" class="song-field">
+            <view class="song-field">
               <text class="song-field__prompt">为什么想听？</text>
-              <wd-textarea
-                v-model="content"
-                no-border
-                :adjust-position="false"
-                :disabled="formDisabled"
-                placeholder="为什么想听这首？"
-                :placeholder-style="placeholderStyle"
-                :maxlength="240"
-                custom-class="song-field__textarea-root"
-                custom-textarea-container-class="song-field__textarea-box"
-                custom-textarea-class="song-field__textarea-inner"
-                @focus="focusField('#song-content-field')"
-                @keyboardheightchange="syncKeyboardHeight"
-              />
+              <view id="song-content-field" class="song-field__textarea-hitarea" @tap="requestSongContentTextareaFocus">
+                <wd-textarea
+                  v-model="content"
+                  no-border
+                  :adjust-position="false"
+                  :disabled="formDisabled"
+                  :focus="songContentTextareaFocused"
+                  placeholder="为什么想听这首？"
+                  :placeholder-style="placeholderStyle"
+                  :maxlength="240"
+                  custom-class="song-field__textarea-root"
+                  custom-textarea-container-class="song-field__textarea-box"
+                  custom-textarea-class="song-field__textarea-inner"
+                  @focus="handleSongContentTextareaFocus"
+                  @blur="blurSongContentTextarea"
+                  @keyboardheightchange="syncKeyboardHeight"
+                />
+              </view>
             </view>
 
             <view class="song-note__section">
@@ -183,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch } from "vue"
+import { computed, nextTick, shallowRef, watch } from "vue"
 import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -212,6 +216,30 @@ const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
+const songContentTextareaFocused = shallowRef(false)
+
+const requestSongContentTextareaFocus = () => {
+  if (formDisabled.value) {
+    return
+  }
+
+  songContentTextareaFocused.value = false
+  nextTick(() => {
+    songContentTextareaFocused.value = true
+    focusField("#song-content-field")
+  })
+}
+
+const handleSongContentTextareaFocus = () => {
+  if (!formDisabled.value) {
+    songContentTextareaFocused.value = true
+    focusField("#song-content-field")
+  }
+}
+
+const blurSongContentTextarea = () => {
+  songContentTextareaFocused.value = false
+}
 
 const songId = shallowRef("")
 const hasLoadError = shallowRef(false)
@@ -603,6 +631,7 @@ onBackPress((options) => {
   content: "";
   opacity: var(--app-decor-opacity);
   transform: rotate(-3deg);
+  pointer-events: none;
 }
 
 .song-note::after {
@@ -615,6 +644,7 @@ onBackPress((options) => {
   content: "";
   opacity: var(--app-decor-opacity);
   transform: rotate(-2deg);
+  pointer-events: none;
 }
 
 .song-note__head {
@@ -762,8 +792,7 @@ onBackPress((options) => {
   font: var(--app-font-section-title);
 }
 
-:deep(.song-field__input-root),
-:deep(.song-field__textarea-root) {
+:deep(.song-field__input-root) {
   @include wot-paper-input-root;
 }
 
@@ -771,10 +800,18 @@ onBackPress((options) => {
   @include wot-paper-textarea-root;
 }
 
+.song-field__textarea-hitarea {
+  display: block;
+  width: 100%;
+}
+
 :deep(.song-field__input-root .wd-input__body),
-:deep(.song-field__input-root .wd-input__value),
-:deep(.song-field__textarea-root .wd-textarea__value) {
+:deep(.song-field__input-root .wd-input__value) {
   @include wot-paper-control-value;
+}
+
+:deep(.song-field__textarea-root .wd-textarea__value) {
+  @include wot-paper-textarea-value;
 }
 
 :deep(.song-field__input-inner) {

@@ -80,22 +80,26 @@
 
         <app-collapse-section :expanded="detailsExpanded">
           <view class="task-ticket__details">
-            <view id="task-content-field" class="task-field">
+            <view class="task-field">
               <text class="task-field__prompt">想留点什么小备注？</text>
-              <wd-textarea
-                v-model="content"
-                no-border
-                :adjust-position="false"
-                :disabled="formDisabled"
-                placeholder="留一点小备注"
-                :placeholder-style="placeholderStyle"
-                :maxlength="240"
-                custom-class="task-field__textarea-root"
-                custom-textarea-container-class="task-field__textarea-box"
-                custom-textarea-class="task-field__textarea-inner"
-                @focus="focusField('#task-content-field')"
-                @keyboardheightchange="syncKeyboardHeight"
-              />
+              <view id="task-content-field" class="task-field__textarea-hitarea" @tap="requestTaskContentTextareaFocus">
+                <wd-textarea
+                  v-model="content"
+                  no-border
+                  :adjust-position="false"
+                  :disabled="formDisabled"
+                  :focus="taskContentTextareaFocused"
+                  placeholder="留一点小备注"
+                  :placeholder-style="placeholderStyle"
+                  :maxlength="240"
+                  custom-class="task-field__textarea-root"
+                  custom-textarea-container-class="task-field__textarea-box"
+                  custom-textarea-class="task-field__textarea-inner"
+                  @focus="handleTaskContentTextareaFocus"
+                  @blur="blurTaskContentTextarea"
+                  @keyboardheightchange="syncKeyboardHeight"
+                />
+              </view>
             </view>
 
             <view class="task-field">
@@ -160,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch } from "vue"
+import { computed, nextTick, shallowRef, watch } from "vue"
 import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
@@ -186,6 +190,30 @@ const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
 const { keyboardSpacerStyle, syncKeyboardHeight, focusField } = useKeyboardAvoidance()
+const taskContentTextareaFocused = shallowRef(false)
+
+const requestTaskContentTextareaFocus = () => {
+  if (formDisabled.value) {
+    return
+  }
+
+  taskContentTextareaFocused.value = false
+  nextTick(() => {
+    taskContentTextareaFocused.value = true
+    focusField("#task-content-field")
+  })
+}
+
+const handleTaskContentTextareaFocus = () => {
+  if (!formDisabled.value) {
+    taskContentTextareaFocused.value = true
+    focusField("#task-content-field")
+  }
+}
+
+const blurTaskContentTextarea = () => {
+  taskContentTextareaFocused.value = false
+}
 
 const taskId = shallowRef("")
 const hasLoadError = shallowRef(false)
@@ -550,6 +578,7 @@ onBackPress((options) => {
   background: var(--app-field);
   content: "";
   opacity: var(--app-muted-opacity);
+  pointer-events: none;
 }
 
 .task-ticket::after {
@@ -562,6 +591,7 @@ onBackPress((options) => {
   content: "";
   opacity: var(--app-decor-opacity);
   transform: rotate(-3deg);
+  pointer-events: none;
 }
 
 .task-ticket--done {
@@ -575,6 +605,7 @@ onBackPress((options) => {
   bottom: var(--app-space-24);
   border-left: var(--app-panel-border-width) dashed var(--app-border);
   opacity: var(--app-decor-opacity);
+  pointer-events: none;
 }
 
 .task-ticket__head {
@@ -644,6 +675,7 @@ onBackPress((options) => {
   height: var(--app-panel-border-width);
   background: var(--app-divider);
   content: "";
+  pointer-events: none;
 }
 
 .task-title-slip__pin {
@@ -653,6 +685,7 @@ onBackPress((options) => {
   height: var(--app-space-5);
   border-radius: var(--app-radius-round);
   opacity: var(--app-decor-opacity);
+  pointer-events: none;
 }
 
 .task-title-slip__pin--red {
@@ -721,8 +754,7 @@ onBackPress((options) => {
   gap: var(--app-space-5);
 }
 
-:deep(.task-field__input-root),
-:deep(.task-field__textarea-root) {
+:deep(.task-field__input-root) {
   @include wot-paper-input-root;
 }
 
@@ -730,10 +762,18 @@ onBackPress((options) => {
   @include wot-paper-textarea-root;
 }
 
+.task-field__textarea-hitarea {
+  display: block;
+  width: 100%;
+}
+
 :deep(.task-field__input-root .wd-input__body),
-:deep(.task-field__input-root .wd-input__value),
-:deep(.task-field__textarea-root .wd-textarea__value) {
+:deep(.task-field__input-root .wd-input__value) {
   @include wot-paper-control-value;
+}
+
+:deep(.task-field__textarea-root .wd-textarea__value) {
+  @include wot-paper-textarea-value;
 }
 
 :deep(.task-field__input-inner) {
