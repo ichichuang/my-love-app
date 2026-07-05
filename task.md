@@ -421,3 +421,40 @@
 - [x] 源码验证：`scan:ui-copy`、`scan:design-tokens`、`type-check`、`type-check:strict`、`build:mp-weixin`、`git diff --check`。
 - [x] 禁用项复扫：原生业务控件/反馈 API、DOM-only 全局、GSAP/依赖变更、raw z-index/timing、AppDateField 外直接 picker/popup。
 - [ ] Runtime QA：微信开发者工具或真机验证 create/song/task/memo/detail/settings 的高亮、textarea/input 键盘、折叠、日期弹层、Toast/MessageBox。
+
+# 第七轮：UI 兼容性与主题适配审计修复（Round 7 Theme + Form Compatibility Pass）
+
+**目标：** 只修复真机确认的「表单组件深浅色适配不一致、深色字段泥灰低对比、歌曲编辑标题输入与整体脱节」等问题；不改业务逻辑、CloudBase、数据形状、路由语义、保存/删除、未保存离页、保存导航锁、上传清理、鉴权、存储格式、产品边界；不新增依赖。
+
+## 审计结论（源码级）
+- 令牌纪律良好：`src/pages`、`src/components` 内 `<style>` 无原始 hex/rpx/px/ms/cubic-bezier；仅 `z-index:1/0`、`opacity:0/1` 字面量（局部层叠与动画状态，扫描器允许，且为本仓既有约定）。
+- 无原生反馈 API、无 DOM-only 全局、无 gsap、AppDateField 外无直接 `wd-popup`/`wd-datetime-picker`、`package.json`/`pnpm-lock.yaml` 未变。
+- P0 输入/textarea 可点可聚焦：所有字段均保留 hitarea + `focusField` + `:adjust-position="false"`（前序轮次已修复，本轮未触碰）。
+
+## 根因
+1. 深色泥灰（P1，系统性）：`palettes.ts` 中深色 `inputBase = mix(page, card, 0.36)`，使 `--app-field` 比卡片(`--app-surface`)更暗，与浅色层级相反 → 所有 input/textarea、选项按钮、标题纸条、chip、日期触发器在深色下呈凹陷泥灰。
+2. song-edit 标题（P2，明确投诉）：`song-title-slip` 为带边框盒子 + `::after` 下划线 + primary 色《》引号的专属样式，与 create/detail 的扁平标题字段及其他兄弟字段不一致；且落在泥灰 `--app-field` 上。
+3. AppDateField 弹层（P1）：sheet/toolbar 用 `--app-bg`（页面最暗色），可读但偏重。
+
+## 修复
+- [x] `palettes.ts`：深色 `inputBase` 改为 `mix(card, text, 0.05)`，字段表面略亮于卡片（向暖色文字轻提），消除泥灰凹陷；浅色不变。选中态由 primary 描边/文字区分，不依赖背景反差。
+- [x] `dark.scss`：首帧兜底 `--app-color-bg-input` 由 `#182234` 改为 `#27324a`（略亮于卡片，方向与运行时一致）。
+- [x] `AppDateField.vue`：弹层 sheet/picker-shell/picker-view 背景 → `--app-surface`；toolbar/roller → `--app-surface-strong`；`popupStyle` 背景 → `--app-surface`。不透明、可读、卡片调性。
+- [x] `song-edit.vue`：移除 `song-title-slip` 盒子 + `::after` 下划线 + 《》引号；改为 `song-field--title`（`wot-paper-input-root` + `wot-paper-title-input-inner`），与歌手/原因字段一致，全字段可点。
+- [x] 标题统一：create/detail 移除 `--app-surface` 标题覆盖（标题用 `--app-field`，与心情/正文一致）；task-edit 移除 `task-title-slip` 盒子+下划线+红蓝别针 → `task-field--title`；memo-edit 移除 `memo-title-slip` 盒子 → `memo-field--title`。五页标题统一为「`wot-paper-input-root` 字段 + title 排版」。
+- [x] 选项选中态：沿用前序轮次内部 ring（`box-shadow` inset + primary 描边/文字），不裁切；深色下经字段表面修复后未选中/选中均清晰。
+
+## 验证
+- [x] `pnpm scan:ui-copy`（通过）
+- [x] `pnpm scan:design-tokens`（通过；palette 字段表面调整通过对比校验）
+- [x] `pnpm type-check`（通过）
+- [x] `pnpm type-check:strict`（通过）
+- [x] `pnpm build:mp-weixin`（通过；产物含 envId `love-d4g006mox4b78e5c6`、AppID `wx04b0ef4f0de5c5c5`，无 AppSecret，无 UnoCSS）
+- [x] `git diff --check`（通过）
+- [x] 禁用项复扫：无原生控件/反馈 API、无 DOM-only 全局（仓库 `document` 仅为局部变量名）、无 gsap、AppDateField 外无 `wd-popup`/`wd-datetime-picker`、`package.json`/`pnpm-lock.yaml` 未变
+- [ ] Runtime QA：真机/开发者工具验证 深色/浅色 字段与选项、歌曲/任务/备忘/回忆/详情 标题、日期弹层、Toast/MessageBox、键盘、大字/紧凑/窄屏
+
+## 取舍
+- 未引入 `--app-z-index-raised` 令牌收敛 `z-index:1`（既有 36 处约定，扫描器允许，本轮净增为零，留作独立后续）。
+- 深色字段改为「略亮于卡片」（标准深色模式抬升字段），浅色保持「温和内嵌」；二者方向不同但均为可读净面，符合「不要全部变暗」「避免泥灰」。
+- 未改 list 页 chip/stamp 的 `--app-field` 用法：经字段表面修复后自动由泥灰转为净面 chip，无需逐处改动。

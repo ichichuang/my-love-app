@@ -42,8 +42,7 @@
           <text class="memo-note__stamp">{{ noteStampText }}</text>
         </view>
 
-        <view id="memo-title-field" class="memo-title-slip">
-          <text class="memo-field__prompt">想记住什么？</text>
+        <view id="memo-title-field" class="memo-field memo-field--title">
           <wd-input
             v-model="title"
             no-border
@@ -52,8 +51,8 @@
             placeholder="比如：她喜欢的花"
             :placeholder-style="placeholderStyle"
             :maxlength="48"
-            custom-class="memo-title-slip__input-root"
-            custom-input-class="memo-title-slip__input-inner"
+            custom-class="memo-field__input-root"
+            custom-input-class="memo-field__input-inner memo-field__input-inner--title"
             @focus="focusField('#memo-title-field')"
             @keyboardheightchange="syncKeyboardHeight"
           />
@@ -629,35 +628,27 @@ onBackPress((options) => {
   transform: rotate(3deg);
 }
 
-.memo-title-slip,
+.memo-field--title,
 .memo-note__footer,
 .memo-saved {
   position: relative;
   z-index: 1;
 }
 
-.memo-title-slip {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-space-5);
-  padding: var(--app-space-7) var(--app-field-padding-x);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-input);
-  background: var(--app-field);
-}
-
-:deep(.memo-title-slip__input-root) {
+:deep(.memo-field__input-root) {
   @include wot-paper-input-root;
-  border: 0;
-  background: transparent;
 }
 
-:deep(.memo-title-slip__input-root .wd-input__body),
-:deep(.memo-title-slip__input-root .wd-input__value) {
+:deep(.memo-field__input-root .wd-input__body),
+:deep(.memo-field__input-root .wd-input__value) {
   @include wot-paper-control-value;
 }
 
-:deep(.memo-title-slip__input-inner) {
+:deep(.memo-field__input-inner) {
+  @include wot-paper-input-inner;
+}
+
+:deep(.memo-field__input-inner--title) {
   @include wot-paper-title-input-inner;
 }
 
@@ -693,7 +684,7 @@ onBackPress((options) => {
   @include wot-paper-textarea-inner;
 }
 
-:deep(.memo-title-slip__input-root.is-disabled),
+:deep(.memo-field__input-root.is-disabled),
 :deep(.memo-field__textarea-root.is-disabled) {
   @include wot-paper-control-disabled;
 }

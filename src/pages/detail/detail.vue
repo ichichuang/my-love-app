@@ -937,10 +937,6 @@ onUnload(() => {
   width: 100%;
 }
 
-:deep(.paper-field__input-root--title) {
-  background: var(--app-surface);
-}
-
 :deep(.paper-field__input-root .wd-input__body),
 :deep(.paper-field__input-root .wd-input__value) {
   @include wot-paper-control-value;

@@ -47,9 +47,7 @@
           <text class="task-ticket__stamp">小票根</text>
         </view>
 
-        <view id="task-title-field" class="task-title-slip">
-          <view class="task-title-slip__pin task-title-slip__pin--red" />
-          <view class="task-title-slip__pin task-title-slip__pin--blue" />
+        <view id="task-title-field" class="task-field task-field--title">
           <wd-input
             v-model="title"
             no-border
@@ -58,8 +56,8 @@
             placeholder="比如：一起去看一场日落"
             :placeholder-style="placeholderStyle"
             :maxlength="48"
-            custom-class="task-title-slip__input-root"
-            custom-input-class="task-title-slip__input-inner"
+            custom-class="task-field__input-root"
+            custom-input-class="task-field__input-inner task-field__input-inner--title"
             @focus="focusField('#task-title-field')"
             @keyboardheightchange="syncKeyboardHeight"
           />
@@ -632,58 +630,12 @@ onBackPress((options) => {
   transform: rotate(3deg);
 }
 
-.task-title-slip {
+.task-field--title {
   position: relative;
   z-index: 1;
-  padding: var(--app-space-5) var(--app-space-0);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-input);
-  background: var(--app-field);
 }
 
-.task-title-slip::after {
-  position: absolute;
-  right: var(--app-field-padding-x);
-  bottom: var(--app-space-5);
-  left: var(--app-field-padding-x);
-  height: var(--app-panel-border-width);
-  background: var(--app-divider);
-  content: "";
-  pointer-events: none;
-}
-
-.task-title-slip__pin {
-  position: absolute;
-  top: var(--app-space-6);
-  width: var(--app-space-5);
-  height: var(--app-space-5);
-  border-radius: var(--app-radius-round);
-  opacity: var(--app-decor-opacity);
-  pointer-events: none;
-}
-
-.task-title-slip__pin--red {
-  left: var(--app-space-6);
-  background: var(--app-color-red-person);
-}
-
-.task-title-slip__pin--blue {
-  right: var(--app-space-6);
-  background: var(--app-color-blue-person);
-}
-
-:deep(.task-title-slip__input-root) {
-  @include wot-paper-input-root;
-  border: 0;
-  background: transparent;
-}
-
-:deep(.task-title-slip__input-root .wd-input__body),
-:deep(.task-title-slip__input-root .wd-input__value) {
-  @include wot-paper-control-value;
-}
-
-:deep(.task-title-slip__input-inner) {
+:deep(.task-field__input-inner--title) {
   @include wot-paper-title-input-inner;
 }
 

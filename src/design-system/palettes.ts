@@ -365,7 +365,10 @@ const makeScheme = (seed: PaletteSchemeSeed, mode: AppTheme): SemanticColorSchem
   const pageMuted = mode === "light" ? mix(seed.page, seed.text, 0.075) : mix(seed.page, seed.card, 0.82)
   const cardSoft = mode === "light" ? mix(seed.card, seed.primary, 0.035) : mix(seed.card, seed.primary, 0.07)
   const cardMuted = mode === "light" ? mix(seed.page, seed.primary, 0.07) : mix(seed.page, seed.card, 0.46)
-  const inputBase = mode === "light" ? mix(seed.card, seed.page, 0.58) : mix(seed.page, seed.card, 0.36)
+  // 浅色：字段表面向纸页底色轻沉，呈温和内嵌的纸面。
+  // 深色：字段表面向暖色文字轻提，略亮于卡片，避免“比卡片更暗”的低对比泥灰凹陷；
+  // 选中态由 primary 描边与文字区分，不依赖与未选中态的背景反差。
+  const inputBase = mode === "light" ? mix(seed.card, seed.page, 0.58) : mix(seed.card, seed.text, 0.05)
   const controlBase = mode === "light" ? mix(seed.page, seed.primary, 0.04) : mix(seed.card, seed.primary, 0.06)
   const primary = makeToneRole(seed.primary, mode)
   const accent = makeToneRole(seed.accent, mode)

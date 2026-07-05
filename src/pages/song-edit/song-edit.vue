@@ -46,24 +46,20 @@
           <text class="song-note__stamp">{{ songStatusLabels[songStatus] }}</text>
         </view>
 
-        <view id="song-title-field" class="song-title-slip">
-          <view class="song-title-slip__line">
-            <text class="song-title-slip__quote">《</text>
-            <wd-input
-              v-model="title"
-              no-border
-              :adjust-position="false"
-              :disabled="formDisabled"
-              placeholder="歌名先写这里"
-              :placeholder-style="placeholderStyle"
-              :maxlength="48"
-              custom-class="song-title-slip__input-root"
-              custom-input-class="song-title-slip__input-inner"
-              @focus="focusField('#song-title-field')"
-              @keyboardheightchange="syncKeyboardHeight"
-            />
-            <text class="song-title-slip__quote">》</text>
-          </view>
+        <view id="song-title-field" class="song-field song-field--title">
+          <wd-input
+            v-model="title"
+            no-border
+            :adjust-position="false"
+            :disabled="formDisabled"
+            placeholder="歌名先写这里"
+            :placeholder-style="placeholderStyle"
+            :maxlength="48"
+            custom-class="song-field__input-root"
+            custom-input-class="song-field__input-inner song-field__input-inner--title"
+            @focus="focusField('#song-title-field')"
+            @keyboardheightchange="syncKeyboardHeight"
+          />
         </view>
 
         <view class="song-detail-toggle-row">
@@ -668,52 +664,12 @@ onBackPress((options) => {
   font: var(--app-font-caption);
 }
 
-.song-title-slip {
+.song-field--title {
   position: relative;
   z-index: 1;
-  padding: var(--app-space-5) var(--app-field-padding-x);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-input);
-  background: var(--app-field);
 }
 
-.song-title-slip::after {
-  position: absolute;
-  right: var(--app-field-padding-x);
-  bottom: var(--app-space-5);
-  left: var(--app-field-padding-x);
-  height: var(--app-panel-border-width);
-  background: var(--app-divider);
-  content: "";
-}
-
-.song-title-slip__line {
-  display: flex;
-  align-items: center;
-  gap: var(--app-space-3);
-}
-
-.song-title-slip__quote {
-  flex-shrink: 0;
-  color: var(--app-primary);
-  font: var(--app-font-section-title);
-  line-height: var(--app-line-height-none);
-}
-
-:deep(.song-title-slip__input-root) {
-  flex: 1;
-  min-width: 0;
-  @include wot-paper-input-root;
-  border: 0;
-  background: transparent;
-}
-
-:deep(.song-title-slip__input-root .wd-input__body),
-:deep(.song-title-slip__input-root .wd-input__value) {
-  @include wot-paper-control-value;
-}
-
-:deep(.song-title-slip__input-inner) {
+:deep(.song-field__input-inner--title) {
   @include wot-paper-title-input-inner;
 }
 

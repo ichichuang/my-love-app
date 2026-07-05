@@ -112,7 +112,7 @@ const currentTimestamp = computed(() => {
 })
 const pickerZIndex = computed(() => Number(theme.appCssVars["--app-z-index-picker"]))
 const popupTokenStyle = computed(() => makeCssVars(theme.appCssVars))
-const popupStyle = computed(() => `${popupTokenStyle.value}; background: var(--app-bg); border-radius: var(--app-radius-card) var(--app-radius-card) var(--app-space-0) var(--app-space-0); overflow: hidden;`)
+const popupStyle = computed(() => `${popupTokenStyle.value}; background: var(--app-surface); border-radius: var(--app-radius-card) var(--app-radius-card) var(--app-space-0) var(--app-space-0); overflow: hidden;`)
 
 const resetDraft = () => {
   draftTimestamp.value = currentTimestamp.value
@@ -311,7 +311,7 @@ watch(
   overflow: hidden;
   border-top: var(--app-panel-border-width) solid var(--app-border-strong);
   border-radius: var(--app-radius-card) var(--app-radius-card) var(--app-space-0) var(--app-space-0);
-  background: var(--app-bg);
+  background: var(--app-surface);
   color: var(--app-text);
 }
 
@@ -323,7 +323,7 @@ watch(
   gap: var(--app-space-5);
   padding: var(--app-space-3) var(--app-space-6);
   border-bottom: var(--app-border-width-focus) dashed var(--app-border);
-  background: var(--app-bg-deep);
+  background: var(--app-surface-strong);
 }
 
 .app-date-field__title {
@@ -340,18 +340,18 @@ watch(
 }
 
 .app-date-field__picker-shell {
-  background: var(--app-bg);
+  background: var(--app-surface);
 }
 
 :deep(.app-date-field__picker-view) {
   padding: var(--app-space-4) var(--app-space-0);
-  background: var(--app-bg);
+  background: var(--app-surface);
 }
 
 :deep(.app-date-field__picker-view .wd-picker-view__roller) {
   border-top: var(--app-border-width-focus) dashed var(--app-primary-soft);
   border-bottom: var(--app-border-width-focus) dashed var(--app-primary-soft);
-  background: var(--app-bg-deep);
+  background: var(--app-surface-strong);
 }
 
 :deep(.app-date-field__picker-view .wd-picker-view-column) {
