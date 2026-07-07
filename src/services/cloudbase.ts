@@ -41,6 +41,11 @@ export interface CloudFileDeleteResult {
   failures: CloudFileDeleteFailure[]
 }
 
+export interface CloudFunctionCallInput<TData extends object> {
+  name: string
+  data?: TData
+}
+
 interface CloudInitState {
   initialized: boolean
   message: string
@@ -228,6 +233,21 @@ export const removeDocument = async (collectionName: string, id: string): Promis
     await database().collection(collectionName).doc(id).remove()
   } catch (error) {
     throw friendlyError("删除记录失败，请稍后再试。", error)
+  }
+}
+
+export const callCloudFunction = async <TData extends object, TResult>(
+  input: CloudFunctionCallInput<TData>
+): Promise<TResult> => {
+  try {
+    const result = await ensureCloudBaseReady().callFunction<TData, TResult>({
+      name: input.name,
+      data: input.data
+    })
+
+    return result.result
+  } catch (error) {
+    throw friendlyError("访问校验暂时不可用，请稍后再试。", error)
   }
 }
 

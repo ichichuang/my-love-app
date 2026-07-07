@@ -2,9 +2,11 @@
 
 ## 1. 产品定位
 
-小珊的树洞当前处于 Stage 1：仅供拥有者单账号冒烟测试的私有微信小程序。
+小珊的树洞当前仍保持 Stage 1 私有微信小程序体验：已新增状态展示型访问入口和业务页访问守卫，但不新增密码输入、配对码输入、邀请、绑定、伴侣管理或公开社交能力。
 
-后续目标是只给两个人使用，但当前阶段不得加入女友访问、伴侣引导或伴侣管理。
+Phase 1 只升级仓库中的云开发安全基线：规则样例使用两人 OpenID 白名单占位符。真实 OpenID 只能在云开发控制台或私有部署通道配置，不得提交到公开仓库。
+
+当前访问控制阶段只增加前端访问入口外壳、业务页路由守卫和运行时错误安全提示：访问页仅展示检查中、已授权跳转、拒绝访问、账号停用/撤销、配置缺失、需要配对和重试状态，不提供密码 UI、配对码输入 UI，也不调用 `verifyPairingCode`。
 
 它不是公开社交产品，不提供公开发现页，不提供陌生人互动，不提供广场、动态流、评论区或公开分享能力。
 
@@ -18,13 +20,18 @@
 
 ## 2. 用户范围
 
-Stage 1 只允许一个固定微信用户访问：
+Phase 1 云开发访问基线只允许两个固定微信用户访问：
 
-- 拥有者 OpenID：`oT1b65CCto1yDiTjtQvQASTsI0to`
+- 拥有者 OpenID：`OWNER_OPENID`
+- 伴侣 OpenID：`PARTNER_OPENID`
 
-当前阶段 `love_entries` 的读取、新建、更新和删除都必须限制为该 OpenID。
+仓库提交的规则文件只能保留上述占位符。真实 OpenID、配对码、密码、AppSecret、云开发密钥、token 或其他秘密值不得提交到公开仓库。
 
-后续 TODO：owner-only 冒烟测试通过后，再加入女友 OpenID，并把云开发数据库和存储访问规则扩展为两人白名单。
+`love_entries` 的读取、新建、更新和删除都必须限制为两人 OpenID 白名单；新建还必须要求 `doc.coupleId == 'main'`。云存储读写必须限制为同一两人白名单和 `love-entries/main/` 路径。
+
+当前阶段仍不得在应用端新增访问门 UI、密码输入、配对码流程、邀请流程或账号管理页面。
+
+后端访问控制云函数必须只从云开发服务端上下文读取调用者 OpenID，不得信任客户端传入的 OpenID。
 
 ## 3. 语言规范
 
@@ -186,9 +193,11 @@ AppPetNavigator 的菜单项必须使用中文文案，菜单动作优先使用 
 
 ## 4. 隐私规范
 
-不得显示真实姓名、手机号、小程序密钥、数据库密钥或任何敏感信息。
+不得显示真实姓名、手机号、真实 OpenID、配对码、密码、小程序密钥、数据库密钥、token 或任何敏感信息。
 
 不得在前端项目中保存小程序密钥。
+
+不得把真实 OpenID、配对码、密码、AppSecret、云开发密钥、token 或其他秘密值提交到公开仓库；真实云开发规则必须在云开发控制台或私有部署通道应用。
 
 不得把私密照片设置为公开内容。
 
@@ -236,6 +245,31 @@ love-entries/main/
 数据库中只保存云开发返回的 fileID 和必要的展示信息。
 
 上传失败、保存失败、读取失败都必须使用中文提示。
+
+## 6.1 后端访问控制基础
+
+云函数固定使用 `access-control`。Phase 3 前端只通过访问页和业务页守卫调用 `getAccessStatus`，在授权确认前不得加载私有业务数据。
+
+云函数必须支持：
+
+- `getAccessStatus`
+- `verifyPairingCode`
+
+云函数配置必须私下保存在云开发环境变量或等价私有配置中，不得提交到公开仓库。配置模型必须包含：
+
+- coupleId: "main"
+- 拥有者 OpenID 槽位
+- 伴侣 OpenID 槽位
+- 最多两个 OpenID
+- owner / partner 角色标签
+- active / disabled / revoked 状态
+- 可选配对码哈希校验
+
+前端只能通过 `src/services/access-control.ts` 调用访问控制能力，并且该服务必须继续通过 `src/services/cloudbase.ts` 的受控封装调用云函数。页面、组件、store 和 composable 不得直接调用 `wx.cloud.callFunction`。
+
+业务页必须在读取、创建、更新、删除记录或获取文件临时链接前先通过 `useAccessGuard().requireAccess()`。访问页在本阶段不得调用 `verifyPairingCode`。
+
+访问控制错误提示必须保持安全、中文、克制：不得展示 OpenID、环境变量名、函数日志原文、异常栈、配对码哈希/盐或服务端私有配置。
 
 ## 7. UI 风格规范
 
@@ -296,10 +330,15 @@ love-entries/main/
 - 记录写入 love_entries
 - 图片写入 love-entries/main/
 - 新记录包含 coupleId: "main"
-- Stage 1 只验证拥有者单账号可读写，不实现女友 / 伴侣访问
+- 云开发数据库规则只允许 `OWNER_OPENID` / `PARTNER_OPENID` 对应的真实两人白名单读写
+- 云开发数据库新增规则必须要求 coupleId: "main"
+- 云存储规则只允许真实两人白名单读写 love-entries/main/
+- 访问控制云函数只从服务端上下文读取 OpenID
+- 页面和组件不直接调用 wx.cloud.callFunction
 - 非白名单用户不能读写数据库
-- 未新增账号体系、公开分享、评论、公开 feed
+- 未新增访问门 UI、密码输入、配对码流程、账号体系、公开分享、评论、公开 feed
 - 未新增 CloudBase collection、cloud functions、AppSecret
+- 未提交真实 OpenID、配对码、密码、AppSecret、云开发密钥、token 或其他秘密值
 - 未新增 UnoCSS
 - 未新增传统 tabBar 或微信 custom-tab-bar
 - 小宠物导航仍遵守 AppShell、page-meta、useNativeChromeSync、Wot UI、token 规则

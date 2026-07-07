@@ -1,4 +1,4 @@
 {
-  "read": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && /^love-entries\\/main\\//.test(resource.path)",
-  "write": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && /^love-entries\\/main\\//.test(resource.path)"
+  "read": "(auth.openid == 'OWNER_OPENID' || auth.openid == 'PARTNER_OPENID') && /^love-entries\\/main\\//.test(resource.path)",
+  "write": "(auth.openid == 'OWNER_OPENID' || auth.openid == 'PARTNER_OPENID') && /^love-entries\\/main\\//.test(resource.path)"
 }

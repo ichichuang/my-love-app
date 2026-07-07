@@ -1,6 +1,6 @@
 {
-  "read": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to'",
-  "create": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to' && doc.coupleId == 'main'",
-  "update": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to'",
-  "delete": "auth.openid == 'oT1b65CCto1yDiTjtQvQASTsI0to'"
+  "read": "(auth.openid == 'OWNER_OPENID' || auth.openid == 'PARTNER_OPENID')",
+  "create": "(auth.openid == 'OWNER_OPENID' || auth.openid == 'PARTNER_OPENID') && doc.coupleId == 'main'",
+  "update": "(auth.openid == 'OWNER_OPENID' || auth.openid == 'PARTNER_OPENID')",
+  "delete": "(auth.openid == 'OWNER_OPENID' || auth.openid == 'PARTNER_OPENID')"
 }

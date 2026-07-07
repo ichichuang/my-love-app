@@ -88,9 +88,21 @@ declare global {
       fileList: DeleteFileItem[]
     }
 
+    interface CallFunctionOptions<TData extends object> {
+      name: string
+      data?: TData
+    }
+
+    interface CallFunctionResult<TResult> {
+      result: TResult
+      requestID?: string
+      errMsg?: string
+    }
+
     interface Api {
       init(options: InitOptions): void
       database(options?: { env?: string }): Database
+      callFunction<TData extends object, TResult>(options: CallFunctionOptions<TData>): Promise<CallFunctionResult<TResult>>
       uploadFile(options: UploadFileOptions): Promise<UploadFileResult>
       getTempFileURL(options: { fileList: string[] }): Promise<TempFileURLResult>
       deleteFile(options: { fileList: string[] }): Promise<DeleteFileResult>

@@ -11,7 +11,7 @@ Private WeChat Mini Program built with UniApp Vue 3, TypeScript, Vite, Pinia, Wo
 - CloudBase file upload, private file IDs, temporary-link display, and file deletion.
 - Wot UI configured through `src/pages.json` easycom mapping.
 - User-facing UI copy is Simplified Chinese only.
-- Stage 1 scope is owner-only smoke testing with one WeChat account.
+- Stage 1 UI behavior remains private and unchanged; Phase 1 only updates the repository CloudBase access-control baseline for a two-person OpenID whitelist.
 - Later product scope is private two-person memory keeping, not public social networking.
 
 See `docs/PRODUCT_REQUIREMENTS.zh-CN.md` for the product rules future changes must preserve.
@@ -40,25 +40,36 @@ Create a CloudBase environment linked to the Mini Program, then create the colle
 love_entries
 ```
 
-Stage 1 is owner-only testing. The only OpenID allowed to read, create, update, and delete `love_entries` is:
+The committed rule files and access-control function source are repository-safe templates. They must only contain placeholders or environment-variable names:
 
 ```text
-oT1b65CCto1yDiTjtQvQASTsI0to
+OWNER_OPENID
+PARTNER_OPENID
 ```
 
-Apply the owner-only database rule file in the CloudBase console:
+The database rule template documents a two-person OpenID whitelist for reading, creating, updating, and deleting `love_entries`. Creates must also require:
+
+```text
+doc.coupleId == 'main'
+```
+
+Apply the real database rule in the CloudBase console or a private deployment channel:
 
 - `cloudbase/security/database.rules.json`
 
-Do not add the partner OpenID during Stage 1. Partner access is a later TODO after the owner-only smoke test passes.
+The storage rule template documents the same two-person OpenID whitelist, limited to:
 
-For CloudBase storage permissions during Stage 1, use this console preset if custom storage rules are not available:
+```text
+love-entries/main/
+```
+
+For CloudBase storage permissions, use this console preset if custom storage rules are not available:
 
 ```text
 仅创建者及管理员可读写
 ```
 
-`cloudbase/security/storage.rules.json` is kept as a reference-only custom rule for future use. If the CloudBase console cannot apply custom storage rules, use the preset permission above instead.
+`cloudbase/security/storage.rules.json` is kept as a reference-only custom rule if the CloudBase console cannot apply custom storage rules. In that case, use the preset permission above instead.
 
 Storage paths are written under:
 
@@ -68,7 +79,13 @@ love-entries/main/
 
 The app stores CloudBase `fileID` values and requests temporary URLs through `wx.cloud.getTempFileURL`. It does not store public file URLs.
 
-Later TODO: add the girlfriend's OpenID to the database and storage access model after the owner-only smoke test is complete.
+Do not commit real OpenIDs, pairing codes, passwords, AppSecret values, cloud credentials, tokens, or other secrets to this public repository. Replace `OWNER_OPENID` and `PARTNER_OPENID` only inside the CloudBase console or a private deployment channel. The current access-control phase includes a status-only access entry page, business-page guard shell, and safe runtime error handling. It still does not add password input, pairing-code input or verification UI, invitation flow, or account-management screens.
+
+Access control uses a private CloudBase Event Function:
+
+- `cloudfunctions/access-control`
+
+The function supports `getAccessStatus` and `verifyPairingCode`, reads the caller OpenID from `cloud.getWXContext().OPENID`, and uses private CloudBase environment variables for the two-person whitelist and optional pairing-code hash. It is source-ready only until deployed manually. See `docs/ACCESS_CONTROL_SETUP.zh-CN.md` for the required private setup and `docs/ACCESS_CONTROL_RUNTIME_QA.zh-CN.md` for WeChat DevTools and real-device runtime QA.
 
 ## Development
 
@@ -122,6 +139,20 @@ Design tokens live under `src/styles/tokens/**` for static fallbacks and `src/de
 
 The design-token scan checks raw style values, unknown `--app-*` tokens, the fixed six-palette inventory, palette source colors, palette contrast, pages bypassing `AppShell`, selector buttons bypassing `AppOptionButton`, Wot/AppShell contracts, and forbidden theme side effects outside `nav-theme.ts`.
 
+Scan CloudBase rule templates and public docs for committed real OpenID-like literals:
+
+```bash
+pnpm scan:security-baseline
+```
+
+The security scan reports only redacted findings. Placeholders such as `OWNER_OPENID` and `PARTNER_OPENID` are allowed.
+
+Scan the access-control cloud-function source and Mini Program call boundary:
+
+```bash
+pnpm scan:access-control
+```
+
 The developer-facing design-system preview page is registered at:
 
 ```text
@@ -137,18 +168,21 @@ Before reporting a UI or theme-system change complete, run:
 ```bash
 pnpm scan:ui-copy
 pnpm scan:design-tokens
+pnpm scan:security-baseline
+pnpm scan:access-control
 pnpm type-check
 pnpm build:mp-weixin
 git diff --check
 ```
 
-After a production build, verify `dist/build/mp-weixin` still contains `love-d4g006mox4b78e5c6` and `wx04b0ef4f0de5c5c5`, contains no AppSecret pattern, has no UnoCSS dependency/config/reference, and has no English user-facing UI copy.
+After a production build, verify `dist/build/mp-weixin` still contains `love-d4g006mox4b78e5c6` and `wx04b0ef4f0de5c5c5`, contains no AppSecret pattern, has no real OpenID, has no UnoCSS dependency/config/reference, and has no English user-facing UI copy.
 
 ## Architecture
 
 - `src/stores/theme.ts` owns theme mode, system theme listener, palette selection, density, font scale, and persistence.
 - `src/design-system/*` resolves palettes, terminal app CSS variables, Wot theme vars, size tokens, and debounced navigation-bar theme updates.
 - `src/services/cloudbase.ts` is the only native `wx.cloud` boundary.
+- `src/services/access-control.ts` calls `cloudfunctions/access-control` through the typed `cloudbase.ts` wrapper.
 - `src/services/repositories/entries.ts` maps database documents to typed entry records.
 - `src/composables/useCrud.ts` and `src/composables/useFileUpload.ts` keep page async state predictable.
 - `src/components/*` contains reusable app UI.
