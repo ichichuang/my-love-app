@@ -210,6 +210,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h } from "vue"
+import { onShow } from "@dcloudio/uni-app"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { makeCssVars } from "@/design-system/css-vars"
 import { resolveThemeColorVars } from "@/design-system/theme-resolver"
@@ -240,6 +241,10 @@ const PreviewSection = defineComponent({
 })
 
 const theme = useNativeChromeSync()
+
+onShow(() => {
+  // 体验版不再进行访问校验，设计预览页直接可用。
+})
 
 const modeOptions: Array<{ caption: string; value: ThemeMode }> = [
   { caption: "跟随系统", value: "system" },

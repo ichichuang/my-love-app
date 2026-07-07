@@ -115,7 +115,7 @@
               <text class="photo-folder__count">{{ files.length }}/{{ maxUploadCount }}</text>
             </view>
 
-            <image-grid :files="files" editable @image-error="recoverImage" @remove="removeFileAt" />
+            <image-grid :files="files" editable @image-error="recoverImage" @remove="guardedRemoveFileAt" />
 
             <view class="photo-folder__upload">
               <wd-button
@@ -124,7 +124,7 @@
                 :loading="uploading"
                 :disabled="maxUploadReached || uploading"
                 custom-class="photo-folder__button"
-                @click="chooseAndUploadImages"
+                @click="guardedChooseAndUploadImages"
               >
                 {{ maxUploadReached ? "照片已经放满啦" : "轻轻放进一张" }}
               </wd-button>
@@ -148,7 +148,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
-import { onBackPress, onUnload } from "@dcloudio/uni-app"
+import { onBackPress, onShow, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
@@ -288,6 +288,14 @@ const recoverImage = async (fileID: string) => {
   } finally {
     imageRecoveryFileIDs.delete(fileID)
   }
+}
+
+const guardedChooseAndUploadImages = async () => {
+  await chooseAndUploadImages()
+}
+
+const guardedRemoveFileAt = async (index: number) => {
+  await removeFileAt(index)
 }
 
 const saveEntry = async () => {

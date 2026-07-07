@@ -5,6 +5,7 @@
       class="empty-state__image"
       :src="imageSrc"
       mode="aspectFit"
+      alt=""
     />
     <view v-else class="empty-state__mark">
       <view class="empty-state__line empty-state__line--top" />

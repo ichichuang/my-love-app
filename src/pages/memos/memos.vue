@@ -373,7 +373,7 @@ onPullDownRefresh(() => {
 
 .memos-page {
   gap: var(--app-form-gap);
-  padding-bottom: calc(var(--app-card-padding) + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-card-padding);
 }
 
 .memos-intro,

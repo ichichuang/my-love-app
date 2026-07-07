@@ -38,6 +38,10 @@
         </text>
         <text v-if="eyebrow" class="app-custom-nav__eyebrow">{{ eyebrow }}</text>
       </view>
+
+      <view v-if="$slots.trailing" class="app-custom-nav__trailing">
+        <slot name="trailing" />
+      </view>
     </view>
   </view>
 </template>
@@ -149,6 +153,15 @@ const handleBack = () => {
   justify-content: center;
   min-width: 0;
   text-align: center;
+}
+
+.app-custom-nav__trailing {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  padding-left: var(--app-space-4);
 }
 
 .app-custom-nav__title-text {

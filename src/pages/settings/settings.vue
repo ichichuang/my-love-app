@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import { onShow } from "@dcloudio/uni-app"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { appConfig } from "@/config/app"
 import type { ThemeDensity, ThemeFontScale, ThemeMode } from "@/stores/theme"
@@ -157,6 +158,10 @@ const fontScaleOptions: Array<{
 ]
 
 const cloudEnvLabel = computed(() => (appConfig.cloudbaseEnvId ? "已配置" : "待配置"))
+
+onShow(() => {
+  // 体验版不再进行访问校验，主题设置页直接可用。
+})
 </script>
 
 <style lang="scss" scoped>

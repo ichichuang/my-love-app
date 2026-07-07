@@ -26,7 +26,9 @@
       v-else-if="!entry"
       title="这张小纸条暂时打不开"
       body="可能是云开发慢了一点，请稍后再试。"
-    />
+    >
+      <wd-button custom-class="detail-empty__button" @click="loadEntry">再试一次</wd-button>
+    </empty-state>
 
     <app-animated-swap v-else :value="editing" v-slot="{ displayValue: isEditing }">
       <view class="detail-swap-wrapper">
@@ -184,7 +186,7 @@
                 :loading="uploading"
                 :disabled="maxUploadReached || uploading"
                 custom-class="photo-folder__button"
-                @click="chooseAndUploadImages"
+                @click="guardedChooseAndUploadImages"
               >
                 {{ maxUploadReached ? "照片已经放满啦" : "再加一张" }}
               </wd-button>
@@ -404,6 +406,10 @@ const applyRecoveredImageUrl = (fileID: string, resolvedTempURL: string): void =
   }
 }
 
+const queueAuthorizedUncommittedUploadsForCleanup = (retainedFiles: CloudFile[] = []): void => {
+  queueUncommittedUploadedFilesForCleanup(retainedFiles)
+}
+
 const hydrateImageUrls = async (sourceEntry: EntryRecord | null = entry.value): Promise<void> => {
   const needsHydration = sourceEntry?.files.some((file) => file.fileID && !file.resolvedTempURL) ?? false
   if (!sourceEntry || !needsHydration) {
@@ -451,6 +457,10 @@ const loadEntry = async () => {
   }
 }
 
+const guardedChooseAndUploadImages = async () => {
+  await chooseAndUploadImages()
+}
+
 const startEditing = () => {
   if (!entry.value) {
     return
@@ -461,7 +471,7 @@ const startEditing = () => {
 }
 
 const cancelEditing = () => {
-  queueUncommittedUploadedFilesForCleanup(entry.value?.files)
+  queueAuthorizedUncommittedUploadsForCleanup(entry.value?.files)
   if (entry.value) {
     hydrateForm(entry.value)
   }
@@ -496,13 +506,18 @@ const navigateBackFromDetail = () => {
 }
 
 const handleBackNavigation = async () => {
+  if (saving.value) {
+    showAppWarning("正在轻轻收好，请稍等")
+    return
+  }
+
   if (!editing.value || !hasDirtyDraft.value) {
     navigateBackFromDetail()
     return
   }
 
   if (await confirmDiscardDraft()) {
-    queueUncommittedUploadedFilesForCleanup(entry.value?.files)
+    queueAuthorizedUncommittedUploadsForCleanup(entry.value?.files)
     navigateBackFromDetail()
   }
 }
@@ -527,7 +542,7 @@ const removeEditFile = async (index: number) => {
   await removeFileAt(index, false)
 
   if (isUncommittedUploadedFile(file.fileID)) {
-    queueUncommittedUploadedFilesForCleanup(files.value)
+    queueAuthorizedUncommittedUploadsForCleanup(files.value)
     return
   }
 
@@ -682,7 +697,7 @@ onUnload(() => {
     return
   }
 
-  queueUncommittedUploadedFilesForCleanup(entry.value?.files)
+  queueAuthorizedUncommittedUploadsForCleanup(entry.value?.files)
 })
 </script>
 
@@ -1015,5 +1030,9 @@ onUnload(() => {
 
 .keyboard-spacer {
   flex-shrink: 0;
+}
+
+:deep(.detail-empty__button) {
+  margin-top: var(--app-card-gap);
 }
 </style>

@@ -104,6 +104,15 @@
       </view>
 
       <empty-state
+        v-else-if="errorMessage && items.length === 0"
+        image-src="/static/logo-couple.png"
+        title="小纸条暂时没加载好"
+        :body="errorMessage"
+      >
+        <wd-button custom-class="home-empty__button" @click="loadEntries()">再试一次</wd-button>
+      </empty-state>
+
+      <empty-state
         v-else-if="items.length === 0"
         image-src="/static/logo-couple.png"
         title="先放进第一颗小记忆"
@@ -152,7 +161,7 @@ import { listEntries, type EntryRecord } from "@/services/repositories/entries"
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
 const indexRoute = "/pages/index/index"
-const { items, loading, reload } = useCachedList({
+const { items, loading, errorMessage, reload } = useCachedList({
   cacheKey: dataCacheKeys.memoryList,
   loader: listEntries
 })

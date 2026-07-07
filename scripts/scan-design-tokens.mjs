@@ -223,13 +223,10 @@ const requiredThemeContractSnippets = [
     file: "src/pages.json",
     label: "option button easycom",
     snippet: "^app-option-button$"
-  },
-  {
-    file: "src/pages.json",
-    label: "design preview route",
-    snippet: "pages/design-preview/design-preview"
   }
 ]
+// 注：design-preview 页面已从体验版路由中移除，仅在开发分支保留源码，
+// 因此不再强制要求 pages.json 包含 design-preview 路由。
 
 const requiredAliasVars = [
   "--app-primary",

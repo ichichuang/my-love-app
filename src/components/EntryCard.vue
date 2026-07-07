@@ -7,7 +7,7 @@
 
     <view class="entry-card__body">
       <view class="entry-card__copy">
-        <text class="entry-card__mood">{{ entry.mood }}</text>
+        <text class="entry-card__mood">{{ entry.mood || "温柔" }}</text>
         <text class="entry-card__title">{{ entry.title }}</text>
         <text class="entry-card__excerpt">{{ excerpt }}</text>
         <view class="entry-card__meta">

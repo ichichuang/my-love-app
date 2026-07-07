@@ -767,7 +767,7 @@ onMounted(async () => {
   position: fixed;
   top: var(--app-space-0);
   left: var(--app-space-0);
-  z-index: calc(var(--app-z-index-pet) - 1);
+  z-index: var(--app-z-index-pet);
   display: flex;
   flex-direction: column;
   width: calc(var(--app-space-64) + var(--app-space-20));
@@ -784,14 +784,14 @@ onMounted(async () => {
   // 开合用回弹缓动 + 更明显的缩放，像从小宠物身边「啵」一下冒出来；
   // visibility 仅在关闭方向延迟，让关闭也能看到收回动画。
   transition: opacity var(--app-transition-fast), transform var(--app-duration-slow) var(--app-ease-bounce), visibility var(--app-duration-instant) linear var(--app-duration-slow);
-  opacity: var(--app-space-0);
+  opacity: 0;
   pointer-events: none;
   transform: translateY(var(--app-fade-offset-y)) scale(var(--app-press-scale-strong));
   visibility: hidden;
 }
 
 .app-pet-bubble--open {
-  opacity: var(--app-line-height-none);
+  opacity: 1;
   pointer-events: auto;
   // 打开方向：可见即时生效，立刻看到弹出
   transition: opacity var(--app-transition-fast), transform var(--app-duration-slow) var(--app-ease-bounce), visibility var(--app-duration-instant);

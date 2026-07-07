@@ -304,7 +304,6 @@ const shouldExpandTaskDetails = (task: TaskDraft): boolean =>
 
 const toggleDetails = () => {
   detailsExpanded.value = !detailsExpanded.value
-  draftDirty.value = true
 }
 
 const setTaskDone = (value: boolean) => {
@@ -387,6 +386,11 @@ const confirmDiscardDraft = async (): Promise<boolean> => {
 }
 
 const handleBackNavigation = async () => {
+  if (saving.value) {
+    showAppWarning("正在轻轻收好，请稍等")
+    return
+  }
+
   if (!hasUnsavedDraft.value) {
     backToTasks()
     return
@@ -517,7 +521,7 @@ onBackPress((options) => {
 
 .task-edit {
   gap: var(--app-form-gap);
-  padding-bottom: calc(var(--app-card-padding) + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-card-padding);
 }
 
 .task-edit-status,
@@ -747,7 +751,6 @@ onBackPress((options) => {
 .task-edit-actions {
   gap: var(--app-space-6);
   padding-top: var(--app-space-3);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .task-edit-error__actions {

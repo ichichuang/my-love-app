@@ -388,6 +388,11 @@ const confirmDiscardDraft = async (): Promise<boolean> => {
 }
 
 const handleBackNavigation = async () => {
+  if (saving.value) {
+    showAppWarning("正在轻轻收好，请稍等")
+    return
+  }
+
   if (!hasUnsavedDraft.value) {
     backToMemos()
     return
@@ -517,7 +522,7 @@ onBackPress((options) => {
 
 .memo-edit {
   gap: var(--app-form-gap);
-  padding-bottom: calc(var(--app-card-padding) + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-card-padding);
 }
 
 .memo-edit-status,
@@ -714,7 +719,6 @@ onBackPress((options) => {
 .memo-edit-actions {
   gap: var(--app-space-6);
   padding-top: var(--app-space-3);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 :deep(.memo-delete-button) {

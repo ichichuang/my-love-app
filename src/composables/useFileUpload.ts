@@ -1,4 +1,4 @@
-import { computed, shallowRef } from "vue"
+import { computed, onUnmounted, shallowRef } from "vue"
 import { appConfig } from "@/config/app"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import {
@@ -95,9 +95,45 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
   const uploading = shallowRef(false)
   const errorMessage = shallowRef("")
   const uncommittedUploadedFileIDs = new Set<string>()
+  const pendingResolveRetry = shallowRef<ReturnType<typeof setTimeout> | null>(null)
   const maxUploadCount = appConfig.maxUploadCount
   const remainingUploadCount = computed(() => Math.max(0, maxUploadCount - files.value.length))
   const maxUploadReached = computed(() => remainingUploadCount.value === 0)
+
+  const cancelResolveRetry = () => {
+    if (pendingResolveRetry.value) {
+      clearTimeout(pendingResolveRetry.value)
+      pendingResolveRetry.value = null
+    }
+  }
+
+  const applyResolvedFiles = (resolvedFiles: CloudFile[]): void => {
+    const resolvedByFileID = new Map(resolvedFiles.map((file) => [file.fileID, file]))
+    const nextFiles = files.value.map((file) => resolvedByFileID.get(file.fileID) ?? file)
+    files.value = nextFiles
+  }
+
+  const scheduleResolveRetry = (filesToResolve: CloudFile[], attempt = 1): void => {
+    cancelResolveRetry()
+    const delay = Math.min(1000 * 2 ** (attempt - 1), 8000)
+    pendingResolveRetry.value = setTimeout(async () => {
+      pendingResolveRetry.value = null
+      try {
+        const resolvedFiles = await batchResolveFiles(filesToResolve, {
+          force: true
+        })
+        applyResolvedFiles(resolvedFiles)
+      } catch {
+        if (attempt < 3) {
+          scheduleResolveRetry(filesToResolve, attempt + 1)
+        }
+      }
+    }, delay)
+  }
+
+  onUnmounted(() => {
+    cancelResolveRetry()
+  })
 
   const setFiles = (nextFiles: CloudFile[]) => {
     files.value = nextFiles
@@ -181,6 +217,7 @@ export const useFileUpload = (initialFiles: CloudFile[] = []) => {
         })
       } catch {
         showAppWarning("图片链接暂时没取到，稍后会再试。")
+        scheduleResolveRetry(uploadedFiles)
       }
       files.value = [...files.value, ...resolvedUploadedFiles]
     } catch (error) {
