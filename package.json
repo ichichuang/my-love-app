@@ -12,7 +12,8 @@
     "scan:ui-copy": "node scripts/scan-ui-copy.mjs",
     "scan:design-tokens": "node scripts/scan-design-tokens.mjs",
     "scan:security-baseline": "node scripts/scan-security-baseline.mjs",
-    "scan:access-control": "node scripts/scan-access-control.mjs"
+    "scan:access-control": "node scripts/scan-access-control.mjs",
+    "scan:project-ui": "node scripts/scan-project-ui.mjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4080420251103001",

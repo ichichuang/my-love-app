@@ -2,6 +2,8 @@
 
 These guidelines are mandatory for future AI and Codex edits in this project. They preserve the architecture frozen after `miniapp-architecture-freeze-v1` and the product direction captured in the final design and development document in the project root.
 
+> For all UI, page, component, layout, style, navigation, token, copy, interaction, scan, or visual-quality work, read `.ai/skills/project-ui/SKILL.md` and the relevant checklists under `.ai/skills/project-ui/checklists/` first. The Skill overrides these generic guidelines where they conflict on UI matters. Also see `docs/UI_GOVERNANCE.zh-CN.md` for a concise Chinese summary of the UI governance model.
+
 ## 1. Architecture Boundaries
 
 - Do not refactor the sealed base architecture.

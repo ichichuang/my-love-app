@@ -2,6 +2,37 @@
 
 This project is a private UniApp WeChat Mini Program for romantic journal and memory keeping.
 
+## Root Governance for Codex
+
+Before any UI, page, component, layout, style, navigation, token, copy, interaction, scan, or visual-quality change, Codex must:
+
+1. Read `.ai/skills/project-ui/SKILL.md`.
+2. Read the relevant checklists under `.ai/skills/project-ui/checklists/`.
+3. Read `CLAUDE.md` and the reference files under `.ai/skills/project-ui/references/` when the change touches visual quality, copy, motion, or interaction polish.
+4. Then read `docs/AI_CODING_GUIDELINES.md`, `docs/PRODUCT_REQUIREMENTS.zh-CN.md`, `docs/EXPERIENCE_BUILD_CHANGE_LOG.zh-CN.md`, `src/pages.json`, `src/components/AppShell.vue`, `src/components/AppCustomNav.vue`, `src/composables/useCustomNavMetrics.ts`, `src/composables/useKeyboardAvoidance.ts`, `src/styles/mixins.scss`, `src/design-system/token-registry.ts`, and any relevant pages/components.
+
+The Skill and its checklists override the generic AI Coding Guidelines where they conflict on UI matters.
+
+## Codex Role
+
+Codex acts as:
+
+- Architecture-safe implementer.
+- Producer of exact, minimal diffs.
+- Maintainer of TypeScript correctness and strict-mode compatibility.
+- Maintainer of static scan scripts and repository hygiene.
+- Validation runner after every change.
+- Non-destructive executor.
+
+## Forbidden Actions
+
+- Do not use `git add .`, broad `git reset`, `git clean`, `git stash`, or any other broad destructive git command.
+- Do not stage, commit, push, deploy, upload, preview unless explicitly instructed.
+- Do not inspect or print secrets, API keys, tokens, AppSecret, OpenID, pairing codes, passwords, or cloud keys.
+- Do not redesign the base architecture, design-system foundation, CloudBase architecture, routing model, or product boundary unless explicitly requested.
+- Do not restore runtime access gating: `pages/access/access` must not be re-registered in `src/pages.json` and must not become the first route; business pages must not call `useAccessGuard` or `requireAccess`.
+- Do not modify CloudBase CRUD, image upload behavior, temp URL behavior, heart/reaction feature code, runtime route behavior, or current user-facing content unless explicitly asked.
+
 ## AI Coding Guidelines
 
 - Future AI/Codex edits must read and follow `docs/AI_CODING_GUIDELINES.md` before changing project files.
@@ -43,6 +74,7 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 - Use `AppOptionGroup.vue` and `AppOptionButton.vue` for setting selectors and palette swatches. Keep CTA and destructive actions on Wot `wd-button` when appropriate.
 - Preserve the global WeChat `button`, `button::after`, and `button:after` reset in `src/App.vue`.
 - Run `pnpm scan:design-tokens` after UI styling changes.
+- Run `pnpm scan:project-ui` after any page shell, navigation, scroll, safe-area, keyboard, or UI governance change.
 - Keep components private, romantic, refined, and mobile-first.
 - Avoid raw hardcoded component colors when a theme variable is available.
 - All user-facing UI copy must be Simplified Chinese. Do not ship English labels, placeholders, empty states, modal text, or toasts.
@@ -53,6 +85,7 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 - Do not add public social features, discovery feeds, public comments, public profiles, or public sharing.
 - Do not add username/password registration or a Web-style login system.
 - Keep product requirements in `docs/PRODUCT_REQUIREMENTS.zh-CN.md` aligned with implementation changes.
+- Do not restore runtime access gating. `pages/index/index` remains the first route; `pages/access/access` remains unregistered for the experience build.
 
 ## CloudBase Rules
 
@@ -74,4 +107,5 @@ This project is a private UniApp WeChat Mini Program for romantic journal and me
 - Run `pnpm type-check` after TypeScript changes.
 - Run `pnpm type-check:strict` after design-system type or token-registry changes when the script exists.
 - Run `pnpm build:mp-weixin` before reporting completion when practical.
+- Run `pnpm scan:project-ui` after page shell, navigation, scroll, safe-area, keyboard, or UI governance changes.
 - Report any environment placeholders that must be filled by the user.
