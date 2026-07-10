@@ -65,6 +65,8 @@
           <text class="note-paper__content">{{ entry.content || "这段回忆还没有写下文字。" }}</text>
         </view>
 
+        <HeartReactionBar v-if="entry" :entry-id="entry.id" />
+
         <view class="detail-actions">
           <wd-button block size="large" @click="startEditing">编辑这条回忆</wd-button>
         </view>
@@ -215,6 +217,7 @@
 import { computed, shallowRef } from "vue"
 import { onBackPress, onLoad, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
+import HeartReactionBar from "@/components/HeartReactionBar.vue"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useFileUpload } from "@/composables/useFileUpload"

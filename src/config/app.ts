@@ -9,6 +9,7 @@ export const appConfig = {
   wechatAppId: publicEnvValue(import.meta.env.VITE_WECHAT_APPID),
   coupleId,
   entriesCollection: "love_entries",
+  reactionsCollection: "love_reactions",
   storageBasePath,
   storageEntriesPath: `${storageBasePath}/${coupleId}`,
   maxUploadCount: 9,

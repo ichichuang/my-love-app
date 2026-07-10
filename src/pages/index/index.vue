@@ -128,6 +128,7 @@
           class="app-rise-stagger"
           :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
           :entry="entry"
+          :reaction-state="reactionStates.get(entry.id)"
           @cover-error="recoverCover"
           @open="openEntry"
         />
@@ -139,11 +140,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
 import AppPetNavigator from "@/components/AppPetNavigator.vue"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
 import { useCachedList } from "@/composables/useCachedList"
+import { useHeartReaction } from "@/composables/useHeartReaction"
+import { useLocalPerson } from "@/composables/useLocalPerson"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
@@ -157,6 +160,7 @@ import {
 } from "@/services/cloud-file-resolver"
 import { dataCacheKeys } from "@/services/data-cache"
 import { listEntries, type EntryRecord } from "@/services/repositories/entries"
+import type { HeartReactionState } from "@/types/heart-reaction"
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
@@ -165,6 +169,9 @@ const { items, loading, errorMessage, reload } = useCachedList({
   cacheKey: dataCacheKeys.memoryList,
   loader: listEntries
 })
+const localPerson = useLocalPerson()
+const heartReaction = useHeartReaction({ localPerson })
+const reactionStates = shallowRef(new Map<string, HeartReactionState>())
 const hour = new Date().getHours()
 const todayGreeting = hour < 12 ? "早安，今天也慢慢收藏" : hour < 18 ? "午后，把小事轻轻放好" : "晚上好，给今天留一盏小灯"
 const memoryCountText = computed(() => (items.value.length > 0 ? `已收好 ${items.value.length} 条回忆` : "等第一颗小记忆"))
@@ -335,8 +342,25 @@ onShow(() => {
 onPullDownRefresh(() => {
   void loadEntries(true)
 })
+const loadReactionStates = async (entries: EntryRecord[]) => {
+  const targetIds = entries.map((entry) => entry.id)
+  if (targetIds.length === 0) {
+    reactionStates.value = new Map()
+    return
+  }
+
+  try {
+    reactionStates.value = await heartReaction.batchLoadStates(targetIds)
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.info(`[小珊的树洞] 时间线小心心状态读取失败：${getFriendlyErrorMessage(error)}`)
+    }
+  }
+}
+
 watch(items, (nextItems) => {
   void hydrateTimelineImages(nextItems)
+  void loadReactionStates(nextItems)
 })
 </script>
 

@@ -12,6 +12,7 @@
         <text class="entry-card__excerpt">{{ excerpt }}</text>
         <view class="entry-card__meta">
           <text>{{ imageCountLabel }}</text>
+          <text v-if="reactionTag" class="entry-card__reaction">{{ reactionTag }}</text>
         </view>
       </view>
 
@@ -32,9 +33,11 @@
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
 import type { EntryRecord } from "@/services/repositories/entries"
+import type { HeartReactionState } from "@/types/heart-reaction"
 
 const props = defineProps<{
   entry: EntryRecord
+  reactionState?: HeartReactionState
 }>()
 
 const emit = defineEmits<{
@@ -52,6 +55,22 @@ const coverUrl = computed(() => {
 const imageCountLabel = computed(() => {
   const count = props.entry.files.length
   return count > 0 ? `${count} 张照片` : "文字回忆"
+})
+
+const reactionTag = computed(() => {
+  if (!props.reactionState) {
+    return ""
+  }
+
+  if (props.reactionState.hasReacted) {
+    return "已比心"
+  }
+
+  if (props.reactionState.hasReceived) {
+    return "小心心已收到"
+  }
+
+  return ""
 })
 
 const excerpt = computed(() => {
@@ -180,6 +199,9 @@ const handleCoverError = () => {
 .entry-card__meta {
   display: inline-flex;
   align-self: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--app-space-4);
   margin-top: auto;
   padding: var(--app-entry-meta-padding-y) var(--app-entry-meta-padding-x);
   border: var(--app-panel-border-width) solid var(--app-border);
@@ -187,6 +209,24 @@ const handleCoverError = () => {
   color: var(--app-text-soft);
   font-size: var(--app-font-size-sm);
   line-height: var(--app-line-height-none);
+}
+
+.entry-card__reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-space-2);
+  padding: var(--app-space-1) var(--app-space-5);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-heart-soft);
+  color: var(--app-primary);
+  font-size: var(--app-font-size-xs);
+  line-height: var(--app-line-height-tight);
+  transform: rotate(-1deg);
+}
+
+.entry-card__reaction::before {
+  content: "♥";
+  font-size: var(--app-font-size-xs);
 }
 
 .entry-card__cover,
