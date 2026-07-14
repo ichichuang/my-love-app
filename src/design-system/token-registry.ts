@@ -426,7 +426,18 @@ export const componentVarNames = [
   "--app-timeline-rail-width",
   "--app-timeline-axis-gap",
   "--app-timeline-node-size",
-  "--app-timeline-line-width"
+  "--app-timeline-line-width",
+
+  "--app-timeline-section-padding",
+  "--app-timeline-section-radius",
+  "--app-timeline-section-gap",
+  "--app-timeline-header-padding-x",
+  "--app-timeline-header-padding-y",
+  "--app-timeline-body-padding",
+  "--app-timeline-body-radius",
+  "--app-timeline-marker-padding",
+  "--app-timeline-marker-radius",
+  "--app-timeline-footer-radius"
 ] as const
 
 export type ComponentVarName = (typeof componentVarNames)[number]

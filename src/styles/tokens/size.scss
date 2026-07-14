@@ -17,6 +17,17 @@ page {
   --app-entry-card-min-height: var(--app-space-48);
   --app-safe-action-bottom-gap: 156rpx;
   --app-textarea-min-height: var(--app-space-64);
+
+  --app-timeline-section-padding: var(--app-space-14);
+  --app-timeline-section-radius: var(--app-radius-2xl);
+  --app-timeline-section-gap: var(--app-space-6);
+  --app-timeline-header-padding-x: var(--app-space-10);
+  --app-timeline-header-padding-y: var(--app-space-6);
+  --app-timeline-body-padding: var(--app-space-8);
+  --app-timeline-body-radius: var(--app-radius-xl);
+  --app-timeline-marker-padding: var(--app-space-2) var(--app-space-3);
+  --app-timeline-marker-radius: var(--app-radius-pill);
+  --app-timeline-footer-radius: var(--app-radius-lg);
 }
 
 .app-density--compact {

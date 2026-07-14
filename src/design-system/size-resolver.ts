@@ -175,6 +175,17 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-timeline-node-size": isCompact ? "18rpx" : "20rpx",
     "--app-timeline-line-width": "2rpx",
 
+    "--app-timeline-section-padding": spacing["2xl"],
+    "--app-timeline-section-radius": radius["2xl"],
+    "--app-timeline-section-gap": spacing.md,
+    "--app-timeline-header-padding-x": spacing.xl,
+    "--app-timeline-header-padding-y": spacing.md,
+    "--app-timeline-body-padding": isCompact ? spacing.lg : spacing.xl,
+    "--app-timeline-body-radius": radius.xl,
+    "--app-timeline-marker-padding": `${spacing.xs} ${spacing.sm}`,
+    "--app-timeline-marker-radius": "var(--app-radius-pill)",
+    "--app-timeline-footer-radius": radius.lg,
+
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",
     "--app-shadow-focus-inset": "inset 0 0 0 var(--app-border-width-focus) var(--app-color-border-focus-ring)",

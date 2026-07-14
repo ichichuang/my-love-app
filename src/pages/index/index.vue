@@ -99,54 +99,69 @@
         <text class="home-section__count">{{ timelineCountText }}</text>
       </view>
 
-      <view v-if="initialLoading" class="home-loading app-anim-breath">
-        <text>正在慢慢读取…</text>
-      </view>
+      <view class="home-section__body">
+        <view v-if="initialLoading" class="home-loading app-anim-breath">
+          <text>正在慢慢读取…</text>
+        </view>
 
-      <empty-state
-        v-else-if="errorMessage && items.length === 0"
-        image-src="/static/logo-couple.png"
-        title="小纸条暂时没加载好"
-        :body="errorMessage"
-      >
-        <wd-button custom-class="home-empty__button" @click="refreshTimeline()">再试一次</wd-button>
-      </empty-state>
+        <empty-state
+          v-else-if="errorMessage && items.length === 0"
+          image-src="/static/logo-couple.png"
+          title="小纸条暂时没加载好"
+          :body="errorMessage"
+        >
+          <wd-button custom-class="home-empty__button" @click="refreshTimeline()">再试一次</wd-button>
+        </empty-state>
 
-      <empty-state
-        v-else-if="items.length === 0"
-        image-src="/static/logo-couple.png"
-        title="先放进第一颗小记忆"
-        body="可以先写一句话、放一张照片，或者记下一个不想忘记的日子。"
-      >
-        <wd-button custom-class="home-empty__button" @click="goCreate">记录第一个瞬间</wd-button>
-      </empty-state>
+        <empty-state
+          v-else-if="items.length === 0"
+          image-src="/static/logo-couple.png"
+          title="先放进第一颗小记忆"
+          body="可以先写一句话、放一张照片，或者记下一个不想忘记的日子。"
+        >
+          <wd-button custom-class="home-empty__button" @click="goCreate">记录第一个瞬间</wd-button>
+        </empty-state>
 
-      <view v-else class="home-list">
-        <memory-timeline
-          ref="memoryTimelineRef"
-          :entries="items"
-          :marker-sticky-top="markerStickyTop"
-          :reaction-states="reactionStates"
-          @cover-error="recoverCover"
-          @open="openEntry"
-        />
-      </view>
+        <template v-else>
+          <view class="home-list">
+            <memory-timeline
+              ref="memoryTimelineRef"
+              :entries="items"
+              :marker-sticky-top="markerStickyTop"
+              :reaction-states="reactionStates"
+              @cover-error="recoverCover"
+              @open="openEntry"
+            />
+          </view>
 
-      <view v-if="loadingMore" class="home-list-footer home-list-footer--loading">
-        <wd-loading size="20" />
-        <text>正在翻后面的回忆…</text>
-      </view>
+          <view v-if="loadingMore" class="home-list-footer home-list-footer--loading">
+            <view class="home-list-footer__rail" aria-hidden="true" />
+            <view class="home-list-footer__content">
+              <wd-loading size="20" />
+              <text>正在翻后面的回忆…</text>
+            </view>
+          </view>
 
-      <view
-        v-else-if="loadMoreError"
-        class="home-list-footer home-list-footer--retry"
-        @click="loadMoreEntries"
-      >
-        <text>后面的回忆暂时没拿到，请再试一次。</text>
-      </view>
+          <view
+            v-else-if="loadMoreError"
+            class="home-list-footer home-list-footer--retry"
+            @click="loadMoreEntries"
+          >
+            <view class="home-list-footer__rail" aria-hidden="true" />
+            <view class="home-list-footer__content">
+              <text>后面的回忆暂时没拿到，请再试一次。</text>
+            </view>
+          </view>
 
-      <view v-else-if="!hasMore && items.length > 0" class="home-list-footer">
-        <text>没有更多啦~</text>
+          <view v-else-if="!hasMore" class="home-list-footer">
+            <view class="home-list-footer__rail" aria-hidden="true" />
+            <view class="home-list-footer__content">
+              <text>没有更多啦~</text>
+            </view>
+          </view>
+
+          <view class="home-section__tail" aria-hidden="true" />
+        </template>
       </view>
     </view>
 
@@ -819,6 +834,11 @@ onReachBottom(() => {
 
 .home-section {
   margin-top: var(--app-section-gap);
+  padding: var(--app-timeline-section-padding);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-timeline-section-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-md);
 }
 
 .home-section__head {
@@ -827,37 +847,66 @@ onReachBottom(() => {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--app-space-8);
-  margin-bottom: var(--app-space-7);
-  padding: var(--app-space-4) var(--app-space-0);
+  margin-bottom: var(--app-timeline-section-gap);
+  padding: var(--app-timeline-header-padding-y) var(--app-timeline-header-padding-x);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface-strong);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .home-section__title {
+  min-width: 0;
+  overflow: hidden;
   color: var(--app-text);
   font: var(--app-font-section-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.home-section__count,
-.home-loading {
+.home-section__count {
+  flex-shrink: 0;
   color: var(--app-text-soft);
   font-size: var(--app-font-size-base);
 }
 
-.home-loading {
-  padding: var(--app-space-16) var(--app-space-0);
+.home-section__body {
+  padding: var(--app-timeline-body-padding);
+  border: var(--app-panel-border-width) solid var(--app-border-muted);
+  border-radius: var(--app-timeline-body-radius);
+  background: var(--app-field);
 }
 
-.home-list {
-  padding-bottom: var(--app-safe-action-bottom-gap);
+.home-loading {
+  padding: var(--app-space-16) var(--app-space-0);
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-base);
+  text-align: center;
 }
 
 .home-list-footer {
+  display: grid;
+  grid-template-columns: var(--app-timeline-rail-width) minmax(0, 1fr);
+  gap: var(--app-timeline-axis-gap);
+  align-items: center;
+  margin-top: var(--app-timeline-section-gap);
+  padding: var(--app-space-8);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-timeline-footer-radius);
+  background: var(--app-surface);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.home-list-footer__rail {
+  width: 100%;
+}
+
+.home-list-footer__content {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--app-space-4);
-  padding: var(--app-space-10) var(--app-space-0) var(--app-safe-action-bottom-gap);
-  color: var(--app-text-soft);
-  font: var(--app-font-caption);
+  grid-column: 2;
 }
 
 .home-list-footer--loading {
@@ -867,6 +916,10 @@ onReachBottom(() => {
 .home-list-footer--retry {
   @include pressable;
   color: var(--app-accent);
+}
+
+.home-section__tail {
+  height: var(--app-safe-action-bottom-gap);
 }
 
 :deep(.home-empty__button) {

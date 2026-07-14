@@ -125,6 +125,7 @@ const handleCoverError = () => {
   grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr);
   gap: var(--app-card-gap);
   padding: var(--app-card-padding);
+  border-radius: var(--app-radius-2xl);
   overflow: hidden;
   // 回弹缓动，让松手像贴纸轻轻弹回
   transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
@@ -144,7 +145,7 @@ const handleCoverError = () => {
   justify-content: center;
   min-height: var(--app-entry-card-min-height);
   border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-card);
+  border-radius: var(--app-radius-lg);
   background:
     linear-gradient(180deg, var(--app-surface-strong), var(--app-field));
   color: var(--app-primary);
@@ -189,7 +190,7 @@ const handleCoverError = () => {
 
 .entry-card__title {
   display: block;
-  margin-top: var(--app-space-2);
+  margin-top: var(--app-space-3);
   color: var(--app-text);
   font: var(--app-font-card-title);
   overflow: hidden;
@@ -199,7 +200,7 @@ const handleCoverError = () => {
 
 .entry-card__excerpt {
   display: -webkit-box;
-  margin-top: var(--app-space-4);
+  margin-top: var(--app-space-5);
   color: var(--app-text-soft);
   font: var(--app-font-caption);
   overflow: hidden;
@@ -242,6 +243,7 @@ const handleCoverError = () => {
 
 .entry-card__cover,
 .entry-card__placeholder {
+  align-self: center;
   width: var(--app-entry-cover-width);
   height: var(--app-entry-cover-height);
   border-radius: var(--app-radius-image);

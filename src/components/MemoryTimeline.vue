@@ -26,27 +26,35 @@
             :style="markerStickyStyle"
           >
             <view
-              class="memory-timeline__node"
+              class="memory-timeline__marker-capsule"
               :class="{
-                'memory-timeline__node--latest': groupIndex === 0,
-                'memory-timeline__node--undated': group.isUndated
-              }"
-            />
-
-            <view
-              class="memory-timeline__month"
-              :class="{
-                'memory-timeline__month--latest': groupIndex === 0,
-                'memory-timeline__month--undated': group.isUndated
+                'memory-timeline__marker-capsule--latest': groupIndex === 0,
+                'memory-timeline__marker-capsule--undated': group.isUndated
               }"
             >
-              <template v-if="group.isUndated">
-                <text class="memory-timeline__month-undated">{{ group.monthLabel }}</text>
-              </template>
-              <template v-else>
-                <text class="memory-timeline__month-number">{{ group.month }}</text>
-                <text class="memory-timeline__month-unit">月</text>
-              </template>
+              <view
+                class="memory-timeline__node"
+                :class="{
+                  'memory-timeline__node--latest': groupIndex === 0,
+                  'memory-timeline__node--undated': group.isUndated
+                }"
+              />
+
+              <view
+                class="memory-timeline__month"
+                :class="{
+                  'memory-timeline__month--latest': groupIndex === 0,
+                  'memory-timeline__month--undated': group.isUndated
+                }"
+              >
+                <template v-if="group.isUndated">
+                  <text class="memory-timeline__month-undated">{{ group.monthLabel }}</text>
+                </template>
+                <template v-else>
+                  <text class="memory-timeline__month-number">{{ group.month }}</text>
+                  <text class="memory-timeline__month-unit">月</text>
+                </template>
+              </view>
             </view>
           </view>
         </view>
@@ -193,9 +201,9 @@ defineExpose({
   top: calc(var(--app-space-3) * -1);
   left: 0;
   width: 100%;
-  padding: var(--app-space-1) var(--app-space-2);
-  border-radius: var(--app-radius-sm);
-  background: var(--app-bg);
+  padding: var(--app-space-2) var(--app-space-3);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
   color: var(--app-text-soft);
   font: var(--app-font-caption);
   text-align: center;
@@ -237,9 +245,26 @@ defineExpose({
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: var(--app-space-2) var(--app-space-3);
-  border-radius: var(--app-radius-md);
-  background: var(--app-bg);
+  padding: var(--app-space-4) var(--app-space-0);
+  background: var(--app-field);
+}
+
+.memory-timeline__marker-capsule {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--app-timeline-marker-padding);
+  border-radius: var(--app-timeline-marker-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.memory-timeline__marker-capsule--latest {
+  background: var(--app-primary-soft);
+}
+
+.memory-timeline__marker-capsule--undated {
+  background: var(--app-surface-strong);
 }
 
 .memory-timeline__node {
@@ -267,9 +292,6 @@ defineExpose({
   flex-direction: column;
   align-items: center;
   margin-top: var(--app-space-2);
-  padding: var(--app-space-2) var(--app-space-3);
-  border-radius: var(--app-radius-md);
-  background: var(--app-bg);
   color: var(--app-text-soft);
   font: var(--app-font-caption);
 }
