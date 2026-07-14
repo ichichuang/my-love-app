@@ -374,7 +374,6 @@ export const componentVarNames = [
   "--app-list-gap",
   "--app-form-gap",
   "--app-image-grid-gap",
-  "--app-entry-card-min-height",
   "--app-safe-action-bottom-gap",
   "--app-textarea-min-height",
   "--app-collapse-max-height",
@@ -395,10 +394,6 @@ export const componentVarNames = [
   "--app-home-decor-bottom",
   "--app-entry-date-width",
   "--app-entry-day-width",
-  "--app-entry-cover-width",
-  "--app-entry-cover-height",
-  "--app-entry-meta-padding-y",
-  "--app-entry-meta-padding-x",
   "--app-image-badge-size",
   "--app-image-remove-touch-size",
   "--app-image-remove-height",
@@ -428,16 +423,10 @@ export const componentVarNames = [
   "--app-timeline-node-size",
   "--app-timeline-line-width",
 
-  "--app-timeline-section-padding",
-  "--app-timeline-section-radius",
-  "--app-timeline-section-gap",
   "--app-timeline-header-padding-x",
   "--app-timeline-header-padding-y",
-  "--app-timeline-body-padding",
-  "--app-timeline-body-radius",
   "--app-timeline-marker-padding",
-  "--app-timeline-marker-radius",
-  "--app-timeline-footer-radius"
+  "--app-timeline-marker-radius"
 ] as const
 
 export type ComponentVarName = (typeof componentVarNames)[number]

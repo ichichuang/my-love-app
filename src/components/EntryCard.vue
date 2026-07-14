@@ -5,33 +5,28 @@
       <text class="entry-card__day">{{ dateParts.day }}</text>
     </view>
 
-    <view class="entry-card__body">
-      <view class="entry-card__copy">
-        <text class="entry-card__mood">{{ entry.mood || "温柔" }}</text>
-        <text class="entry-card__title">{{ entry.title }}</text>
-        <text class="entry-card__excerpt">{{ excerpt }}</text>
-        <view class="entry-card__meta">
-          <text>{{ imageCountLabel }}</text>
-          <text v-if="reactionTag" class="entry-card__reaction">{{ reactionTag }}</text>
-        </view>
-      </view>
-
-      <image
-        v-if="coverUrl"
-        class="entry-card__cover"
-        :src="coverUrl"
-        mode="aspectFill"
-        @error="handleCoverError"
-      />
-      <view v-else class="entry-card__placeholder">
-        <text class="entry-card__placeholder-mark">忆</text>
+    <view class="entry-card__copy">
+      <text class="entry-card__mood">{{ entry.mood || "温柔" }}</text>
+      <text class="entry-card__title">{{ entry.title }}</text>
+      <text class="entry-card__excerpt">{{ excerpt }}</text>
+      <view class="entry-card__meta">
+        <text class="entry-card__media">{{ imageCountLabel }}</text>
+        <text v-if="reactionTag" class="entry-card__reaction">{{ reactionTag }}</text>
       </view>
     </view>
+
+    <image
+      v-if="showHeartCorner"
+      class="entry-card__heart"
+      src="/static/heart-hand-drawn.png"
+      mode="aspectFit"
+      aria-hidden="true"
+    />
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
+import { computed } from "vue"
 import type { EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
@@ -48,15 +43,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   open: [id: string]
-  "cover-error": [entryId: string, fileID: string]
 }>()
-
-const failedCoverUrl = shallowRef("")
-const coverFile = computed(() => props.entry.files[0])
-const coverUrl = computed(() => {
-  const url = coverFile.value?.resolvedTempURL ?? ""
-  return url && url !== failedCoverUrl.value ? url : ""
-})
 
 const imageCountLabel = computed(() => {
   const count = props.entry.files.length
@@ -79,13 +66,21 @@ const reactionTag = computed(() => {
   return ""
 })
 
+const showHeartCorner = computed(() => {
+  if (!props.reactionState) {
+    return false
+  }
+
+  return props.reactionState.hasReacted || props.reactionState.hasReceived
+})
+
 const excerpt = computed(() => {
   const text = props.entry.content.trim()
   if (!text) {
     return "这段回忆还没有写下文字。"
   }
 
-  return text.length > 48 ? `${text.slice(0, 48)}...` : text
+  return text.length > 64 ? `${text.slice(0, 64)}...` : text
 })
 
 const dateParts = computed(() => {
@@ -102,17 +97,6 @@ const dateParts = computed(() => {
     day: String(Number(match[2])).padStart(2, "0")
   }
 })
-
-const handleCoverError = () => {
-  const file = coverFile.value
-  const url = file?.resolvedTempURL ?? ""
-  if (!file?.fileID || !url) {
-    return
-  }
-
-  failedCoverUrl.value = url
-  emit("cover-error", props.entry.id, file.fileID)
-}
 </script>
 
 <style lang="scss" scoped>
@@ -121,20 +105,18 @@ const handleCoverError = () => {
 .entry-card {
   @include panel;
   @include pressable;
+  position: relative;
   display: grid;
   grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr);
   gap: var(--app-card-gap);
+  align-items: stretch;
   padding: var(--app-card-padding);
-  border-radius: var(--app-radius-2xl);
+  border-radius: var(--app-radius-xl);
   overflow: hidden;
-  // 回弹缓动，让松手像贴纸轻轻弹回
-  transition: transform var(--app-duration-normal) var(--app-ease-bounce), opacity var(--app-transition-fast), background-color var(--app-transition-normal), border-color var(--app-transition-normal), box-shadow var(--app-transition-normal);
 
   &:active {
     opacity: var(--app-press-opacity);
-    box-shadow: var(--app-shadow-image);
-    // 按下：轻微缩 + 一点纸张倾角
-    transform: scale(var(--app-press-scale-strong)) rotate(-0.6deg);
+    transform: scale(var(--app-press-scale));
   }
 }
 
@@ -143,11 +125,10 @@ const handleCoverError = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: var(--app-entry-card-min-height);
+  padding: var(--app-space-5) var(--app-space-3);
   border: var(--app-panel-border-width) solid var(--app-border);
   border-radius: var(--app-radius-lg);
-  background:
-    linear-gradient(180deg, var(--app-surface-strong), var(--app-field));
+  background: var(--app-field);
   color: var(--app-primary);
 }
 
@@ -164,22 +145,16 @@ const handleCoverError = () => {
 .entry-card__day {
   margin-top: var(--app-space-1);
   font-family: var(--app-font-family-display);
-  font-size: var(--app-font-size-5xl);
+  font-size: var(--app-font-size-4xl);
   font-weight: var(--app-font-weight-semibold);
   line-height: var(--app-line-height-none);
-}
-
-.entry-card__body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--app-entry-cover-width);
-  gap: var(--app-space-8);
-  min-width: 0;
 }
 
 .entry-card__copy {
   display: flex;
   min-width: 0;
   flex-direction: column;
+  gap: var(--app-space-2);
 }
 
 .entry-card__mood {
@@ -190,7 +165,6 @@ const handleCoverError = () => {
 
 .entry-card__title {
   display: block;
-  margin-top: var(--app-space-3);
   color: var(--app-text);
   font: var(--app-font-card-title);
   overflow: hidden;
@@ -200,7 +174,6 @@ const handleCoverError = () => {
 
 .entry-card__excerpt {
   display: -webkit-box;
-  margin-top: var(--app-space-5);
   color: var(--app-text-soft);
   font: var(--app-font-caption);
   overflow: hidden;
@@ -209,18 +182,19 @@ const handleCoverError = () => {
 }
 
 .entry-card__meta {
-  display: inline-flex;
-  align-self: flex-start;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--app-space-4);
   margin-top: auto;
-  padding: var(--app-entry-meta-padding-y) var(--app-entry-meta-padding-x);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-badge);
+  padding-top: var(--app-space-5);
   color: var(--app-text-soft);
   font-size: var(--app-font-size-sm);
-  line-height: var(--app-line-height-none);
+  line-height: var(--app-line-height-tight);
+}
+
+.entry-card__media {
+  flex-shrink: 0;
 }
 
 .entry-card__reaction {
@@ -241,32 +215,13 @@ const handleCoverError = () => {
   font-size: var(--app-font-size-xs);
 }
 
-.entry-card__cover,
-.entry-card__placeholder {
-  align-self: center;
-  width: var(--app-entry-cover-width);
-  height: var(--app-entry-cover-height);
-  border-radius: var(--app-radius-image);
-  // 封面/占位温柔淡入，链接解析回来时不硬切
-  animation: app-soft-in var(--app-duration-normal) var(--app-ease-out);
-}
-
-.entry-card__cover {
-  background: var(--app-surface-strong);
-}
-
-.entry-card__placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: var(--app-panel-border-width) solid var(--app-border);
-  background:
-    linear-gradient(135deg, var(--app-surface-strong), var(--app-field));
-}
-
-.entry-card__placeholder-mark {
-  color: var(--app-primary);
-  font-family: var(--app-font-family-display);
-  font-size: var(--app-font-size-6xl);
+.entry-card__heart {
+  position: absolute;
+  top: var(--app-space-4);
+  right: var(--app-space-4);
+  width: var(--app-space-18);
+  height: var(--app-space-18);
+  transform: rotate(calc(var(--app-rotate-stamp) * -2));
+  pointer-events: none;
 }
 </style>

@@ -129,7 +129,6 @@
               :entries="items"
               :marker-sticky-top="markerStickyTop"
               :reaction-states="reactionStates"
-              @cover-error="recoverCover"
               @open="openEntry"
             />
           </view>
@@ -187,13 +186,6 @@ import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { useTimelineActiveMonth } from "@/composables/useTimelineActiveMonth"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
-import {
-  batchResolveEntryCovers,
-  getTempFileURLByFileIds,
-  mergeResolvedTempURLsForEntry,
-  removeResolvedTempURLFromFiles,
-  setResolvedTempURLForFile
-} from "@/services/cloud-file-resolver"
 import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
@@ -241,123 +233,6 @@ const timelineTitleText = computed(() => {
 
   return `回忆时间线 · ${activeMonth.activeLabel.value}`
 })
-
-const coverRecoveryFileKeys = new Set<string>()
-let timelineImageHydrationRun = 0
-
-const mergeEntriesInTimeline = (nextEntries: EntryRecord[]): void => {
-  const nextEntryById = new Map(nextEntries.map((entry) => [entry.id, entry]))
-  let changed = false
-  const nextItems = items.value.map((item) => {
-    const nextEntry = nextEntryById.get(item.id)
-    if (!nextEntry) {
-      return item
-    }
-
-    const mergedItem = mergeResolvedTempURLsForEntry(item, nextEntry)
-    if (mergedItem !== item) {
-      changed = true
-    }
-    return mergedItem
-  })
-
-  if (changed) {
-    items.value = nextItems
-  }
-}
-
-const hydrateTimelineImages = async (sourceItems: EntryRecord[]): Promise<void> => {
-  const needsHydration = sourceItems.some((entry) =>
-    Boolean(entry.files[0]?.fileID && !entry.files[0]?.resolvedTempURL)
-  )
-  if (!needsHydration) {
-    return
-  }
-
-  const run = ++timelineImageHydrationRun
-  try {
-    const resolvedEntries = await batchResolveEntryCovers(sourceItems)
-    if (run !== timelineImageHydrationRun) {
-      return
-    }
-
-    mergeEntriesInTimeline(resolvedEntries)
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.info(`[小珊的树洞] 时间线图片链接暂时没取到：${getFriendlyErrorMessage(error)}`)
-    }
-  }
-}
-
-const hideFailedCover = (id: string, fileID: string): void => {
-  let changed = false
-  const nextItems = items.value.map((item) => {
-    if (item.id !== id) {
-      return item
-    }
-
-    const nextFiles = removeResolvedTempURLFromFiles(item.files, fileID)
-    if (nextFiles === item.files) {
-      return item
-    }
-
-    changed = true
-    return { ...item, files: nextFiles }
-  })
-
-  if (changed) {
-    items.value = nextItems
-  }
-}
-
-const applyRecoveredCover = (id: string, fileID: string, resolvedTempURL: string): void => {
-  let changed = false
-  const nextItems = items.value.map((item) => {
-    if (item.id !== id) {
-      return item
-    }
-
-    const nextFiles = setResolvedTempURLForFile(item.files, fileID, resolvedTempURL)
-    if (nextFiles === item.files) {
-      return item
-    }
-
-    changed = true
-    return {
-      ...item,
-      files: nextFiles
-    }
-  })
-
-  if (changed) {
-    items.value = nextItems
-  }
-}
-
-const recoverCover = async (id: string, fileID: string) => {
-  hideFailedCover(id, fileID)
-  const recoveryKey = `${id}:${fileID}`
-  if (coverRecoveryFileKeys.has(recoveryKey)) {
-    return
-  }
-
-  coverRecoveryFileKeys.add(recoveryKey)
-  try {
-    const urls = await getTempFileURLByFileIds([fileID], {
-      force: true
-    })
-    const resolvedTempURL = urls.get(fileID)
-    if (resolvedTempURL) {
-      applyRecoveredCover(id, fileID, resolvedTempURL)
-    }
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.info(`[小珊的树洞] 封面图片链接刷新失败：${getFriendlyErrorMessage(error)}`)
-    }
-  } finally {
-    coverRecoveryFileKeys.delete(recoveryKey)
-  }
-}
 
 const measureHeaderGeometry = (): void => {
   const query = uni.createSelectorQuery()
@@ -422,7 +297,6 @@ const refreshTimeline = async () => {
 const loadMoreEntries = async () => {
   const result = await timeline.loadMore()
   if (result.appendedItems.length > 0) {
-    void hydrateTimelineImages(result.appendedItems)
     void loadReactionStates(result.appendedItems)
   }
 
@@ -515,7 +389,6 @@ const loadReactionStates = async (entries: EntryRecord[]) => {
 }
 
 watch(items, (nextItems) => {
-  void hydrateTimelineImages(nextItems)
   void loadReactionStates(nextItems)
   void remeasureMonthAnchors()
 })
@@ -834,11 +707,6 @@ onReachBottom(() => {
 
 .home-section {
   margin-top: var(--app-section-gap);
-  padding: var(--app-timeline-section-padding);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-timeline-section-radius);
-  background: var(--app-surface);
-  box-shadow: var(--app-shadow-md);
 }
 
 .home-section__head {
@@ -847,11 +715,11 @@ onReachBottom(() => {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--app-space-8);
-  margin-bottom: var(--app-timeline-section-gap);
+  margin-bottom: var(--app-list-gap);
   padding: var(--app-timeline-header-padding-y) var(--app-timeline-header-padding-x);
+  border: var(--app-panel-border-width) solid var(--app-border);
   border-radius: var(--app-radius-lg);
   background: var(--app-surface-strong);
-  box-shadow: var(--app-shadow-sm);
 }
 
 .home-section__title {
@@ -869,13 +737,6 @@ onReachBottom(() => {
   font-size: var(--app-font-size-base);
 }
 
-.home-section__body {
-  padding: var(--app-timeline-body-padding);
-  border: var(--app-panel-border-width) solid var(--app-border-muted);
-  border-radius: var(--app-timeline-body-radius);
-  background: var(--app-field);
-}
-
 .home-loading {
   padding: var(--app-space-16) var(--app-space-0);
   color: var(--app-text-soft);
@@ -888,11 +749,8 @@ onReachBottom(() => {
   grid-template-columns: var(--app-timeline-rail-width) minmax(0, 1fr);
   gap: var(--app-timeline-axis-gap);
   align-items: center;
-  margin-top: var(--app-timeline-section-gap);
-  padding: var(--app-space-8);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-timeline-footer-radius);
-  background: var(--app-surface);
+  margin-top: var(--app-list-gap);
+  padding: var(--app-space-6) var(--app-space-0);
   color: var(--app-text-soft);
   font: var(--app-font-caption);
 }

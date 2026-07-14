@@ -69,7 +69,6 @@
           date-display="day"
           :entry="entry"
           :reaction-state="reactionStates.get(entry.id)"
-          @cover-error="(entryId, fileID) => emit('cover-error', entryId, fileID)"
           @open="(id) => emit('open', id)"
         />
       </view>
@@ -98,7 +97,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   open: [id: string]
-  "cover-error": [entryId: string, fileID: string]
 }>()
 
 const instance = getCurrentInstance()
@@ -256,7 +254,6 @@ defineExpose({
   padding: var(--app-timeline-marker-padding);
   border-radius: var(--app-timeline-marker-radius);
   background: var(--app-surface);
-  box-shadow: var(--app-shadow-sm);
 }
 
 .memory-timeline__marker-capsule--latest {

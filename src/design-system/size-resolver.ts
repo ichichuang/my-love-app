@@ -106,7 +106,6 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-input-height": isCompact ? control.md : "88rpx",
     "--app-nav-height": control.lg,
     "--app-image-grid-gap": spacing.md,
-    "--app-entry-card-min-height": isCompact ? "156rpx" : "168rpx",
     "--app-safe-action-bottom-gap": isCompact ? "144rpx" : "156rpx",
     "--app-textarea-min-height": isCompact ? "232rpx" : "260rpx",
     // 折叠区展开态保守高度上限：容纳歌曲/任务详情（含 textarea + 选项组），
@@ -133,10 +132,6 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
 
     "--app-entry-date-width": isCompact ? "86rpx" : "94rpx",
     "--app-entry-day-width": isCompact ? "62rpx" : "68rpx",
-    "--app-entry-cover-width": isCompact ? "128rpx" : "142rpx",
-    "--app-entry-cover-height": isCompact ? "156rpx" : "168rpx",
-    "--app-entry-meta-padding-y": spacing.xs,
-    "--app-entry-meta-padding-x": isCompact ? "12rpx" : "14rpx",
 
     "--app-image-badge-size": isCompact ? "30rpx" : "34rpx",
     "--app-image-remove-touch-size": "80rpx",
@@ -175,16 +170,10 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-timeline-node-size": isCompact ? "18rpx" : "20rpx",
     "--app-timeline-line-width": "2rpx",
 
-    "--app-timeline-section-padding": spacing["2xl"],
-    "--app-timeline-section-radius": radius["2xl"],
-    "--app-timeline-section-gap": spacing.md,
     "--app-timeline-header-padding-x": spacing.xl,
     "--app-timeline-header-padding-y": spacing.md,
-    "--app-timeline-body-padding": isCompact ? spacing.lg : spacing.xl,
-    "--app-timeline-body-radius": radius.xl,
     "--app-timeline-marker-padding": `${spacing.xs} ${spacing.sm}`,
     "--app-timeline-marker-radius": "var(--app-radius-pill)",
-    "--app-timeline-footer-radius": radius.lg,
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",
