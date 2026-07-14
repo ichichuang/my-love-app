@@ -153,22 +153,132 @@ const removeEntryCache = (id: string): void => {
   removeCachedListItem(dataCacheKeys.memoryList(), id)
 }
 
-export const listEntries = async (): Promise<EntryRecord[]> => {
-  const documents = await listDocuments<StoredEntryDocument>(appConfig.entriesCollection, {
-    where: {
-      coupleId: appConfig.coupleId
-    },
-    orderBy: {
-      field: "createdAt",
-      direction: "desc"
-    },
-    limit: 50
-  })
-
-  const entries = documents.map(normalizeEntry).filter((entry): entry is EntryRecord => entry !== null)
-  writeDataCache(dataCacheKeys.memoryList(), entries)
-  return entries
+export interface MemoryTimelineCursor {
+  rawOffset: number
 }
+
+export interface MemoryTimelinePage {
+  items: EntryRecord[]
+  nextCursor: MemoryTimelineCursor | undefined
+  hasMore: boolean
+  rawDocumentsConsumed: number
+}
+
+// CloudBase returns at most 20 documents per request in the current environment.
+// Keep the raw request page size at that cap so we never silently truncate.
+const CLOUDBASE_MEMORY_PAGE_SIZE = 20
+// Visible timeline page size: how many memory cards the user sees per load.
+const VISIBLE_MEMORY_PAGE_SIZE = 6
+const MAX_MEMORY_PAGES = 100
+
+const fetchMemoryTimelinePage = async (
+  cursor: MemoryTimelineCursor = { rawOffset: 0 }
+): Promise<MemoryTimelinePage> => {
+  const collection = appConfig.entriesCollection
+  const coupleId = appConfig.coupleId
+  const memoryEntries: EntryRecord[] = []
+  const seenIds = new Set<string>()
+  const startRawOffset = cursor.rawOffset
+  let rawOffset = startRawOffset
+  let rawDocumentsConsumed = 0
+  let lastRawPageSize = 0
+  let lastBreakIndex = -1
+
+  if (import.meta.env.DEV) {
+    console.info(`[timeline-page] start rawOffset=${startRawOffset}`)
+  }
+
+  for (let page = 0; page < MAX_MEMORY_PAGES; page += 1) {
+    if (import.meta.env.DEV) {
+      console.info(`[timeline-page] raw query skip=${rawOffset} limit=${CLOUDBASE_MEMORY_PAGE_SIZE}`)
+    }
+
+    const documents = await listDocuments<StoredEntryDocument>(collection, {
+      where: { coupleId },
+      orderBy: {
+        field: "createdAt",
+        direction: "desc"
+      },
+      skip: rawOffset,
+      limit: CLOUDBASE_MEMORY_PAGE_SIZE
+    })
+
+    lastRawPageSize = documents.length
+    if (import.meta.env.DEV) {
+      console.info(`[timeline-page] raw query returned ${lastRawPageSize} docs`)
+    }
+
+    if (lastRawPageSize === 0) {
+      break
+    }
+
+    let visiblePageFilledInThisBatch = false
+
+    for (let index = 0; index < documents.length; index += 1) {
+      const document = documents[index]
+      rawOffset += 1
+      rawDocumentsConsumed += 1
+
+      const entry = normalizeEntry(document)
+      if (!entry || seenIds.has(entry.id)) {
+        continue
+      }
+
+      seenIds.add(entry.id)
+      memoryEntries.push(entry)
+
+      if (memoryEntries.length >= VISIBLE_MEMORY_PAGE_SIZE) {
+        lastBreakIndex = index
+        visiblePageFilledInThisBatch = true
+        break
+      }
+    }
+
+    if (visiblePageFilledInThisBatch) {
+      break
+    }
+
+    // The whole fetched batch was consumed and the visible page is still not full.
+    if (lastRawPageSize < CLOUDBASE_MEMORY_PAGE_SIZE) {
+      break
+    }
+  }
+
+  const isVisiblePageFull = memoryEntries.length >= VISIBLE_MEMORY_PAGE_SIZE
+  let hasMore = false
+
+  if (isVisiblePageFull) {
+    // If we stopped before the end of the fetched batch, unconsumed raw docs remain.
+    // If we stopped on the final document of a short batch, the collection is exhausted.
+    // If we stopped on the final document of a full batch, another raw page may exist.
+    if (lastBreakIndex >= 0 && lastBreakIndex < lastRawPageSize - 1) {
+      hasMore = true
+    } else if (lastRawPageSize === CLOUDBASE_MEMORY_PAGE_SIZE) {
+      hasMore = true
+    }
+  } else if (lastRawPageSize === CLOUDBASE_MEMORY_PAGE_SIZE) {
+    // The visible page is not full, but the last consumed raw batch was full,
+    // so more raw documents may yield additional memory entries.
+    hasMore = true
+  }
+
+  if (import.meta.env.DEV) {
+    console.info(
+      `[timeline-page] end start=${startRawOffset} consumed=${rawDocumentsConsumed} memories=${memoryEntries.length} endRawOffset=${rawOffset} hasMore=${hasMore}`
+    )
+  }
+
+  return {
+    items: memoryEntries,
+    nextCursor: hasMore ? { rawOffset } : undefined,
+    hasMore,
+    rawDocumentsConsumed
+  }
+}
+
+export const loadMemoryTimelinePage = async (
+  cursor?: MemoryTimelineCursor
+): Promise<MemoryTimelinePage> => fetchMemoryTimelinePage(cursor)
 
 const getNormalizedEntry = async (id: string): Promise<EntryRecord> => {
   const document = await getDocument<StoredEntryDocument>(appConfig.entriesCollection, id)

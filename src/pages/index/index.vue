@@ -96,10 +96,10 @@
     <view class="home-section">
       <view class="home-section__head" :style="stickySectionStyle">
         <text class="home-section__title">回忆时间线</text>
-        <text class="home-section__count">{{ items.length }} 条回忆</text>
+        <text class="home-section__count">{{ timelineCountText }}</text>
       </view>
 
-      <view v-if="loading" class="home-loading app-anim-breath">
+      <view v-if="initialLoading" class="home-loading app-anim-breath">
         <text>正在慢慢读取…</text>
       </view>
 
@@ -109,7 +109,7 @@
         title="小纸条暂时没加载好"
         :body="errorMessage"
       >
-        <wd-button custom-class="home-empty__button" @click="loadEntries()">再试一次</wd-button>
+        <wd-button custom-class="home-empty__button" @click="refreshTimeline()">再试一次</wd-button>
       </empty-state>
 
       <empty-state
@@ -133,6 +133,23 @@
           @open="openEntry"
         />
       </view>
+
+      <view v-if="loadingMore" class="home-list-footer home-list-footer--loading">
+        <wd-loading size="20" />
+        <text>正在翻后面的回忆…</text>
+      </view>
+
+      <view
+        v-else-if="loadMoreError"
+        class="home-list-footer home-list-footer--retry"
+        @click="loadMoreEntries"
+      >
+        <text>后面的回忆暂时没拿到，请再试一次。</text>
+      </view>
+
+      <view v-else-if="!hasMore && items.length > 0" class="home-list-footer">
+        <text>没有更多啦~</text>
+      </view>
     </view>
 
     <app-pet-navigator />
@@ -141,14 +158,16 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import AppPetNavigator from "@/components/AppPetNavigator.vue"
-import { showAppError, showAppWarning } from "@/composables/useAppToast"
-import { useCachedList } from "@/composables/useCachedList"
+import { showAppError } from "@/composables/useAppToast"
 import { useHeartReaction } from "@/composables/useHeartReaction"
 import { useLocalPerson } from "@/composables/useLocalPerson"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { usePaginatedTimeline } from "@/composables/usePaginatedTimeline"
 import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
+import { consumeTimelineReactionChanged } from "@/composables/useTimelineReactionSignal"
+import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import {
@@ -158,23 +177,41 @@ import {
   removeResolvedTempURLFromFiles,
   setResolvedTempURLForFile
 } from "@/services/cloud-file-resolver"
-import { dataCacheKeys } from "@/services/data-cache"
-import { listEntries, type EntryRecord } from "@/services/repositories/entries"
+import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
 const indexRoute = "/pages/index/index"
-const { items, loading, errorMessage, reload } = useCachedList({
-  cacheKey: dataCacheKeys.memoryList,
-  loader: listEntries
-})
+const timeline = usePaginatedTimeline()
+const {
+  items,
+  initialLoading,
+  refreshing,
+  loadingMore,
+  hasMore,
+  loadMoreError,
+  errorMessage
+} = timeline
 const localPerson = useLocalPerson()
 const heartReaction = useHeartReaction({ localPerson })
 const reactionStates = shallowRef(new Map<string, HeartReactionState>())
 const hour = new Date().getHours()
 const todayGreeting = hour < 12 ? "早安，今天也慢慢收藏" : hour < 18 ? "午后，把小事轻轻放好" : "晚上好，给今天留一盏小灯"
-const memoryCountText = computed(() => (items.value.length > 0 ? `已收好 ${items.value.length} 条回忆` : "等第一颗小记忆"))
+const memoryCountText = computed(() => {
+  if (items.value.length === 0) {
+    return "等第一颗小记忆"
+  }
+
+  return hasMore.value ? `已载入 ${items.value.length} 条` : `已收好 ${items.value.length} 条回忆`
+})
+const timelineCountText = computed(() => {
+  if (items.value.length === 0) {
+    return ""
+  }
+
+  return hasMore.value ? `已载入 ${items.value.length} 条` : `${items.value.length} 条回忆`
+})
 const coverRecoveryFileKeys = new Set<string>()
 let timelineImageHydrationRun = 0
 
@@ -292,16 +329,58 @@ const recoverCover = async (id: string, fileID: string) => {
   }
 }
 
-const loadEntries = async (notifyCachedFailure = false) => {
+const refreshTimeline = async () => {
   try {
-    const result = await reload()
-    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      showAppWarning("小纸条暂时没更新好，请稍后再试。")
-    }
+    await timeline.refresh()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
-  } finally {
-    uni.stopPullDownRefresh()
+  }
+
+  if (items.value.length > 0) {
+    void loadReactionStates(items.value)
+  }
+  uni.stopPullDownRefresh()
+}
+
+const loadMoreEntries = async () => {
+  const result = await timeline.loadMore()
+  if (result.appendedItems.length > 0) {
+    void hydrateTimelineImages(result.appendedItems)
+    void loadReactionStates(result.appendedItems)
+  }
+}
+
+const refreshReactionStateForEntry = async (entryId: string) => {
+  const entry = items.value.find((item) => item.id === entryId)
+  if (!entry) {
+    return
+  }
+
+  try {
+    const states = await heartReaction.batchLoadStates([entryId])
+    const nextStates = new Map(reactionStates.value)
+    const state = states.get(entryId)
+    if (state) {
+      nextStates.set(entryId, state)
+    } else {
+      nextStates.delete(entryId)
+    }
+    reactionStates.value = nextStates
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.info(`[小珊的树洞] 单条小心心状态刷新失败：${getFriendlyErrorMessage(error)}`)
+    }
+  }
+}
+
+const refreshReactionsOnShow = () => {
+  const changedEntryId = consumeTimelineReactionChanged()
+  if (changedEntryId) {
+    void refreshReactionStateForEntry(changedEntryId)
+  }
+
+  if (items.value.length > 0) {
+    void loadReactionStates(items.value)
   }
 }
 
@@ -335,13 +414,6 @@ const openEntry = (id: string) => {
   })
 }
 
-onShow(() => {
-  consumeRouteFeedback(indexRoute)
-  void loadEntries()
-})
-onPullDownRefresh(() => {
-  void loadEntries(true)
-})
 const loadReactionStates = async (entries: EntryRecord[]) => {
   const targetIds = entries.map((entry) => entry.id)
   if (targetIds.length === 0) {
@@ -350,7 +422,12 @@ const loadReactionStates = async (entries: EntryRecord[]) => {
   }
 
   try {
-    reactionStates.value = await heartReaction.batchLoadStates(targetIds)
+    const states = await heartReaction.batchLoadStates(targetIds)
+    const nextStates = new Map(reactionStates.value)
+    for (const [targetId, state] of states) {
+      nextStates.set(targetId, state)
+    }
+    reactionStates.value = nextStates
   } catch (error) {
     if (import.meta.env.DEV) {
       console.info(`[小珊的树洞] 时间线小心心状态读取失败：${getFriendlyErrorMessage(error)}`)
@@ -361,6 +438,41 @@ const loadReactionStates = async (entries: EntryRecord[]) => {
 watch(items, (nextItems) => {
   void hydrateTimelineImages(nextItems)
   void loadReactionStates(nextItems)
+})
+
+watch(
+  () => localPerson.selectedKey.value,
+  () => {
+    if (items.value.length > 0) {
+      void loadReactionStates(items.value)
+    }
+  }
+)
+
+onShow(() => {
+  consumeRouteFeedback(indexRoute)
+  if (consumeTimelineNeedsRefresh(indexRoute)) {
+    void refreshTimeline()
+    return
+  }
+
+  refreshReactionsOnShow()
+})
+
+onPullDownRefresh(() => {
+  void refreshTimeline()
+})
+
+onReachBottom(() => {
+  if (initialLoading.value || refreshing.value || loadingMore.value) {
+    return
+  }
+
+  if (!hasMore.value) {
+    return
+  }
+
+  void loadMoreEntries()
 })
 </script>
 
@@ -655,6 +767,25 @@ watch(items, (nextItems) => {
   flex-direction: column;
   gap: var(--app-list-gap);
   padding-bottom: var(--app-safe-action-bottom-gap);
+}
+
+.home-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-4);
+  padding: var(--app-space-10) var(--app-space-0) var(--app-safe-action-bottom-gap);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.home-list-footer--loading {
+  color: var(--app-text-muted);
+}
+
+.home-list-footer--retry {
+  @include pressable;
+  color: var(--app-accent);
 }
 
 :deep(.home-empty__button) {

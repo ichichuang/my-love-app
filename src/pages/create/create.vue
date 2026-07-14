@@ -152,6 +152,7 @@ import { onBackPress, onShow, onUnload } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { showAppError, showAppToast, showAppWarning } from "@/composables/useAppToast"
 import { useFileUpload } from "@/composables/useFileUpload"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
@@ -326,6 +327,7 @@ const saveEntry = async () => {
 
     markFilesCommitted(entry.files)
     saveSucceeded.value = true
+    setTimelineNeedsRefresh("/pages/index/index")
     uni.redirectTo({
       url: `/pages/detail/detail?id=${encodeURIComponent(entry.id)}`
     })

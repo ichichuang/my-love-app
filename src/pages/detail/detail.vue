@@ -224,6 +224,7 @@ import { useFileUpload } from "@/composables/useFileUpload"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { getFriendlyErrorMessage, type CloudFile } from "@/services/cloudbase"
 import {
   batchResolveEntries,
@@ -622,6 +623,7 @@ const saveChanges = async () => {
     markFilesCommitted(visibleEntry.files)
     hydrateForm(visibleEntry)
     editing.value = false
+    setTimelineNeedsRefresh(indexRoute)
     void hydrateImageUrls(nextEntry)
     const visibleFileIDs = new Set(visibleEntry.files.map((file) => file.fileID))
     filesToCleanupAfterSave = removedFilesSnapshot.filter((file) => !visibleFileIDs.has(file.fileID))
@@ -671,6 +673,7 @@ const deleteCurrentEntry = async () => {
   try {
     await deleteEntry(entry.value.id)
     setRouteSuccessFeedback(indexRoute, "这条回忆已经收起来")
+    setTimelineNeedsRefresh(indexRoute)
     uni.redirectTo({
       url: indexRoute
     })

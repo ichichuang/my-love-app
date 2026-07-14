@@ -36,6 +36,7 @@ import HeartReactionPersonSheet from "@/components/HeartReactionPersonSheet.vue"
 import { showAppError } from "@/composables/useAppToast"
 import { useHeartReaction } from "@/composables/useHeartReaction"
 import { useLocalPerson } from "@/composables/useLocalPerson"
+import { setTimelineReactionChanged } from "@/composables/useTimelineReactionSignal"
 
 const props = defineProps<{
   entryId: string
@@ -127,6 +128,7 @@ const handleAction = async () => {
   }
 
   await heart.sendHeart(props.entryId)
+  setTimelineReactionChanged(props.entryId)
 }
 
 const handleUndo = async () => {
@@ -151,6 +153,7 @@ const handleUndo = async () => {
     })
 
     await heart.removeHeart(props.entryId)
+    setTimelineReactionChanged(props.entryId)
   } catch {
     // User cancelled; keep the heart.
   }
@@ -159,7 +162,9 @@ const handleUndo = async () => {
 const handlePersonSelected = () => {
   if (sendAfterSelect.value && props.entryId) {
     sendAfterSelect.value = false
-    void heart.sendHeart(props.entryId)
+    void heart.sendHeart(props.entryId).then(() => {
+      setTimelineReactionChanged(props.entryId)
+    })
   }
 }
 

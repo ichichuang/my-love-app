@@ -7,6 +7,9 @@ export interface DataCacheEnvelope<T> {
 }
 
 type DataCacheKind = "memory" | "song" | "task" | "memo"
+type DataCacheScope = "list" | "detail" | "timeline" | "timeline-v2"
+
+const MEMORY_TIMELINE_SCOPE = "timeline-v2"
 type SemanticData = boolean | number | string | null | SemanticData[] | { [key: string]: SemanticData }
 type StableListKey = number | string
 
@@ -33,13 +36,14 @@ const FILE_URL_KEYS_STRIPPED_FROM_CACHE = new Set<string>([RESOLVED_FILE_URL_KEY
 
 const cacheEnvId = (): string => appConfig.cloudbaseEnvId || FALLBACK_ENV_ID
 
-const makeDataCacheKey = (kind: DataCacheKind, scope: "list" | "detail", id = ""): string => {
+const makeDataCacheKey = (kind: DataCacheKind, scope: DataCacheScope, id = ""): string => {
   const baseKey = `${DATA_CACHE_PREFIX}:v${DATA_CACHE_VERSION}:${cacheEnvId()}:${appConfig.coupleId}:${kind}:${scope}`
   return id ? `${baseKey}:${id}` : baseKey
 }
 
 export const dataCacheKeys = {
   memoryList: (): string => makeDataCacheKey("memory", "list"),
+  memoryTimelinePage: (): string => makeDataCacheKey("memory", MEMORY_TIMELINE_SCOPE),
   memoryDetail: (id: string): string => makeDataCacheKey("memory", "detail", id),
   songList: (): string => makeDataCacheKey("song", "list"),
   songDetail: (id: string): string => makeDataCacheKey("song", "detail", id),
