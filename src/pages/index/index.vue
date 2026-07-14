@@ -122,13 +122,9 @@
       </empty-state>
 
       <view v-else class="home-list">
-        <entry-card
-          v-for="(entry, index) in items"
-          :key="entry.id"
-          class="app-rise-stagger"
-          :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
-          :entry="entry"
-          :reaction-state="reactionStates.get(entry.id)"
+        <memory-timeline
+          :entries="items"
+          :reaction-states="reactionStates"
           @cover-error="recoverCover"
           @open="openEntry"
         />
@@ -177,6 +173,7 @@ import {
   removeResolvedTempURLFromFiles,
   setResolvedTempURLForFile
 } from "@/services/cloud-file-resolver"
+import MemoryTimeline from "@/components/MemoryTimeline.vue"
 import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
@@ -763,9 +760,6 @@ onReachBottom(() => {
 }
 
 .home-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-list-gap);
   padding-bottom: var(--app-safe-action-bottom-gap);
 }
 

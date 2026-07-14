@@ -20,6 +20,7 @@ page {
   --app-home-decor-bottom: 98rpx;
 
   --app-entry-date-width: 94rpx;
+  --app-entry-day-width: 68rpx;
   --app-entry-cover-width: 142rpx;
   --app-entry-cover-height: var(--app-entry-card-min-height);
   --app-entry-meta-padding-y: var(--app-space-2);
@@ -39,4 +40,10 @@ page {
   --app-z-index-nav: 10;
   --app-z-index-pet: 50;
   --app-z-index-picker: 1050;
+
+  --app-timeline-rail-width: 76rpx;
+  --app-timeline-axis-gap: var(--app-space-6);
+  --app-timeline-node-size: var(--app-space-9);
+  --app-timeline-line-width: var(--app-border-width-focus);
+  --app-timeline-year-width: var(--app-space-16);
 }

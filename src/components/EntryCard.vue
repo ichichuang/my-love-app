@@ -1,7 +1,7 @@
 <template>
   <view class="entry-card" @click="emit('open', entry.id)">
-    <view class="entry-card__date">
-      <text class="entry-card__month">{{ dateParts.month }}</text>
+    <view class="entry-card__date" :class="{ 'entry-card__date--day-only': props.dateDisplay === 'day' }">
+      <text v-if="props.dateDisplay === 'month-day'" class="entry-card__month">{{ dateParts.month }}</text>
       <text class="entry-card__day">{{ dateParts.day }}</text>
     </view>
 
@@ -35,10 +35,16 @@ import { computed, shallowRef } from "vue"
 import type { EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
-const props = defineProps<{
-  entry: EntryRecord
-  reactionState?: HeartReactionState
-}>()
+const props = withDefaults(
+  defineProps<{
+    entry: EntryRecord
+    reactionState?: HeartReactionState
+    dateDisplay?: "month-day" | "day"
+  }>(),
+  {
+    dateDisplay: "month-day"
+  }
+)
 
 const emit = defineEmits<{
   open: [id: string]
@@ -83,8 +89,8 @@ const excerpt = computed(() => {
 })
 
 const dateParts = computed(() => {
-  const date = new Date(props.entry.occurredAt)
-  if (Number.isNaN(date.getTime())) {
+  const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(props.entry.occurredAt.trim())
+  if (!match) {
     return {
       month: "忆",
       day: "--"
@@ -92,8 +98,8 @@ const dateParts = computed(() => {
   }
 
   return {
-    month: `${date.getMonth() + 1}月`,
-    day: String(date.getDate()).padStart(2, "0")
+    month: `${Number(match[1])}月`,
+    day: String(Number(match[2])).padStart(2, "0")
   }
 })
 
@@ -142,6 +148,11 @@ const handleCoverError = () => {
   background:
     linear-gradient(180deg, var(--app-surface-strong), var(--app-field));
   color: var(--app-primary);
+}
+
+.entry-card__date--day-only {
+  min-width: var(--app-entry-day-width);
+  width: var(--app-entry-day-width);
 }
 
 .entry-card__month {

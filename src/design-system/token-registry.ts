@@ -394,6 +394,7 @@ export const componentVarNames = [
   "--app-home-decor-height",
   "--app-home-decor-bottom",
   "--app-entry-date-width",
+  "--app-entry-day-width",
   "--app-entry-cover-width",
   "--app-entry-cover-height",
   "--app-entry-meta-padding-y",
@@ -420,7 +421,13 @@ export const componentVarNames = [
   "--app-cloud-value-width",
   "--app-z-index-nav",
   "--app-z-index-pet",
-  "--app-z-index-picker"
+  "--app-z-index-picker",
+
+  "--app-timeline-rail-width",
+  "--app-timeline-axis-gap",
+  "--app-timeline-node-size",
+  "--app-timeline-line-width",
+  "--app-timeline-year-width"
 ] as const
 
 export type ComponentVarName = (typeof componentVarNames)[number]

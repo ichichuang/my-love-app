@@ -7,9 +7,9 @@ export interface DataCacheEnvelope<T> {
 }
 
 type DataCacheKind = "memory" | "song" | "task" | "memo"
-type DataCacheScope = "list" | "detail" | "timeline" | "timeline-v2"
+type DataCacheScope = "list" | "detail" | "timeline" | "timeline-v2" | "timeline-v3"
 
-const MEMORY_TIMELINE_SCOPE = "timeline-v2"
+const MEMORY_TIMELINE_SCOPE = "timeline-v3"
 type SemanticData = boolean | number | string | null | SemanticData[] | { [key: string]: SemanticData }
 type StableListKey = number | string
 

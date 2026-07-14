@@ -196,7 +196,7 @@ const fetchMemoryTimelinePage = async (
     const documents = await listDocuments<StoredEntryDocument>(collection, {
       where: { coupleId },
       orderBy: {
-        field: "createdAt",
+        field: "occurredAt",
         direction: "desc"
       },
       skip: rawOffset,

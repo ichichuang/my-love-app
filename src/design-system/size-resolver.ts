@@ -132,6 +132,7 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-home-decor-bottom": isCompact ? "88rpx" : "98rpx",
 
     "--app-entry-date-width": isCompact ? "86rpx" : "94rpx",
+    "--app-entry-day-width": isCompact ? "62rpx" : "68rpx",
     "--app-entry-cover-width": isCompact ? "128rpx" : "142rpx",
     "--app-entry-cover-height": isCompact ? "156rpx" : "168rpx",
     "--app-entry-meta-padding-y": spacing.xs,
@@ -168,6 +169,12 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-z-index-nav": "10",
     "--app-z-index-pet": "50",
     "--app-z-index-picker": "1050",
+
+    "--app-timeline-rail-width": isCompact ? "70rpx" : "76rpx",
+    "--app-timeline-axis-gap": isCompact ? "14rpx" : "18rpx",
+    "--app-timeline-node-size": isCompact ? "18rpx" : "20rpx",
+    "--app-timeline-line-width": "2rpx",
+    "--app-timeline-year-width": isCompact ? "60rpx" : "64rpx",
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",

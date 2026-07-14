@@ -56,8 +56,13 @@ const writeTimelineCache = (items: EntryRecord[], cursor: MemoryTimelineCursor |
   })
 }
 
-const invalidateLegacyMemoryListCache = (() => {
+const invalidateLegacyTimelineCaches = (() => {
   let invalidated = false
+  const legacyKeys = [
+    "love-cache:v1:unconfigured:main:memory:list",
+    "love-cache:v1:unconfigured:main:memory:timeline",
+    "love-cache:v1:unconfigured:main:memory:timeline-v2"
+  ]
   return (): void => {
     if (invalidated) {
       return
@@ -65,6 +70,9 @@ const invalidateLegacyMemoryListCache = (() => {
 
     invalidated = true
     removeDataCache(dataCacheKeys.memoryList())
+    for (const key of legacyKeys) {
+      removeDataCache(key)
+    }
   }
 })()
 
@@ -123,7 +131,7 @@ export const usePaginatedTimeline = (): UsePaginatedTimelineResult => {
     loadMoreError.value = false
     errorMessage.value = ""
     writeTimelineCache(items.value, page.nextCursor, page.hasMore)
-    invalidateLegacyMemoryListCache()
+    invalidateLegacyTimelineCaches()
   }
 
   const handlePageError = (error: unknown, fallbackMessage: string, isLoadMore: boolean): void => {
