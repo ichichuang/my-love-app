@@ -94,8 +94,8 @@
     </view>
 
     <view class="home-section">
-      <view class="home-section__head" :style="stickySectionStyle">
-        <text class="home-section__title">回忆时间线</text>
+      <view id="home-timeline-head" class="home-section__head" :style="stickySectionStyle">
+        <text class="home-section__title">{{ timelineTitleText }}</text>
         <text class="home-section__count">{{ timelineCountText }}</text>
       </view>
 
@@ -123,7 +123,9 @@
 
       <view v-else class="home-list">
         <memory-timeline
+          ref="memoryTimelineRef"
           :entries="items"
+          :marker-sticky-top="markerStickyTop"
           :reaction-states="reactionStates"
           @cover-error="recoverCover"
           @open="openEntry"
@@ -153,10 +155,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch } from "vue"
-import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
+import { computed, nextTick, onMounted, ref, shallowRef, watch } from "vue"
+import { onPageScroll, onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import AppPetNavigator from "@/components/AppPetNavigator.vue"
+import MemoryTimeline from "@/components/MemoryTimeline.vue"
 import { showAppError } from "@/composables/useAppToast"
+import { useCustomNavMetrics } from "@/composables/useCustomNavMetrics"
 import { useHeartReaction } from "@/composables/useHeartReaction"
 import { useLocalPerson } from "@/composables/useLocalPerson"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
@@ -165,7 +169,9 @@ import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { consumeTimelineReactionChanged } from "@/composables/useTimelineReactionSignal"
 import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
+import { useTimelineActiveMonth } from "@/composables/useTimelineActiveMonth"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
+import { useThemeStore } from "@/stores/theme"
 import {
   batchResolveEntryCovers,
   getTempFileURLByFileIds,
@@ -173,12 +179,16 @@ import {
   removeResolvedTempURLFromFiles,
   setResolvedTempURLForFile
 } from "@/services/cloud-file-resolver"
-import MemoryTimeline from "@/components/MemoryTimeline.vue"
 import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
 const theme = useNativeChromeSync()
+const themeStore = useThemeStore()
 const { stickySectionStyle } = useStickySectionOffset()
+const { metrics } = useCustomNavMetrics()
+const activeMonth = useTimelineActiveMonth()
+const memoryTimelineRef = ref<InstanceType<typeof MemoryTimeline> | null>(null)
+const markerStickyTop = ref(0)
 const indexRoute = "/pages/index/index"
 const timeline = usePaginatedTimeline()
 const {
@@ -209,6 +219,14 @@ const timelineCountText = computed(() => {
 
   return hasMore.value ? `已载入 ${items.value.length} 条` : `${items.value.length} 条回忆`
 })
+const timelineTitleText = computed(() => {
+  if (!activeMonth.activeLabel.value) {
+    return "回忆时间线"
+  }
+
+  return `回忆时间线 · ${activeMonth.activeLabel.value}`
+})
+
 const coverRecoveryFileKeys = new Set<string>()
 let timelineImageHydrationRun = 0
 
@@ -326,6 +344,49 @@ const recoverCover = async (id: string, fileID: string) => {
   }
 }
 
+const measureHeaderGeometry = (): void => {
+  const query = uni.createSelectorQuery()
+  query.select("#home-timeline-head").boundingClientRect()
+  query.exec((results) => {
+    const rect = results[0] as UniApp.NodeInfo | null | undefined
+    if (!rect || typeof rect.height !== "number") {
+      return
+    }
+
+    const offset = metrics.value.customNavHeight + rect.height
+    markerStickyTop.value = offset
+    activeMonth.setBoundaryOffset(offset)
+  })
+}
+
+watch(activeMonth.activeLabel, () => {
+  void nextTick().then(measureHeaderGeometry)
+})
+
+const yieldToRenderer = (): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0)
+  })
+
+let anchorRevision = 0
+
+const remeasureMonthAnchors = async (): Promise<void> => {
+  const currentRevision = ++anchorRevision
+  await nextTick()
+  await yieldToRenderer()
+
+  if (currentRevision !== anchorRevision) {
+    return
+  }
+
+  const anchors = await memoryTimelineRef.value?.measureMonthAnchors()
+  if (currentRevision !== anchorRevision || !anchors) {
+    return
+  }
+
+  activeMonth.updateAnchors(anchors)
+}
+
 const refreshTimeline = async () => {
   try {
     await timeline.refresh()
@@ -336,6 +397,10 @@ const refreshTimeline = async () => {
   if (items.value.length > 0) {
     void loadReactionStates(items.value)
   }
+
+  await nextTick()
+  measureHeaderGeometry()
+  await remeasureMonthAnchors()
   uni.stopPullDownRefresh()
 }
 
@@ -345,6 +410,8 @@ const loadMoreEntries = async () => {
     void hydrateTimelineImages(result.appendedItems)
     void loadReactionStates(result.appendedItems)
   }
+
+  await remeasureMonthAnchors()
 }
 
 const refreshReactionStateForEntry = async (entryId: string) => {
@@ -435,6 +502,7 @@ const loadReactionStates = async (entries: EntryRecord[]) => {
 watch(items, (nextItems) => {
   void hydrateTimelineImages(nextItems)
   void loadReactionStates(nextItems)
+  void remeasureMonthAnchors()
 })
 
 watch(
@@ -446,6 +514,23 @@ watch(
   }
 )
 
+watch(
+  () => [themeStore.density, themeStore.fontScale] as const,
+  () => {
+    measureHeaderGeometry()
+    void remeasureMonthAnchors()
+  }
+)
+
+onMounted(() => {
+  measureHeaderGeometry()
+  void remeasureMonthAnchors()
+})
+
+onPageScroll((event) => {
+  activeMonth.updateActiveMonth(event.scrollTop)
+})
+
 onShow(() => {
   consumeRouteFeedback(indexRoute)
   if (consumeTimelineNeedsRefresh(indexRoute)) {
@@ -454,6 +539,8 @@ onShow(() => {
   }
 
   refreshReactionsOnShow()
+  measureHeaderGeometry()
+  void remeasureMonthAnchors()
 })
 
 onPullDownRefresh(() => {

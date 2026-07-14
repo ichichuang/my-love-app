@@ -174,7 +174,6 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
     "--app-timeline-axis-gap": isCompact ? "14rpx" : "18rpx",
     "--app-timeline-node-size": isCompact ? "18rpx" : "20rpx",
     "--app-timeline-line-width": "2rpx",
-    "--app-timeline-year-width": isCompact ? "60rpx" : "64rpx",
 
     "--app-shadow-none": "none",
     "--app-shadow-focus": "0 0 0 4rpx var(--app-color-border-focus-ring)",

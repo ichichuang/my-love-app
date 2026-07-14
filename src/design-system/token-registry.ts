@@ -426,8 +426,7 @@ export const componentVarNames = [
   "--app-timeline-rail-width",
   "--app-timeline-axis-gap",
   "--app-timeline-node-size",
-  "--app-timeline-line-width",
-  "--app-timeline-year-width"
+  "--app-timeline-line-width"
 ] as const
 
 export type ComponentVarName = (typeof componentVarNames)[number]
