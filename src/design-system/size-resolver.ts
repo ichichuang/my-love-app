@@ -132,6 +132,9 @@ const structuralVars = (density: ThemeDensity, fontScale: ThemeFontScale) => {
 
     "--app-entry-date-width": isCompact ? "86rpx" : "94rpx",
     "--app-entry-day-width": isCompact ? "62rpx" : "68rpx",
+    // 紧凑封面预览：明显小于已移除的旧封面（128/142rpx × 156/168rpx），窄屏通过密度降档
+    "--app-entry-preview-width": isCompact ? "104rpx" : "112rpx",
+    "--app-entry-preview-height": isCompact ? "116rpx" : "124rpx",
 
     "--app-image-badge-size": isCompact ? "30rpx" : "34rpx",
     "--app-image-remove-touch-size": "80rpx",

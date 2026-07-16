@@ -1,5 +1,9 @@
 <template>
-  <view class="entry-card" @click="emit('open', entry.id)">
+  <view
+    class="entry-card"
+    :class="{ 'entry-card--with-preview': showPreviewSlot }"
+    @click="emit('open', entry.id)"
+  >
     <view class="entry-card__date" :class="{ 'entry-card__date--day-only': props.dateDisplay === 'day' }">
       <text v-if="props.dateDisplay === 'month-day'" class="entry-card__month">{{ dateParts.month }}</text>
       <text class="entry-card__day">{{ dateParts.day }}</text>
@@ -15,8 +19,25 @@
       </view>
     </view>
 
+    <view v-if="showPreviewSlot" class="entry-card__preview">
+      <image
+        v-if="coverUrl"
+        class="entry-card__preview-image"
+        :src="coverUrl"
+        mode="aspectFill"
+        @error="handleCoverError"
+      />
+      <image
+        v-if="showHeartCorner"
+        class="entry-card__heart entry-card__heart--preview"
+        src="/static/heart-hand-drawn.png"
+        mode="aspectFit"
+        aria-hidden="true"
+      />
+    </view>
+
     <image
-      v-if="showHeartCorner"
+      v-else-if="showHeartCorner"
       class="entry-card__heart"
       src="/static/heart-hand-drawn.png"
       mode="aspectFit"
@@ -26,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, shallowRef } from "vue"
 import type { EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
 
@@ -35,15 +56,41 @@ const props = withDefaults(
     entry: EntryRecord
     reactionState?: HeartReactionState
     dateDisplay?: "month-day" | "day"
+    showImagePreview?: boolean
+    previewExhaustedKeys?: Set<string>
   }>(),
   {
-    dateDisplay: "month-day"
+    dateDisplay: "month-day",
+    showImagePreview: true,
+    previewExhaustedKeys: () =>
+      new Set<string>()
   }
 )
 
 const emit = defineEmits<{
   open: [id: string]
+  "cover-error": [entryId: string, fileID: string]
 }>()
+
+const failedCoverUrl = shallowRef("")
+const coverFile = computed(() =>
+  props.entry.files.find((file) => file.type === "image" && file.fileID.length > 0)
+)
+const coverUrl = computed(() => {
+  const url = coverFile.value?.resolvedTempURL ?? ""
+  return url && url !== failedCoverUrl.value ? url : ""
+})
+const previewExhausted = computed(() => {
+  const file = coverFile.value
+  if (!file) {
+    return false
+  }
+
+  return props.previewExhaustedKeys.has(`${props.entry.id}:${file.fileID}`)
+})
+const showPreviewSlot = computed(
+  () => props.showImagePreview && Boolean(coverFile.value) && !previewExhausted.value
+)
 
 const imageCountLabel = computed(() => {
   const count = props.entry.files.length
@@ -97,6 +144,17 @@ const dateParts = computed(() => {
     day: String(Number(match[2])).padStart(2, "0")
   }
 })
+
+const handleCoverError = () => {
+  const file = coverFile.value
+  const url = file?.resolvedTempURL ?? ""
+  if (!file?.fileID || !url) {
+    return
+  }
+
+  failedCoverUrl.value = url
+  emit("cover-error", props.entry.id, file.fileID)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -118,6 +176,10 @@ const dateParts = computed(() => {
     opacity: var(--app-press-opacity);
     transform: scale(var(--app-press-scale));
   }
+}
+
+.entry-card--with-preview {
+  grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr) var(--app-entry-preview-width);
 }
 
 .entry-card__date {
@@ -215,6 +277,26 @@ const dateParts = computed(() => {
   font-size: var(--app-font-size-xs);
 }
 
+.entry-card__preview {
+  position: relative;
+  align-self: center;
+  width: var(--app-entry-preview-width);
+  height: var(--app-entry-preview-height);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-image);
+  background: var(--app-field);
+}
+
+.entry-card__preview-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--app-radius-image);
+  background: var(--app-surface-strong);
+  // 封面温柔淡入，链接解析回来时不硬切
+  animation: app-soft-in var(--app-duration-normal) var(--app-ease-out);
+}
+
 .entry-card__heart {
   position: absolute;
   top: var(--app-space-4);
@@ -223,5 +305,10 @@ const dateParts = computed(() => {
   height: var(--app-space-18);
   transform: rotate(calc(var(--app-rotate-stamp) * -2));
   pointer-events: none;
+}
+
+.entry-card__heart--preview {
+  top: calc(var(--app-space-2) * -1);
+  right: calc(var(--app-space-2) * -1);
 }
 </style>

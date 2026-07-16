@@ -68,7 +68,9 @@
           :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${groupIndex + entryIndex})` }"
           date-display="day"
           :entry="entry"
+          :preview-exhausted-keys="previewExhaustedKeys"
           :reaction-state="reactionStates.get(entry.id)"
+          @cover-error="(entryId, fileID) => emit('cover-error', entryId, fileID)"
           @open="(id) => emit('open', id)"
         />
       </view>
@@ -87,16 +89,20 @@ import type { TimelineAnchorSnapshot } from "@/composables/useTimelineActiveMont
 const props = withDefaults(
   defineProps<{
     entries: EntryRecord[]
+    previewExhaustedKeys?: Set<string>
     reactionStates: Map<string, HeartReactionState>
     markerStickyTop?: number
   }>(),
   {
-    markerStickyTop: 0
+    markerStickyTop: 0,
+    previewExhaustedKeys: () =>
+      new Set<string>()
   }
 )
 
 const emit = defineEmits<{
   open: [id: string]
+  "cover-error": [entryId: string, fileID: string]
 }>()
 
 const instance = getCurrentInstance()
