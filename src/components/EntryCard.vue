@@ -69,7 +69,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   open: [id: string]
-  "cover-error": [entryId: string, fileID: string]
+  "cover-error": [entryId: string, fileID: string, failedUrl: string]
 }>()
 
 const failedCoverUrl = shallowRef("")
@@ -146,7 +146,7 @@ const handleCoverError = () => {
   }
 
   failedCoverUrl.value = url
-  emit("cover-error", props.entry.id, file.fileID)
+  emit("cover-error", props.entry.id, file.fileID, url)
 }
 </script>
 

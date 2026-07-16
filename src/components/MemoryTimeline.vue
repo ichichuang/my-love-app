@@ -69,7 +69,7 @@
           :entry="entry"
           :preview-exhausted-keys="previewExhaustedKeys"
           :reaction-state="reactionStates.get(entry.id)"
-          @cover-error="(entryId, fileID) => emit('cover-error', entryId, fileID)"
+          @cover-error="(entryId, fileID, failedUrl) => emit('cover-error', entryId, fileID, failedUrl)"
           @open="(id) => emit('open', id)"
         />
       </view>
@@ -101,7 +101,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   open: [id: string]
-  "cover-error": [entryId: string, fileID: string]
+  "cover-error": [entryId: string, fileID: string, failedUrl: string]
 }>()
 
 const instance = getCurrentInstance()

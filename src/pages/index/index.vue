@@ -188,16 +188,9 @@ import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { useTimelineActiveMonth } from "@/composables/useTimelineActiveMonth"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
-import {
-  applyResolvedTempURLsToFiles,
-  getTempFileURLByFileIds,
-  mergeResolvedTempURLsForEntry,
-  removeResolvedTempURLFromFiles,
-  setResolvedTempURLForFile
-} from "@/services/cloud-file-resolver"
 import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
-import { selectFirstImageFile } from "@/utils/entry-files"
+import { useTimelinePreviewHydration } from "@/composables/useTimelinePreviewHydration"
 
 const theme = useNativeChromeSync()
 const themeStore = useThemeStore()
@@ -244,183 +237,17 @@ const timelineTitleText = computed(() => {
   return `回忆时间线 · ${activeMonth.activeLabel.value}`
 })
 
-const coverRecoveryFileKeys = new Set<string>()
-const coverRecoveredFileKeys = new Set<string>()
-const previewExhaustedFileKeys = shallowRef(new Set<string>())
-let timelineImageHydrationRun = 0
-
-const mergeEntriesInTimeline = (nextEntries: EntryRecord[]): void => {
-  const nextEntryById = new Map(nextEntries.map((entry) => [entry.id, entry]))
-  let changed = false
-  const nextItems = items.value.map((item) => {
-    const nextEntry = nextEntryById.get(item.id)
-    if (!nextEntry) {
-      return item
-    }
-
-    const mergedItem = mergeResolvedTempURLsForEntry(item, nextEntry)
-    if (mergedItem !== item) {
-      changed = true
-    }
-    return mergedItem
-  })
-
-  if (changed) {
-    items.value = nextItems
-  }
-}
-
-const syncPreviewExhausted = (recoveryKey: string, exhausted: boolean): boolean => {
-  if (previewExhaustedFileKeys.value.has(recoveryKey) === exhausted) {
-    return false
-  }
-
-  const nextKeys = new Set(previewExhaustedFileKeys.value)
-  if (exhausted) {
-    nextKeys.add(recoveryKey)
-  } else {
-    nextKeys.delete(recoveryKey)
-  }
-  previewExhaustedFileKeys.value = nextKeys
-  return true
-}
-
-// 预览几何批量变化后只触发一次受控重测；anchorRevision 会折叠并发调用
 const schedulePreviewAnchorRemeasure = (): void => {
   void remeasureMonthAnchors()
 }
 
-const applyRecoveryOutcome = (recoveryKey: string, exhausted: boolean): void => {
-  if (syncPreviewExhausted(recoveryKey, exhausted)) {
-    schedulePreviewAnchorRemeasure()
-  }
-}
+const preview = useTimelinePreviewHydration({
+  items,
+  scheduleRemeasure: schedulePreviewAnchorRemeasure
+})
 
-const clearPreviewExhaustedForResolved = (entries: EntryRecord[]): void => {
-  let changed = false
-  for (const entry of entries) {
-    const coverFile = selectFirstImageFile(entry.files)
-    if (coverFile?.resolvedTempURL) {
-      changed = syncPreviewExhausted(`${entry.id}:${coverFile.fileID}`, false) || changed
-    }
-  }
-
-  if (changed) {
-    schedulePreviewAnchorRemeasure()
-  }
-}
-
-const hydrateTimelineImages = async (sourceItems: EntryRecord[]): Promise<void> => {
-  const coverFileIDs = sourceItems.map((entry) => selectFirstImageFile(entry.files)?.fileID ?? "")
-  const needsHydration = sourceItems.some((entry) => {
-    const coverFile = selectFirstImageFile(entry.files)
-    return Boolean(coverFile && !coverFile.resolvedTempURL)
-  })
-  if (!needsHydration) {
-    return
-  }
-
-  const run = ++timelineImageHydrationRun
-  try {
-    const urls = await getTempFileURLByFileIds(coverFileIDs)
-    if (run !== timelineImageHydrationRun) {
-      return
-    }
-
-    const resolvedEntries = sourceItems.map((entry) => ({
-      ...entry,
-      files: applyResolvedTempURLsToFiles(entry.files, urls)
-    }))
-    mergeEntriesInTimeline(resolvedEntries)
-    clearPreviewExhaustedForResolved(resolvedEntries)
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.info(`[小珊的树洞] 时间线图片链接暂时没取到：${getFriendlyErrorMessage(error)}`)
-    }
-  }
-}
-
-const hideFailedCover = (id: string, fileID: string): void => {
-  let changed = false
-  const nextItems = items.value.map((item) => {
-    if (item.id !== id) {
-      return item
-    }
-
-    const nextFiles = removeResolvedTempURLFromFiles(item.files, fileID)
-    if (nextFiles === item.files) {
-      return item
-    }
-
-    changed = true
-    return { ...item, files: nextFiles }
-  })
-
-  if (changed) {
-    items.value = nextItems
-  }
-}
-
-const applyRecoveredCover = (id: string, fileID: string, resolvedTempURL: string): void => {
-  let changed = false
-  const nextItems = items.value.map((item) => {
-    if (item.id !== id) {
-      return item
-    }
-
-    const nextFiles = setResolvedTempURLForFile(item.files, fileID, resolvedTempURL)
-    if (nextFiles === item.files) {
-      return item
-    }
-
-    changed = true
-    return {
-      ...item,
-      files: nextFiles
-    }
-  })
-
-  if (changed) {
-    items.value = nextItems
-  }
-}
-
-const recoverCover = async (id: string, fileID: string) => {
-  const recoveryKey = `${id}:${fileID}`
-  if (coverRecoveryFileKeys.has(recoveryKey) || previewExhaustedFileKeys.value.has(recoveryKey)) {
-    return
-  }
-
-  hideFailedCover(id, fileID)
-
-  // 同一条目同一文件只允许一次定向恢复；再次失败直接进入不可用占位，避免重复请求
-  if (coverRecoveredFileKeys.has(recoveryKey)) {
-    applyRecoveryOutcome(recoveryKey, true)
-    return
-  }
-
-  coverRecoveryFileKeys.add(recoveryKey)
-  coverRecoveredFileKeys.add(recoveryKey)
-  try {
-    const urls = await getTempFileURLByFileIds([fileID], {
-      force: true
-    })
-    const resolvedTempURL = urls.get(fileID)
-    if (resolvedTempURL) {
-      applyRecoveredCover(id, fileID, resolvedTempURL)
-      applyRecoveryOutcome(recoveryKey, false)
-    } else {
-      applyRecoveryOutcome(recoveryKey, true)
-    }
-  } catch (error) {
-    applyRecoveryOutcome(recoveryKey, true)
-    if (import.meta.env.DEV) {
-      console.info(`[小珊的树洞] 封面图片链接刷新失败：${getFriendlyErrorMessage(error)}`)
-    }
-  } finally {
-    coverRecoveryFileKeys.delete(recoveryKey)
-  }
-}
+const previewExhaustedFileKeys = preview.exhaustedKeys
+const recoverCover = preview.recover
 
 const measureHeaderGeometry = (): void => {
   const query = uni.createSelectorQuery()
@@ -485,7 +312,6 @@ const refreshTimeline = async () => {
 const loadMoreEntries = async () => {
   const result = await timeline.loadMore()
   if (result.appendedItems.length > 0) {
-    void hydrateTimelineImages(result.appendedItems)
     void loadReactionStates(result.appendedItems)
   }
 
@@ -577,11 +403,15 @@ const loadReactionStates = async (entries: EntryRecord[]) => {
   }
 }
 
-watch(items, (nextItems) => {
-  void hydrateTimelineImages(nextItems)
-  void loadReactionStates(nextItems)
-  void remeasureMonthAnchors()
-})
+watch(
+  items,
+  (nextItems) => {
+    void preview.hydrate(nextItems)
+    void loadReactionStates(nextItems)
+    void remeasureMonthAnchors()
+  },
+  { immediate: true }
+)
 
 watch(
   () => localPerson.selectedKey.value,
@@ -617,6 +447,7 @@ onShow(() => {
   }
 
   refreshReactionsOnShow()
+  void preview.hydrateAll()
   measureHeaderGeometry()
   void remeasureMonthAnchors()
 })
