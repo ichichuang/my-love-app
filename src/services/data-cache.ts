@@ -6,7 +6,7 @@ export interface DataCacheEnvelope<T> {
   data: T
 }
 
-type DataCacheKind = "memory" | "song" | "task" | "memo"
+type DataCacheKind = "memory" | "song" | "task" | "memo" | "moment"
 type DataCacheScope = "list" | "detail" | "timeline" | "timeline-v2" | "timeline-v3"
 
 const MEMORY_TIMELINE_SCOPE = "timeline-v3"
@@ -50,7 +50,9 @@ export const dataCacheKeys = {
   taskList: (): string => makeDataCacheKey("task", "list"),
   taskDetail: (id: string): string => makeDataCacheKey("task", "detail", id),
   memoList: (): string => makeDataCacheKey("memo", "list"),
-  memoDetail: (id: string): string => makeDataCacheKey("memo", "detail", id)
+  memoDetail: (id: string): string => makeDataCacheKey("memo", "detail", id),
+  momentList: (): string => makeDataCacheKey("moment", "list"),
+  momentDetail: (id: string): string => makeDataCacheKey("moment", "detail", id)
 }
 
 const isCacheEnvelope = <T>(value: unknown): value is DataCacheEnvelope<T> => {

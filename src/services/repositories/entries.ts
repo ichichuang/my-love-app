@@ -18,7 +18,7 @@ import {
 } from "@/services/data-cache"
 import { queueCloudFilesForCleanup } from "@/services/cloud-file-cleanup"
 
-export type LoveEntryKind = "memory" | "song" | "task" | "memo"
+export type LoveEntryKind = "memory" | "song" | "task" | "memo" | "moment"
 
 export interface EntryDraft {
   title: string
@@ -57,8 +57,19 @@ const asString = (value: unknown, fallback = ""): string => (typeof value === "s
 
 const asNumber = (value: unknown, fallback = 0): number => (typeof value === "number" ? value : fallback)
 
-const normalizeKind = (value: unknown): LoveEntryKind =>
-  value === "memory" || value === "song" || value === "task" || value === "memo" ? value : "memory"
+const RECOGNIZED_ENTRY_KINDS = new Set<LoveEntryKind>(["memory", "song", "task", "memo", "moment"])
+
+const normalizeKind = (value: unknown): LoveEntryKind | undefined => {
+  if (value === undefined || value === null || value === "") {
+    return "memory"
+  }
+
+  if (RECOGNIZED_ENTRY_KINDS.has(value as LoveEntryKind)) {
+    return value as LoveEntryKind
+  }
+
+  return undefined
+}
 
 const ENTRY_UNAVAILABLE_MESSAGE = "这张小纸条暂时打不开，可能是云开发慢了一点，请稍后再试。"
 
@@ -108,7 +119,8 @@ const normalizeEntry = (document: StoredEntryDocument): EntryRecord | null => {
     return null
   }
 
-  if (normalizeKind(document.kind) !== "memory") {
+  const kind = normalizeKind(document.kind)
+  if (kind !== "memory") {
     return null
   }
 
