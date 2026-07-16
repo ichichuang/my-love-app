@@ -190,6 +190,7 @@ import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
 import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
+import { selectFirstImageFile } from "@/utils/entry-files"
 import { useTimelinePreviewHydration } from "@/composables/useTimelinePreviewHydration"
 
 const theme = useNativeChromeSync()
@@ -237,14 +238,7 @@ const timelineTitleText = computed(() => {
   return `回忆时间线 · ${activeMonth.activeLabel.value}`
 })
 
-const schedulePreviewAnchorRemeasure = (): void => {
-  void remeasureMonthAnchors()
-}
-
-const preview = useTimelinePreviewHydration({
-  items,
-  scheduleRemeasure: schedulePreviewAnchorRemeasure
-})
+const preview = useTimelinePreviewHydration({ items })
 
 const previewExhaustedFileKeys = preview.exhaustedKeys
 const recoverCover = preview.recover
@@ -293,19 +287,21 @@ const remeasureMonthAnchors = async (): Promise<void> => {
 }
 
 const refreshTimeline = async () => {
+  let succeeded = false
   try {
     await timeline.refresh()
+    succeeded = !errorMessage.value
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
   }
 
-  if (items.value.length > 0) {
+  if (succeeded) {
+    void preview.retryUnavailable(items.value)
     void loadReactionStates(items.value)
   }
 
   await nextTick()
   measureHeaderGeometry()
-  await remeasureMonthAnchors()
   uni.stopPullDownRefresh()
 }
 
@@ -314,8 +310,6 @@ const loadMoreEntries = async () => {
   if (result.appendedItems.length > 0) {
     void loadReactionStates(result.appendedItems)
   }
-
-  await remeasureMonthAnchors()
 }
 
 const refreshReactionStateForEntry = async (entryId: string) => {
@@ -345,10 +339,6 @@ const refreshReactionsOnShow = () => {
   const changedEntryId = consumeTimelineReactionChanged()
   if (changedEntryId) {
     void refreshReactionStateForEntry(changedEntryId)
-  }
-
-  if (items.value.length > 0) {
-    void loadReactionStates(items.value)
   }
 }
 
@@ -403,12 +393,65 @@ const loadReactionStates = async (entries: EntryRecord[]) => {
   }
 }
 
+const entryBusinessSignature = computed(() => items.value.map((entry) => entry.id).join("|"))
+const previousEntryIds = ref(new Set<string>())
+
+watch(
+  entryBusinessSignature,
+  () => {
+    const currentIds = new Set(items.value.map((entry) => entry.id))
+    const previousIds = previousEntryIds.value
+
+    // 只在“替换/删除/重排”时全量加载；纯追加由 loadMoreEntries 单独加载新增项，
+    // 避免分页时重复请求全部 Heart Reaction 状态。
+    const isAppend =
+      previousIds.size > 0 &&
+      Array.from(previousIds).every((id) => currentIds.has(id)) &&
+      currentIds.size > previousIds.size
+
+    if (!isAppend) {
+      void loadReactionStates(items.value)
+    }
+
+    previousEntryIds.value = currentIds
+  },
+  { immediate: true }
+)
+
+const timelineGeometrySignature = computed(() => {
+  const entriesPart = items.value
+    .map((entry) => {
+      const file = selectFirstImageFile(entry.files)
+      return [
+        entry.id,
+        entry.occurredAt,
+        entry.title,
+        entry.content,
+        entry.mood,
+        file ? "1" : "0"
+      ].join("\x1f")
+    })
+    .join("\x1e")
+
+  const reactionsPart = Array.from(reactionStates.value.entries())
+    .map(([id, state]) => `${id}:${state.hasReacted ? "1" : "0"}:${state.hasReceived ? "1" : "0"}`)
+    .join("\x1e")
+
+  return `${entriesPart}||${reactionsPart}`
+})
+
+watch(
+  timelineGeometrySignature,
+  () => {
+    void remeasureMonthAnchors()
+  },
+  { immediate: true }
+)
+
 watch(
   items,
   (nextItems) => {
     void preview.hydrate(nextItems)
-    void loadReactionStates(nextItems)
-    void remeasureMonthAnchors()
   },
   { immediate: true }
 )
