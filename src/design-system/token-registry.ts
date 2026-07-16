@@ -392,8 +392,6 @@ export const componentVarNames = [
   "--app-home-decor-width",
   "--app-home-decor-height",
   "--app-home-decor-bottom",
-  "--app-entry-date-width",
-  "--app-entry-day-width",
   "--app-entry-preview-width",
   "--app-entry-preview-height",
   "--app-image-badge-size",

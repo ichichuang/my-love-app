@@ -1,48 +1,45 @@
 <template>
   <view
     class="entry-card"
-    :class="{ 'entry-card--with-preview': showPreviewSlot }"
+    :class="{ 'entry-card--with-preview': previewState !== 'none' }"
     @click="emit('open', entry.id)"
   >
-    <view class="entry-card__date" :class="{ 'entry-card__date--day-only': props.dateDisplay === 'day' }">
-      <text v-if="props.dateDisplay === 'month-day'" class="entry-card__month">{{ dateParts.month }}</text>
-      <text class="entry-card__day">{{ dateParts.day }}</text>
-    </view>
-
     <view class="entry-card__copy">
-      <text class="entry-card__mood">{{ entry.mood || "温柔" }}</text>
+      <view class="entry-card__head">
+        <text class="entry-card__date-chip">{{ dateChipLabel }}</text>
+        <text class="entry-card__head-separator" aria-hidden="true">·</text>
+        <text class="entry-card__mood">{{ entry.mood || "温柔" }}</text>
+      </view>
       <text class="entry-card__title">{{ entry.title }}</text>
-      <text class="entry-card__excerpt">{{ excerpt }}</text>
+      <text
+        class="entry-card__excerpt"
+        :class="{ 'entry-card__excerpt--roomy': previewState === 'none' }"
+      >{{ excerpt }}</text>
       <view class="entry-card__meta">
         <text class="entry-card__media">{{ imageCountLabel }}</text>
         <text v-if="reactionTag" class="entry-card__reaction">{{ reactionTag }}</text>
       </view>
     </view>
 
-    <view v-if="showPreviewSlot" class="entry-card__preview">
+    <view v-if="previewState !== 'none'" class="entry-card__preview">
       <image
-        v-if="coverUrl"
+        v-if="previewState === 'ready'"
         class="entry-card__preview-image"
         :src="coverUrl"
         mode="aspectFill"
         @error="handleCoverError"
       />
-      <image
-        v-if="showHeartCorner"
-        class="entry-card__heart entry-card__heart--preview"
-        src="/static/heart-hand-drawn.png"
-        mode="aspectFit"
+      <view
+        v-else-if="previewState === 'loading'"
+        class="entry-card__preview-state"
         aria-hidden="true"
-      />
+      >
+        <wd-loading size="20" />
+      </view>
+      <view v-else class="entry-card__preview-state">
+        <text class="entry-card__preview-unavailable">暂缺</text>
+      </view>
     </view>
-
-    <image
-      v-else-if="showHeartCorner"
-      class="entry-card__heart"
-      src="/static/heart-hand-drawn.png"
-      mode="aspectFit"
-      aria-hidden="true"
-    />
   </view>
 </template>
 
@@ -50,17 +47,20 @@
 import { computed, shallowRef } from "vue"
 import type { EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
+import { selectFirstImageFile } from "@/utils/entry-files"
+
+// 预览列的显式状态机：无图不渲染列；有图但链接未就绪时保持列稳定并展示加载态；
+// 定向恢复已穷尽时在同一位置展示安静的不可用占位，而不是收起或留白。
+type EntryPreviewState = "none" | "loading" | "ready" | "unavailable"
 
 const props = withDefaults(
   defineProps<{
     entry: EntryRecord
     reactionState?: HeartReactionState
-    dateDisplay?: "month-day" | "day"
     showImagePreview?: boolean
     previewExhaustedKeys?: Set<string>
   }>(),
   {
-    dateDisplay: "month-day",
     showImagePreview: true,
     previewExhaustedKeys: () =>
       new Set<string>()
@@ -73,9 +73,7 @@ const emit = defineEmits<{
 }>()
 
 const failedCoverUrl = shallowRef("")
-const coverFile = computed(() =>
-  props.entry.files.find((file) => file.type === "image" && file.fileID.length > 0)
-)
+const coverFile = computed(() => selectFirstImageFile(props.entry.files))
 const coverUrl = computed(() => {
   const url = coverFile.value?.resolvedTempURL ?? ""
   return url && url !== failedCoverUrl.value ? url : ""
@@ -88,9 +86,17 @@ const previewExhausted = computed(() => {
 
   return props.previewExhaustedKeys.has(`${props.entry.id}:${file.fileID}`)
 })
-const showPreviewSlot = computed(
-  () => props.showImagePreview && Boolean(coverFile.value) && !previewExhausted.value
-)
+const previewState = computed<EntryPreviewState>(() => {
+  if (!props.showImagePreview || !coverFile.value) {
+    return "none"
+  }
+
+  if (previewExhausted.value) {
+    return "unavailable"
+  }
+
+  return coverUrl.value ? "ready" : "loading"
+})
 
 const imageCountLabel = computed(() => {
   const count = props.entry.files.length
@@ -113,14 +119,6 @@ const reactionTag = computed(() => {
   return ""
 })
 
-const showHeartCorner = computed(() => {
-  if (!props.reactionState) {
-    return false
-  }
-
-  return props.reactionState.hasReacted || props.reactionState.hasReceived
-})
-
 const excerpt = computed(() => {
   const text = props.entry.content.trim()
   if (!text) {
@@ -130,19 +128,14 @@ const excerpt = computed(() => {
   return text.length > 64 ? `${text.slice(0, 64)}...` : text
 })
 
-const dateParts = computed(() => {
+// 月份由外部月份轴负责，卡片头只保留紧凑的“日”小签；非法日期退回占位符。
+const dateChipLabel = computed(() => {
   const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(props.entry.occurredAt.trim())
   if (!match) {
-    return {
-      month: "忆",
-      day: "--"
-    }
+    return "--"
   }
 
-  return {
-    month: `${Number(match[1])}月`,
-    day: String(Number(match[2])).padStart(2, "0")
-  }
+  return `${Number(match[2])}日`
 })
 
 const handleCoverError = () => {
@@ -165,11 +158,10 @@ const handleCoverError = () => {
   @include pressable;
   position: relative;
   display: grid;
-  grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--app-card-gap);
-  align-items: stretch;
+  align-items: center;
   padding: var(--app-card-padding);
-  border-radius: var(--app-radius-xl);
   overflow: hidden;
 
   &:active {
@@ -179,37 +171,7 @@ const handleCoverError = () => {
 }
 
 .entry-card--with-preview {
-  grid-template-columns: var(--app-entry-date-width) minmax(0, 1fr) var(--app-entry-preview-width);
-}
-
-.entry-card__date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--app-space-5) var(--app-space-3);
-  border: var(--app-panel-border-width) solid var(--app-border);
-  border-radius: var(--app-radius-lg);
-  background: var(--app-field);
-  color: var(--app-primary);
-}
-
-.entry-card__date--day-only {
-  min-width: var(--app-entry-day-width);
-  width: var(--app-entry-day-width);
-}
-
-.entry-card__month {
-  font-size: var(--app-font-size-sm);
-  line-height: var(--app-line-height-tight);
-}
-
-.entry-card__day {
-  margin-top: var(--app-space-1);
-  font-family: var(--app-font-family-display);
-  font-size: var(--app-font-size-4xl);
-  font-weight: var(--app-font-weight-semibold);
-  line-height: var(--app-line-height-none);
+  grid-template-columns: minmax(0, 1fr) var(--app-entry-preview-width);
 }
 
 .entry-card__copy {
@@ -219,10 +181,40 @@ const handleCoverError = () => {
   gap: var(--app-space-2);
 }
 
+.entry-card__head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--app-space-3);
+}
+
+.entry-card__date-chip {
+  flex-shrink: 0;
+  padding: var(--app-space-1) var(--app-space-3);
+  border: var(--app-panel-border-width) solid var(--app-border);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-field);
+  color: var(--app-primary);
+  font-size: var(--app-font-size-xs);
+  font-weight: var(--app-font-weight-semibold);
+  line-height: var(--app-line-height-tight);
+}
+
+.entry-card__head-separator {
+  flex-shrink: 0;
+  color: var(--app-text-muted);
+  font-size: var(--app-font-size-xs);
+  line-height: var(--app-line-height-tight);
+}
+
 .entry-card__mood {
+  min-width: 0;
+  overflow: hidden;
   color: var(--app-accent);
   font-size: var(--app-font-size-md);
   line-height: var(--app-line-height-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .entry-card__title {
@@ -241,6 +233,10 @@ const handleCoverError = () => {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.entry-card__excerpt--roomy {
+  -webkit-line-clamp: 3;
 }
 
 .entry-card__meta {
@@ -278,13 +274,15 @@ const handleCoverError = () => {
 }
 
 .entry-card__preview {
-  position: relative;
-  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: var(--app-entry-preview-width);
   height: var(--app-entry-preview-height);
   border: var(--app-panel-border-width) solid var(--app-border);
   border-radius: var(--app-radius-image);
   background: var(--app-field);
+  overflow: hidden;
 }
 
 .entry-card__preview-image {
@@ -297,18 +295,17 @@ const handleCoverError = () => {
   animation: app-soft-in var(--app-duration-normal) var(--app-ease-out);
 }
 
-.entry-card__heart {
-  position: absolute;
-  top: var(--app-space-4);
-  right: var(--app-space-4);
-  width: var(--app-space-18);
-  height: var(--app-space-18);
-  transform: rotate(calc(var(--app-rotate-stamp) * -2));
-  pointer-events: none;
+.entry-card__preview-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--app-text-muted);
 }
 
-.entry-card__heart--preview {
-  top: calc(var(--app-space-2) * -1);
-  right: calc(var(--app-space-2) * -1);
+.entry-card__preview-unavailable {
+  font-size: var(--app-font-size-xs);
+  line-height: var(--app-line-height-tight);
 }
 </style>

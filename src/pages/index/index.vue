@@ -189,7 +189,7 @@ import { useTimelineActiveMonth } from "@/composables/useTimelineActiveMonth"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { useThemeStore } from "@/stores/theme"
 import {
-  batchResolveEntryCovers,
+  applyResolvedTempURLsToFiles,
   getTempFileURLByFileIds,
   mergeResolvedTempURLsForEntry,
   removeResolvedTempURLFromFiles,
@@ -197,6 +197,7 @@ import {
 } from "@/services/cloud-file-resolver"
 import { type EntryRecord } from "@/services/repositories/entries"
 import type { HeartReactionState } from "@/types/heart-reaction"
+import { selectFirstImageFile } from "@/utils/entry-files"
 
 const theme = useNativeChromeSync()
 const themeStore = useThemeStore()
@@ -244,6 +245,7 @@ const timelineTitleText = computed(() => {
 })
 
 const coverRecoveryFileKeys = new Set<string>()
+const coverRecoveredFileKeys = new Set<string>()
 const previewExhaustedFileKeys = shallowRef(new Set<string>())
 let timelineImageHydrationRun = 0
 
@@ -268,9 +270,9 @@ const mergeEntriesInTimeline = (nextEntries: EntryRecord[]): void => {
   }
 }
 
-const syncPreviewExhausted = (recoveryKey: string, exhausted: boolean): void => {
+const syncPreviewExhausted = (recoveryKey: string, exhausted: boolean): boolean => {
   if (previewExhaustedFileKeys.value.has(recoveryKey) === exhausted) {
-    return
+    return false
   }
 
   const nextKeys = new Set(previewExhaustedFileKeys.value)
@@ -280,35 +282,55 @@ const syncPreviewExhausted = (recoveryKey: string, exhausted: boolean): void => 
     nextKeys.delete(recoveryKey)
   }
   previewExhaustedFileKeys.value = nextKeys
+  return true
+}
 
-  // 预览列出现或收起会改变卡片几何，按现有受控生命周期重测月份锚点
+// 预览几何批量变化后只触发一次受控重测；anchorRevision 会折叠并发调用
+const schedulePreviewAnchorRemeasure = (): void => {
   void remeasureMonthAnchors()
 }
 
+const applyRecoveryOutcome = (recoveryKey: string, exhausted: boolean): void => {
+  if (syncPreviewExhausted(recoveryKey, exhausted)) {
+    schedulePreviewAnchorRemeasure()
+  }
+}
+
 const clearPreviewExhaustedForResolved = (entries: EntryRecord[]): void => {
+  let changed = false
   for (const entry of entries) {
-    const coverFile = entry.files.find((file) => file.type === "image" && file.fileID.length > 0)
+    const coverFile = selectFirstImageFile(entry.files)
     if (coverFile?.resolvedTempURL) {
-      syncPreviewExhausted(`${entry.id}:${coverFile.fileID}`, false)
+      changed = syncPreviewExhausted(`${entry.id}:${coverFile.fileID}`, false) || changed
     }
+  }
+
+  if (changed) {
+    schedulePreviewAnchorRemeasure()
   }
 }
 
 const hydrateTimelineImages = async (sourceItems: EntryRecord[]): Promise<void> => {
-  const needsHydration = sourceItems.some((entry) =>
-    Boolean(entry.files[0]?.fileID && !entry.files[0]?.resolvedTempURL)
-  )
+  const coverFileIDs = sourceItems.map((entry) => selectFirstImageFile(entry.files)?.fileID ?? "")
+  const needsHydration = sourceItems.some((entry) => {
+    const coverFile = selectFirstImageFile(entry.files)
+    return Boolean(coverFile && !coverFile.resolvedTempURL)
+  })
   if (!needsHydration) {
     return
   }
 
   const run = ++timelineImageHydrationRun
   try {
-    const resolvedEntries = await batchResolveEntryCovers(sourceItems)
+    const urls = await getTempFileURLByFileIds(coverFileIDs)
     if (run !== timelineImageHydrationRun) {
       return
     }
 
+    const resolvedEntries = sourceItems.map((entry) => ({
+      ...entry,
+      files: applyResolvedTempURLsToFiles(entry.files, urls)
+    }))
     mergeEntriesInTimeline(resolvedEntries)
     clearPreviewExhaustedForResolved(resolvedEntries)
   } catch (error) {
@@ -370,7 +392,15 @@ const recoverCover = async (id: string, fileID: string) => {
   }
 
   hideFailedCover(id, fileID)
+
+  // 同一条目同一文件只允许一次定向恢复；再次失败直接进入不可用占位，避免重复请求
+  if (coverRecoveredFileKeys.has(recoveryKey)) {
+    applyRecoveryOutcome(recoveryKey, true)
+    return
+  }
+
   coverRecoveryFileKeys.add(recoveryKey)
+  coverRecoveredFileKeys.add(recoveryKey)
   try {
     const urls = await getTempFileURLByFileIds([fileID], {
       force: true
@@ -378,12 +408,12 @@ const recoverCover = async (id: string, fileID: string) => {
     const resolvedTempURL = urls.get(fileID)
     if (resolvedTempURL) {
       applyRecoveredCover(id, fileID, resolvedTempURL)
-      syncPreviewExhausted(recoveryKey, false)
+      applyRecoveryOutcome(recoveryKey, false)
     } else {
-      syncPreviewExhausted(recoveryKey, true)
+      applyRecoveryOutcome(recoveryKey, true)
     }
   } catch (error) {
-    syncPreviewExhausted(recoveryKey, true)
+    applyRecoveryOutcome(recoveryKey, true)
     if (import.meta.env.DEV) {
       console.info(`[小珊的树洞] 封面图片链接刷新失败：${getFriendlyErrorMessage(error)}`)
     }

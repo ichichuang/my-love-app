@@ -66,7 +66,6 @@
           :key="entry.id"
           class="app-rise-stagger"
           :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${groupIndex + entryIndex})` }"
-          date-display="day"
           :entry="entry"
           :preview-exhausted-keys="previewExhaustedKeys"
           :reaction-state="reactionStates.get(entry.id)"
