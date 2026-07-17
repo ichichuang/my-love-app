@@ -152,6 +152,10 @@ const menuItems: MenuItem[] = [
     path: "/pages/create/create"
   },
   {
+    label: "小日子",
+    path: "/pages/moments/moments"
+  },
+  {
     label: "小歌单",
     path: "/pages/songs/songs"
   },
