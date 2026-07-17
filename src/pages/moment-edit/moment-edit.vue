@@ -30,15 +30,18 @@
 
         <view class="moment-field">
           <text class="moment-field__prompt">这是一个什么样的日子？</text>
-          <app-option-group :columns="3" responsive="auto">
+          <app-option-group :columns="2">
             <app-option-button
-              v-for="option in categoryOptions"
-              :key="option.value"
-              :active="category === option.value"
+              v-for="preset in categoryPresets"
+              :key="preset.value"
+              :active="category === preset.value"
               :disabled="formDisabled"
-              @click="category = option.value"
+              @click="applyCategoryPreset(preset.value)"
             >
-              <text class="moment-choice__label">{{ option.label }}</text>
+              <view class="moment-preset">
+                <text class="moment-preset__title">{{ preset.label }}</text>
+                <text class="moment-preset__description">{{ preset.description }}</text>
+              </view>
             </app-option-button>
           </app-option-group>
         </view>
@@ -68,39 +71,100 @@
             v-model="sourceDate"
             placeholder="挑一个日子"
             title="挑个日子"
+            min-date="1900-01-01"
+            max-date="2100-12-31"
             :disabled="formDisabled"
           />
+          <text class="moment-behavior-summary">{{ behaviorSummary }}</text>
         </view>
 
         <view class="moment-field">
-          <text class="moment-field__prompt">想怎么数它？</text>
-          <app-option-group :columns="3" responsive="auto">
-            <app-option-button
-              v-for="option in modeOptions"
-              :key="option.value"
-              :active="mode === option.value"
-              :disabled="formDisabled"
-              @click="mode = option.value"
-            >
-              <text class="moment-choice__label">{{ option.label }}</text>
-            </app-option-button>
-          </app-option-group>
+          <text class="moment-field__prompt">先看看它的样子</text>
+          <moment-card v-if="previewReady" :moment="previewRecord" :projection="previewProjection" />
+          <view v-else class="moment-preview-placeholder">
+            <text class="moment-field__hint">挑好日子后，这里会先演一遍它的样子。</text>
+          </view>
         </view>
 
-        <view class="moment-field">
-          <text class="moment-field__prompt">每年都要回来吗？</text>
-          <app-option-group :columns="2" responsive="auto">
-            <app-option-button
-              v-for="option in recurrenceOptions"
-              :key="option.value"
-              :active="recurrence === option.value"
-              :disabled="formDisabled"
-              @click="recurrence = option.value"
-            >
-              <text class="moment-choice__label">{{ option.label }}</text>
-            </app-option-button>
-          </app-option-group>
+        <view class="moment-advanced-toggle-row">
+          <wd-button
+            size="small"
+            plain
+            :icon="advancedExpanded ? 'arrow-up' : 'arrow-down'"
+            :disabled="formDisabled"
+            custom-class="moment-advanced-toggle"
+            @click="toggleAdvanced"
+          >
+            {{ advancedToggleText }}
+          </wd-button>
         </view>
+
+        <app-collapse-section :expanded="advancedExpanded">
+          <view class="moment-advanced">
+            <view class="moment-field">
+              <text class="moment-field__prompt">想怎么数它？</text>
+              <view class="moment-mode-stack">
+                <app-option-button
+                  v-for="option in modeOptions"
+                  :key="option.value"
+                  :active="mode === option.value"
+                  :disabled="formDisabled"
+                  @click="mode = option.value"
+                >
+                  <view class="moment-mode-option">
+                    <text class="moment-mode-option__title">{{ option.label }}</text>
+                    <text class="moment-mode-option__description">{{ option.description }}</text>
+                  </view>
+                </app-option-button>
+              </view>
+            </view>
+
+            <view class="moment-field">
+              <text class="moment-field__prompt">这一天会每年再过一次吗？</text>
+              <app-option-group :columns="2" responsive="auto">
+                <app-option-button
+                  v-for="option in recurrenceOptions"
+                  :key="option.value"
+                  :active="recurrence === option.value"
+                  :disabled="formDisabled"
+                  @click="recurrence = option.value"
+                >
+                  <text class="moment-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
+
+            <view class="moment-field">
+              <text class="moment-field__prompt">当天算第几天？</text>
+              <app-option-group :columns="2" responsive="auto">
+                <app-option-button
+                  v-for="option in countingOptions"
+                  :key="option.value"
+                  :active="counting === option.value"
+                  :disabled="formDisabled"
+                  @click="counting = option.value"
+                >
+                  <text class="moment-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
+
+            <view class="moment-field">
+              <text class="moment-field__prompt">想看到什么样的数字？</text>
+              <app-option-group :columns="2" responsive="auto">
+                <app-option-button
+                  v-for="option in displayOptions"
+                  :key="option.value"
+                  :active="display === option.value"
+                  :disabled="formDisabled"
+                  @click="display = option.value"
+                >
+                  <text class="moment-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
+          </view>
+        </app-collapse-section>
 
         <view class="moment-field">
           <text class="moment-field__prompt">想留一句悄悄话吗？</text>
@@ -120,14 +184,6 @@
               @focus="focusField('#moment-note-field')"
               @keyboardheightchange="syncKeyboardHeight"
             />
-          </view>
-        </view>
-
-        <view class="moment-field">
-          <text class="moment-field__prompt">先看看它的样子</text>
-          <moment-card v-if="previewReady" :moment="previewRecord" :projection="previewProjection" />
-          <view v-else class="moment-preview-placeholder">
-            <text class="moment-field__hint">挑好日子后，这里会先演一遍它的样子。</text>
           </view>
         </view>
 
@@ -154,10 +210,11 @@ import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
 import {
   isValidCalendarDate,
-  momentCategoryLabels,
   projectMoment,
   todayCalendarDate,
   type MomentCategory,
+  type MomentCounting,
+  type MomentDisplay,
   type MomentDisplayMode,
   type MomentDraft,
   type MomentRecord,
@@ -177,34 +234,71 @@ const saving = shallowRef(false)
 const saved = shallowRef(false)
 const draftDirty = shallowRef(false)
 const isLeaveConfirming = shallowRef(false)
+const advancedExpanded = shallowRef(false)
+
+interface MomentBehaviorPreset {
+  mode: MomentDisplayMode
+  recurrence: MomentRecurrence
+  counting: MomentCounting
+  display: MomentDisplay
+}
+
+/**
+ * 每种票根自带的默认数法：选中预设即整套套用，仍可在「再调一调」里细改。
+ * 「自己设置」与其他预设同默认值，但会自动展开高级设置。
+ */
+const momentBehaviorPresets: Record<MomentCategory, MomentBehaviorPreset> = {
+  anniversary: { mode: "countup", recurrence: "yearly", counting: "ordinal", display: "days" },
+  birthday: { mode: "countdown", recurrence: "yearly", counting: "elapsed", display: "days" },
+  first: { mode: "countup", recurrence: "none", counting: "ordinal", display: "days" },
+  travel: { mode: "auto", recurrence: "none", counting: "elapsed", display: "days" },
+  daily: { mode: "auto", recurrence: "none", counting: "elapsed", display: "days" },
+  custom: { mode: "auto", recurrence: "none", counting: "elapsed", display: "days" }
+}
+
+const initialBehavior = momentBehaviorPresets.anniversary
 
 const category = shallowRef<MomentCategory>("anniversary")
 const title = shallowRef("")
 const sourceDate = shallowRef("")
-const mode = shallowRef<MomentDisplayMode>("auto")
-const recurrence = shallowRef<MomentRecurrence>("none")
+const mode = shallowRef<MomentDisplayMode>(initialBehavior.mode)
+const recurrence = shallowRef<MomentRecurrence>(initialBehavior.recurrence)
+const counting = shallowRef<MomentCounting>(initialBehavior.counting)
+const display = shallowRef<MomentDisplay>(initialBehavior.display)
 const content = shallowRef("")
 
-const categoryOptions = (Object.keys(momentCategoryLabels) as MomentCategory[]).map((value) => ({
-  value,
-  label: momentCategoryLabels[value]
-}))
+const categoryPresets: Array<{
+  value: MomentCategory
+  label: string
+  description: string
+}> = [
+  { value: "anniversary", label: "纪念日", description: "在一起、领证的大日子" },
+  { value: "birthday", label: "生日", description: "她的、你的，一年一次" },
+  { value: "first", label: "第一次", description: "第一次牵手、第一次看海" },
+  { value: "travel", label: "旅行或计划", description: "想去的远方，想做的事" },
+  { value: "daily", label: "普通日子", description: "平平常常，也想记住" },
+  { value: "custom", label: "自己设置", description: "数数和重复都自己挑" }
+]
 
 const modeOptions: Array<{
   label: string
   value: MomentDisplayMode
+  description: string
 }> = [
   {
-    label: "自动判断",
-    value: "auto"
+    label: "让它自己判断",
+    value: "auto",
+    description: "过去了看走了多久，还没到看还要等多久"
   },
   {
-    label: "正计时",
-    value: "countup"
+    label: "看已经走过多久",
+    value: "countup",
+    description: "从这一天起，一直往后数"
   },
   {
-    label: "倒计时",
-    value: "countdown"
+    label: "看还有多久到来",
+    value: "countdown",
+    description: "盯着这一天，慢慢倒数等它"
   }
 ]
 
@@ -213,12 +307,40 @@ const recurrenceOptions: Array<{
   value: MomentRecurrence
 }> = [
   {
-    label: "不重复",
+    label: "只记这一次",
     value: "none"
   },
   {
-    label: "每年回来",
+    label: "每年都记得",
     value: "yearly"
+  }
+]
+
+const countingOptions: Array<{
+  label: string
+  value: MomentCounting
+}> = [
+  {
+    label: "从0天开始",
+    value: "elapsed"
+  },
+  {
+    label: "当天是第1天",
+    value: "ordinal"
+  }
+]
+
+const displayOptions: Array<{
+  label: string
+  value: MomentDisplay
+}> = [
+  {
+    label: "只看总天数",
+    value: "days"
+  },
+  {
+    label: "几年几个月几天",
+    value: "calendar"
   }
 ]
 
@@ -250,7 +372,7 @@ const discardDraftConfirmOptions = {
   }
 }
 
-/** M4A 未暴露的字段固定走安全默认值；展示派生值永远只由 projectMoment 现场计算。 */
+/** M4A 仍未暴露的字段（模板/提醒/里程碑/文件/置顶/闰日策略）固定走安全默认值；展示派生值永远只由 projectMoment 现场计算。 */
 const buildDraft = (): MomentDraft => ({
   category: category.value,
   title: title.value.trim(),
@@ -263,8 +385,8 @@ const buildDraft = (): MomentDraft => ({
   milestoneValues: [],
   mode: mode.value,
   recurrence: recurrence.value,
-  counting: "elapsed",
-  display: "days",
+  counting: counting.value,
+  display: display.value,
   leapDayPolicy: "feb28"
 })
 
@@ -285,8 +407,50 @@ const previewRecord = computed<MomentRecord>(() => ({
 
 const previewProjection = computed(() => projectMoment(previewRecord.value, todayCalendarDate()))
 
+const modeSummaryCopy: Record<MomentDisplayMode, string> = {
+  auto: "它自己会判断：过去了看走了多久，还没到看还要等多久",
+  countup: "从这一天开始往后数，看已经走了多久",
+  countdown: "一直倒数，看还有多久到这一天"
+}
+
+/**
+ * 行为摘要只按当前配置组合拼出口径说明，不做任何日期运算；
+ * 具体数值永远由上方 projectMoment 的实时预览展示。
+ * counting 与 display 只影响正计时方向，纯倒计时下不出现。
+ */
+const behaviorSummary = computed(() => {
+  const parts = [modeSummaryCopy[mode.value]]
+  parts.push(recurrence.value === "yearly" ? "每年都会再过一次" : "只记这一次")
+
+  if (mode.value !== "countdown") {
+    parts.push(counting.value === "ordinal" ? "当天算第 1 天" : "从 0 天开始数")
+    parts.push(display.value === "calendar" ? "按几年几个月几天给你看" : "只看总天数")
+  }
+
+  return `${parts.join("，")}。`
+})
+
+const advancedToggleText = computed(() => (advancedExpanded.value ? "先收起来" : "再调一调"))
+
+const applyCategoryPreset = (value: MomentCategory) => {
+  category.value = value
+  const preset = momentBehaviorPresets[value]
+  mode.value = preset.mode
+  recurrence.value = preset.recurrence
+  counting.value = preset.counting
+  display.value = preset.display
+
+  if (value === "custom") {
+    advancedExpanded.value = true
+  }
+}
+
+const toggleAdvanced = () => {
+  advancedExpanded.value = !advancedExpanded.value
+}
+
 watch(
-  [category, title, sourceDate, mode, recurrence, content],
+  [category, title, sourceDate, mode, recurrence, counting, display, content],
   () => {
     if (!formDisabled.value) {
       draftDirty.value = true
@@ -547,6 +711,66 @@ onBackPress((options) => {
 .moment-choice__label {
   display: block;
   width: 100%;
+}
+
+.moment-preset,
+.moment-mode-option {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--app-space-2);
+  white-space: normal;
+}
+
+.moment-preset__description,
+.moment-mode-option__description {
+  color: var(--app-text-muted);
+  font: var(--app-font-caption);
+  line-height: var(--app-line-height-normal);
+}
+
+.moment-behavior-summary {
+  display: block;
+  padding: var(--app-space-4) var(--app-field-padding-x);
+  border: var(--app-panel-border-width) dashed var(--app-divider);
+  border-radius: var(--app-radius-input);
+  background: var(--app-field);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+  line-height: var(--app-line-height-relaxed);
+}
+
+.moment-mode-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-option-group-gap);
+}
+
+.moment-advanced-toggle-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+}
+
+:deep(.moment-advanced-toggle) {
+  color: var(--app-accent);
+  box-shadow: var(--app-shadow-none);
+  transition:
+    transform var(--app-transition-fast),
+    opacity var(--app-transition-fast);
+}
+
+:deep(.moment-advanced-toggle:active) {
+  opacity: var(--app-press-opacity);
+  transform: scale(var(--app-press-scale-strong));
+}
+
+.moment-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-card-gap);
+  padding-top: var(--app-space-5);
 }
 
 .moment-preview-placeholder {

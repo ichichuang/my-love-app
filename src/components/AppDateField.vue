@@ -55,6 +55,8 @@
           <wd-datetime-picker-view
             v-model="draftTimestamp"
             type="date"
+            :min-date="minPickerTimestamp"
+            :max-date="maxPickerTimestamp"
             custom-class="app-date-field__picker-view"
             :formatter="formatPickerColumn"
           />
@@ -83,13 +85,17 @@ const props = withDefaults(
     title?: string
     disabled?: boolean
     clearable?: boolean
+    minDate?: string
+    maxDate?: string
   }>(),
   {
     modelValue: "",
     placeholder: "挑一个日子吧",
     title: "挑个好日子",
     disabled: false,
-    clearable: false
+    clearable: false,
+    minDate: "",
+    maxDate: ""
   }
 )
 
@@ -110,6 +116,23 @@ const currentTimestamp = computed(() => {
   const timestamp = calendarDateToTimestamp(normalizedValue.value)
   return Number.isFinite(timestamp) ? timestamp : fallbackTimestamp.value
 })
+
+/**
+ * 可选选择边界：日历字符串先经 normalizeCalendarDate 校验、再转本地时间戳；
+ * 留空或非法时回退 undefined，wd-datetime-picker-view 继续使用自身默认范围，
+ * 不传 minDate/maxDate 的旧调用方行为完全不变。
+ */
+const toPickerBoundary = (value: string): number | undefined => {
+  const normalized = normalizeCalendarDate(value)
+  if (!normalized) {
+    return undefined
+  }
+
+  const timestamp = calendarDateToTimestamp(normalized)
+  return Number.isFinite(timestamp) ? timestamp : undefined
+}
+const minPickerTimestamp = computed(() => toPickerBoundary(props.minDate))
+const maxPickerTimestamp = computed(() => toPickerBoundary(props.maxDate))
 const pickerZIndex = computed(() => Number(theme.appCssVars["--app-z-index-picker"]))
 const popupTokenStyle = computed(() => makeCssVars(theme.appCssVars))
 const popupStyle = computed(() => `${popupTokenStyle.value}; background: var(--app-surface); border-radius: var(--app-radius-card) var(--app-radius-card) var(--app-space-0) var(--app-space-0); overflow: hidden;`)
