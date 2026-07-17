@@ -7,6 +7,10 @@
     :page-style="theme.nativeChromeTheme.pageStyle"
   />
   <app-shell nav-title="我们的小日子" nav-eyebrow="悄悄记住" nav-show-back nav-variant="page">
+    <template #nav-actions>
+      <wd-button size="small" plain @click="goCreateMoment">记一个</wd-button>
+    </template>
+
     <view class="moments-page">
       <view class="moments-intro app-reveal-1">
         <view class="moments-intro__paper-corner" />
@@ -41,7 +45,9 @@
           v-if="moments.length === 0"
           title="这页还空着"
           body="等第一个小日子被悄悄记下，它会先来到这页。"
-        />
+        >
+          <wd-button custom-class="moments-state__button" @click="goCreateMoment">记下第一个小日子</wd-button>
+        </empty-state>
 
         <view v-else class="moments-groups">
           <view v-for="group in momentGroups" :key="group.key" class="moment-group">
@@ -85,6 +91,7 @@ import { listMoments } from "@/services/repositories/moments"
 
 const theme = useNativeChromeSync()
 const momentsRoute = "/pages/moments/moments"
+const momentEditRoute = "/pages/moment-edit/moment-edit"
 
 const { items: moments, loading, refreshing, errorMessage, reload } = useCachedList<MomentRecord>({
   cacheKey: dataCacheKeys.momentList,
@@ -187,6 +194,12 @@ const introNote = computed(() => {
 
   return "这页还空着，等第一个小日子住进来。"
 })
+
+const goCreateMoment = () => {
+  uni.navigateTo({
+    url: momentEditRoute
+  })
+}
 
 const loadMoments = async (notifyCachedFailure = false) => {
   try {

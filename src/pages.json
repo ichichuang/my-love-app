@@ -98,6 +98,13 @@
         "navigationBarTitleText": "我们的小日子",
         "enablePullDownRefresh": true
       }
+    },
+    {
+      "path": "pages/moment-edit/moment-edit",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "小日子票根"
+      }
     }
   ],
   "globalStyle": {
