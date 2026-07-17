@@ -25,8 +25,8 @@ export type MomentDirection = "countup" | "countdown" | "today"
  * - 源日期锚定（永不随年度重复重置）：`elapsedDays`、`calendarDuration`、`nextMilestone`。
  * - 发生日锚定（重复规则派生）：`nextOccurrence`、`remainingDays`、`anniversaryCount`，
  *   以及 `direction` / `primaryValue` 的倒计时部分。
- * - `counting`（elapsed|ordinal）只影响 countup 方向的 `primaryValue` 展示值，
- *   不影响周年计数与里程碑状态。
+ * - `counting`（elapsed|ordinal）只影响 countup 方向的引导文案与 `primaryValue`
+ *   展示值，不影响周年计数与里程碑状态。
  */
 export interface MomentProjection {
   direction: MomentDirection
@@ -222,7 +222,7 @@ const computePrimaryValue = (
  * - 已过天数、纪念序号、日里程碑、公历年/月/日时长永远自原始 `sourceDate` 起算，
  *   年度重复不会把它们重置到上一周年发生日；
  * - 倒计时剩余天数、`nextOccurrence`、`anniversaryCount` 由重复规则派生；
- * - `counting` 只影响 countup 主数值的展示，不影响周年计数与里程碑状态。
+ * - `counting` 只影响 countup 方向的引导文案与主数值展示，不影响周年计数与里程碑状态。
  *
  * 不会把任何派生值持久化到记录里。
  */
@@ -261,7 +261,7 @@ export const projectMoment = (record: MomentRecord, today: string = todayCalenda
   const primaryUnit = "天"
 
   const leadCopy: Record<MomentDirection, string> = {
-    countup: "已经",
+    countup: record.counting === "ordinal" ? "今天是第" : "已经",
     countdown: "还有",
     today: "就是今天"
   }

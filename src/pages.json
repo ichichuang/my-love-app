@@ -14,6 +14,7 @@
       "^empty-state$": "@/components/EmptyState.vue",
       "^entry-card$": "@/components/EntryCard.vue",
       "^image-grid$": "@/components/ImageGrid.vue",
+      "^moment-card$": "@/components/MomentCard.vue",
       "^theme-swatch-picker$": "@/components/ThemeSwatchPicker.vue",
       "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
     }
@@ -88,6 +89,14 @@
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "写小线索"
+      }
+    },
+    {
+      "path": "pages/moments/moments",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "我们的小日子",
+        "enablePullDownRefresh": true
       }
     }
   ],
