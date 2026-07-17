@@ -64,6 +64,8 @@
                 :style="{ animationDelay: `calc(var(--app-stagger-reveal) * ${index})` }"
                 :moment="entry.moment"
                 :projection="entry.projection"
+                interactive
+                @open="openMoment"
               />
             </view>
           </view>
@@ -92,6 +94,7 @@ import { listMoments } from "@/services/repositories/moments"
 const theme = useNativeChromeSync()
 const momentsRoute = "/pages/moments/moments"
 const momentEditRoute = "/pages/moment-edit/moment-edit"
+const momentDetailRoute = "/pages/moment-detail/moment-detail"
 
 const { items: moments, loading, refreshing, errorMessage, reload } = useCachedList<MomentRecord>({
   cacheKey: dataCacheKeys.momentList,
@@ -198,6 +201,12 @@ const introNote = computed(() => {
 const goCreateMoment = () => {
   uni.navigateTo({
     url: momentEditRoute
+  })
+}
+
+const openMoment = (id: string) => {
+  uni.navigateTo({
+    url: `${momentDetailRoute}?id=${encodeURIComponent(id)}`
   })
 }
 

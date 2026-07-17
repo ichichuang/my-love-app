@@ -1,5 +1,11 @@
 <template>
-  <view class="moment-card" :class="{ 'moment-card--pinned': moment.pinned }">
+  <view
+    class="moment-card"
+    :class="{ 'moment-card--pinned': moment.pinned, 'moment-card--interactive': interactive }"
+    :role="interactive ? 'button' : undefined"
+    :aria-label="interactive ? openAriaLabel : undefined"
+    @click="handleOpen"
+  >
     <view class="moment-card__paper-corner" />
     <view class="moment-card__head">
       <view class="moment-card__title-group">
@@ -36,10 +42,31 @@ import {
   type MomentRecord
 } from "@/domain/moments"
 
-const props = defineProps<{
-  moment: MomentRecord
-  projection: MomentProjection
+const props = withDefaults(
+  defineProps<{
+    moment: MomentRecord
+    projection: MomentProjection
+    /** 编辑器预览等场景保持非交互；列表里才打开详情。 */
+    interactive?: boolean
+  }>(),
+  {
+    interactive: false
+  }
+)
+
+const emit = defineEmits<{
+  open: [id: string]
 }>()
+
+const openAriaLabel = computed(() => `打开「${props.moment.title}」这个小日子`)
+
+const handleOpen = () => {
+  if (!props.interactive) {
+    return
+  }
+
+  emit("open", props.moment.id)
+}
 
 const categoryLabel = computed(() => momentCategoryLabels[props.moment.category])
 
@@ -96,6 +123,15 @@ const milestoneLabel = computed(() =>
 .moment-card--pinned {
   background:
     linear-gradient(180deg, var(--app-surface), var(--app-primary-soft));
+}
+
+.moment-card--interactive {
+  @include pressable;
+
+  &:active {
+    opacity: var(--app-press-opacity);
+    transform: scale(var(--app-press-scale));
+  }
 }
 
 .moment-card::before {

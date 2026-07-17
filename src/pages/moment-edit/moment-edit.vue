@@ -8,13 +8,28 @@
   />
   <app-shell
     nav-title="小日子票根"
-    nav-eyebrow="记一个日子"
+    :nav-eyebrow="pageEyebrow"
     nav-show-back
     nav-variant="page"
     :nav-auto-back="false"
     @back="handleBackNavigation"
   >
-    <view class="moment-edit">
+    <view v-if="loading" class="moment-edit-status app-anim-breath">
+      <text>正在翻这张小票根…</text>
+    </view>
+
+    <empty-state
+      v-else-if="hasLoadError && !editingMoment"
+      title="这个小日子暂时没翻到"
+      body="可能是网络慢了一点，稍后再试一次。"
+    >
+      <view class="moment-edit-error__actions">
+        <wd-button block :loading="loading" @click="loadMoment">再试一次</wd-button>
+        <wd-button block plain @click="handleBackNavigation">返回小日子</wd-button>
+      </view>
+    </empty-state>
+
+    <view v-else class="moment-edit">
       <view class="moment-ticket app-reveal-1 app-ticket-stump">
         <view class="app-ticket-stump__punch app-ticket-stump__punch--left" />
         <view class="app-ticket-stump__punch app-ticket-stump__punch--right" />
@@ -202,9 +217,10 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from "vue"
-import { onBackPress } from "@dcloudio/uni-app"
+import { onBackPress, onLoad } from "@dcloudio/uni-app"
 import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError, showAppWarning } from "@/composables/useAppToast"
+import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
@@ -221,7 +237,13 @@ import {
   type MomentRecurrence
 } from "@/domain/moments"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
-import { createMoment } from "@/services/repositories/moments"
+import { dataCacheKeys } from "@/services/data-cache"
+import {
+  createMoment,
+  getMoment,
+  isMomentUnavailableError,
+  updateMoment
+} from "@/services/repositories/moments"
 import { normalizeCalendarDate } from "@/utils/date"
 
 const momentsRoute = "/pages/moments/moments"
@@ -235,6 +257,20 @@ const saved = shallowRef(false)
 const draftDirty = shallowRef(false)
 const isLeaveConfirming = shallowRef(false)
 const advancedExpanded = shallowRef(false)
+const momentId = shallowRef("")
+const hasLoadError = shallowRef(false)
+const hydratingDraft = shallowRef(false)
+const {
+  record: editingMoment,
+  loading,
+  reload: reloadMoment
+} = useCachedRecord<MomentRecord>({
+  cacheKey: () => dataCacheKeys.momentDetail(momentId.value),
+  isUnavailableError: isMomentUnavailableError,
+  loader: () => getMoment(momentId.value)
+})
+
+const isEditMode = computed(() => momentId.value.length > 0)
 
 interface MomentBehaviorPreset {
   mode: MomentDisplayMode
@@ -346,6 +382,7 @@ const displayOptions: Array<{
 
 const formDisabled = computed(() => saving.value || saved.value)
 const hasUnsavedDraft = computed(() => draftDirty.value && !saving.value && !saved.value)
+const pageEyebrow = computed(() => (isEditMode.value ? "改一个小日子" : "记一个日子"))
 const saveButtonText = computed(() => {
   if (saving.value) {
     return "正在轻轻收好"
@@ -355,7 +392,7 @@ const saveButtonText = computed(() => {
     return "已经轻轻收好"
   }
 
-  return "收进小日子"
+  return isEditMode.value ? "收好这张票根" : "收进小日子"
 })
 const discardDraftConfirmOptions = {
   title: "这张票根还没收好",
@@ -372,23 +409,31 @@ const discardDraftConfirmOptions = {
   }
 }
 
-/** M4A 仍未暴露的字段（模板/提醒/里程碑/文件/置顶/闰日策略）固定走安全默认值；展示派生值永远只由 projectMoment 现场计算。 */
-const buildDraft = (): MomentDraft => ({
-  category: category.value,
-  title: title.value.trim(),
-  content: content.value.trim(),
-  sourceDate: sourceDate.value,
-  pinned: false,
-  files: [],
-  template: "{title}",
-  reminderOffsets: [],
-  milestoneValues: [],
-  mode: mode.value,
-  recurrence: recurrence.value,
-  counting: counting.value,
-  display: display.value,
-  leapDayPolicy: "feb28"
-})
+/**
+ * 新建时 M4B 仍未暴露的字段（模板/提醒/里程碑/文件/置顶/闰日策略）固定走安全默认值；
+ * 编辑时这些隐藏字段必须沿用已加载记录的原值，绝不能被重置。
+ * 展示派生值永远只由 projectMoment 现场计算。
+ */
+const buildDraft = (): MomentDraft => {
+  const existing = isEditMode.value ? editingMoment.value : null
+
+  return {
+    category: category.value,
+    title: title.value.trim(),
+    content: content.value.trim(),
+    sourceDate: sourceDate.value,
+    pinned: existing?.pinned ?? false,
+    files: existing?.files ?? [],
+    template: existing?.template ?? "{title}",
+    reminderOffsets: existing?.reminderOffsets ?? [],
+    milestoneValues: existing?.milestoneValues ?? [],
+    mode: mode.value,
+    recurrence: recurrence.value,
+    counting: counting.value,
+    display: display.value,
+    leapDayPolicy: existing?.leapDayPolicy ?? "feb28"
+  }
+}
 
 const previewReady = computed(() => isValidCalendarDate(normalizeCalendarDate(sourceDate.value)))
 
@@ -449,10 +494,81 @@ const toggleAdvanced = () => {
   advancedExpanded.value = !advancedExpanded.value
 }
 
+const decodeQueryId = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return ""
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  try {
+    return decodeURIComponent(trimmed)
+  } catch {
+    return trimmed
+  }
+}
+
+const updateDraftWithoutTracking = (update: () => void) => {
+  hydratingDraft.value = true
+  update()
+  hydratingDraft.value = false
+  draftDirty.value = false
+}
+
+/** 记录的数法组合与分类预设不一致时自动展开「再调一调」，让已保存的自定义配置可见。 */
+const shouldExpandAdvanced = (moment: MomentRecord): boolean => {
+  const preset = momentBehaviorPresets[moment.category]
+  return (
+    moment.mode !== preset.mode ||
+    moment.recurrence !== preset.recurrence ||
+    moment.counting !== preset.counting ||
+    moment.display !== preset.display
+  )
+}
+
+/** 编辑模式水合：逐字段写入记录原值，绝不套用分类预设，也不触碰隐藏字段。 */
+const hydrateMoment = (moment: MomentRecord) => {
+  updateDraftWithoutTracking(() => {
+    category.value = moment.category
+    title.value = moment.title
+    sourceDate.value = moment.sourceDate
+    mode.value = moment.mode
+    recurrence.value = moment.recurrence
+    counting.value = moment.counting
+    display.value = moment.display
+    content.value = moment.content
+    advancedExpanded.value = shouldExpandAdvanced(moment)
+    saved.value = false
+  })
+}
+
+const loadMoment = async () => {
+  if (!momentId.value) {
+    hasLoadError.value = false
+    return
+  }
+
+  hasLoadError.value = false
+
+  try {
+    await reloadMoment({
+      applyCached: hydrateMoment,
+      applyFresh: hydrateMoment,
+      // 缓存或新鲜数据到达时，用户若已经开始改动，绝不覆盖未保存输入。
+      canApplyFresh: () => !draftDirty.value && !formDisabled.value
+    })
+  } catch {
+    hasLoadError.value = true
+  }
+}
+
 watch(
   [category, title, sourceDate, mode, recurrence, counting, display, content],
   () => {
-    if (!formDisabled.value) {
+    if (!hydratingDraft.value && !formDisabled.value) {
       draftDirty.value = true
     }
   },
@@ -525,11 +641,15 @@ const saveMoment = async () => {
   sourceDate.value = trimmedDate
 
   try {
-    await createMoment(buildDraft())
+    if (isEditMode.value) {
+      await updateMoment(momentId.value, buildDraft())
+    } else {
+      await createMoment(buildDraft())
+    }
 
     saving.value = false
     saved.value = true
-    setRouteSuccessFeedback(momentsRoute, "这个小日子已经悄悄收好")
+    setRouteSuccessFeedback(momentsRoute, isEditMode.value ? "这个小日子已经改好了" : "这个小日子已经悄悄收好")
     backToMoments()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
@@ -539,6 +659,11 @@ const saveMoment = async () => {
     }
   }
 }
+
+onLoad((query) => {
+  momentId.value = decodeQueryId(query?.id)
+  void loadMoment()
+})
 
 onBackPress((options) => {
   if (options.from === "navigateBack" || !hasUnsavedDraft.value) {
@@ -565,6 +690,22 @@ onBackPress((options) => {
 .moment-edit {
   gap: var(--app-form-gap);
   padding-bottom: var(--app-card-padding);
+}
+
+.moment-edit-status {
+  @include panel;
+  padding: var(--app-empty-padding-y) var(--app-empty-padding-x);
+  color: var(--app-text-soft);
+  font: var(--app-font-body);
+  text-align: center;
+}
+
+.moment-edit-error__actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--app-space-6);
+  margin-top: var(--app-card-padding);
 }
 
 .moment-ticket {
