@@ -92,13 +92,14 @@ import { useMessage } from "wot-design-uni/components/wd-message-box"
 import { showAppError } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
-import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
+import { setRouteSuccessFeedback, consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import {
   momentCategoryLabels,
   projectMoment,
   todayCalendarDate,
   type MomentCounting,
   type MomentDisplay,
+  type MomentDisplayMode,
   type MomentProjection,
   type MomentRecord,
   type MomentRecurrence
@@ -115,6 +116,7 @@ import { formatChineseDate } from "@/utils/date"
 
 const momentsRoute = "/pages/moments/moments"
 const momentEditRoute = "/pages/moment-edit/moment-edit"
+const momentDetailRoute = "/pages/moment-detail/moment-detail"
 
 const theme = useNativeChromeSync()
 const message = useMessage()
@@ -175,7 +177,13 @@ const calendarDurationLabel = computed(() => {
   return parts.join(" ")
 })
 
-/** 信息行口径与编辑器选项文案保持一致；纪念序号、下一次发生日、里程碑由 projection 现场给出。 */
+/** 信息行口径与编辑器选项文案保持一致；下一次发生日、周年数、里程碑由 projection 现场给出。 */
+const displayModeCopy: Record<MomentDisplayMode, string> = {
+  auto: "让它自己判断",
+  countup: "看已经走过多久",
+  countdown: "看还有多久到来"
+}
+
 const recurrenceCopy: Record<MomentRecurrence, string> = {
   none: "只记这一次",
   yearly: "每年都记得"
@@ -207,10 +215,17 @@ const infoRows = computed<MomentInfoRow[]>(() => {
   const rows: MomentInfoRow[] = [
     { key: "sourceDate", label: "那一天", value: currentProjection.sourceDateLabel },
     { key: "category", label: "分类", value: categoryLabel.value },
-    { key: "recurrence", label: "重复", value: recurrenceCopy[record.recurrence] },
-    { key: "counting", label: "数法", value: countingCopy[record.counting] },
-    { key: "display", label: "展示", value: displayCopy[record.display] }
+    { key: "mode", label: "主要看法", value: displayModeCopy[record.mode] },
+    { key: "recurrence", label: "重复", value: recurrenceCopy[record.recurrence] }
   ]
+
+  // 当天算法与时间格式只影响正计时结果；纯倒计时记录不参与计算，不再展示。
+  if (record.mode !== "countdown") {
+    rows.push(
+      { key: "counting", label: "当天算法", value: countingCopy[record.counting] },
+      { key: "display", label: "时间格式", value: displayCopy[record.display] }
+    )
+  }
 
   const note = record.content.trim()
   if (note) {
@@ -225,11 +240,12 @@ const infoRows = computed<MomentInfoRow[]>(() => {
     })
   }
 
-  if (currentProjection.anniversaryCount > 0) {
+  // 「周年」语义只对纪念日成立，不再对生日/第一次/旅行/普通日子输出「第 N 个」。
+  if (record.category === "anniversary" && currentProjection.anniversaryCount > 0) {
     rows.push({
       key: "anniversary",
       label: "周年",
-      value: `第 ${currentProjection.anniversaryCount} 个${categoryLabel.value}`
+      value: `已经走过 ${currentProjection.anniversaryCount} 周年`
     })
   }
 
@@ -390,6 +406,7 @@ onLoad((query) => {
 
 onShow(() => {
   today.value = todayCalendarDate()
+  consumeRouteFeedback(momentDetailRoute)
   void loadMoment()
 })
 </script>
@@ -501,14 +518,17 @@ onShow(() => {
 .moment-ticket__title {
   color: var(--app-text);
   font: var(--app-font-detail-title);
+  word-break: break-all;
 }
 
 .moment-ticket__hero {
   position: relative;
   z-index: 1;
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--app-space-3);
+  gap: var(--app-space-2) var(--app-space-3);
 }
 
 .moment-ticket__lead,
@@ -518,10 +538,12 @@ onShow(() => {
 }
 
 .moment-ticket__value {
+  max-width: 100%;
   color: var(--app-primary);
   font-size: var(--app-font-size-6xl);
   font-weight: var(--app-font-weight-semibold);
   line-height: var(--app-line-height-none);
+  word-break: break-all;
 }
 
 .moment-ticket__today {
@@ -577,7 +599,7 @@ onShow(() => {
 .moment-info__value {
   min-width: 0;
   color: var(--app-text);
-  font: var(--app-font-body);
+  font: var(--app-font-caption);
   text-align: right;
   word-break: break-all;
 }

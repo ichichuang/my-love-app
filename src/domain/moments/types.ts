@@ -35,13 +35,17 @@ export interface MomentFile {
   uploadedAt?: number
 }
 
+/**
+ * 全端统一的用户可见分类文案：创建预设、列表卡片、详情票根、模板占位符
+ * 与落库 `mood` 字段都从这里取同一份标签。已有历史文档无需迁移。
+ */
 export const momentCategoryLabels: Record<MomentCategory, string> = {
   anniversary: "纪念日",
   birthday: "生日",
   first: "第一次",
-  travel: "旅行",
-  daily: "日常",
-  custom: "自定义"
+  travel: "旅行或计划",
+  daily: "普通日子",
+  custom: "自己设置"
 }
 
 export const momentDisplayModeLabels: Record<MomentDisplayMode, string> = {

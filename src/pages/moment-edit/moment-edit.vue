@@ -247,6 +247,7 @@ import {
 import { normalizeCalendarDate } from "@/utils/date"
 
 const momentsRoute = "/pages/moments/moments"
+const momentDetailRoute = "/pages/moment-detail/moment-detail"
 const placeholderStyle = "color: var(--app-text-muted)"
 const theme = useNativeChromeSync()
 const message = useMessage()
@@ -649,7 +650,11 @@ const saveMoment = async () => {
 
     saving.value = false
     saved.value = true
-    setRouteSuccessFeedback(momentsRoute, isEditMode.value ? "这个小日子已经改好了" : "这个小日子已经悄悄收好")
+    // 编辑保存后返回详情页并立即给出反馈；新建仍回到列表页反馈。
+    setRouteSuccessFeedback(
+      isEditMode.value ? momentDetailRoute : momentsRoute,
+      isEditMode.value ? "这个小日子已经改好了" : "这个小日子已经悄悄收好"
+    )
     backToMoments()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))

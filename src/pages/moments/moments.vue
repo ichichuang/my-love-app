@@ -12,7 +12,12 @@
     </template>
 
     <view class="moments-page">
-      <view class="moments-intro app-reveal-1">
+      <view v-if="hasMoments" class="moments-summary app-reveal-1">
+        <text class="moments-summary__count">{{ summaryCountCopy }}</text>
+        <text v-if="summaryHintCopy" class="moments-summary__hint">{{ summaryHintCopy }}</text>
+      </view>
+
+      <view v-else class="moments-intro app-reveal-1">
         <view class="moments-intro__paper-corner" />
         <view class="moments-intro__head">
           <view class="moments-intro__copy">
@@ -24,7 +29,7 @@
         </view>
 
         <view class="moments-intro__foot">
-          <text class="moments-intro__note">{{ introNote }}</text>
+          <text class="moments-intro__note">这页还空着，等第一个小日子住进来。</text>
         </view>
       </view>
 
@@ -104,7 +109,7 @@ const { items: moments, loading, refreshing, errorMessage, reload } = useCachedL
 /** 「今天」在每次 onShow 重新锚定；所有派生值仍只由 projectMoment(moment, today) 现场计算。 */
 const today = shallowRef(todayCalendarDate())
 
-type MomentGroupKey = "today" | "countup" | "yearly" | "countdown"
+type MomentGroupKey = "pinned" | "today" | "countdown" | "countup"
 
 interface MomentListEntry {
   moment: MomentRecord
@@ -122,20 +127,20 @@ const momentGroupOrder: Array<{
   title: string
 }> = [
   {
+    key: "pinned",
+    title: "常看"
+  },
+  {
     key: "today",
     title: "就是今天"
   },
   {
-    key: "countup",
-    title: "正在累计"
-  },
-  {
-    key: "yearly",
-    title: "每年回来"
-  },
-  {
     key: "countdown",
     title: "快要到了"
+  },
+  {
+    key: "countup",
+    title: "正在累计"
   }
 ]
 
@@ -148,31 +153,32 @@ const momentEntries = computed<MomentListEntry[]>(() =>
 
 /**
  * 每条记录按顺序只落进一个分组，组内保持仓储返回顺序：
- * 1. 就是今天（projection.isToday）；2. 正在累计（非今天的正计时）；
- * 3. 每年回来（其余非今天的每年重复记录）；4. 快要到了（其余倒计时记录）。
+ * 1. 常看（置顶）；2. 就是今天（projection.isToday）；
+ * 3. 快要到了（倒计时）；4. 正在累计（其余正计时记录）。
+ * 是否每年重复不再单独分组，由卡片上的「每年回来」小标签表达。
  */
 const resolveMomentGroupKey = (entry: MomentListEntry): MomentGroupKey => {
+  if (entry.moment.pinned) {
+    return "pinned"
+  }
+
   if (entry.projection.isToday) {
     return "today"
   }
 
-  if (entry.projection.direction === "countup") {
-    return "countup"
+  if (entry.projection.direction === "countdown") {
+    return "countdown"
   }
 
-  if (entry.moment.recurrence === "yearly") {
-    return "yearly"
-  }
-
-  return "countdown"
+  return "countup"
 }
 
 const momentGroups = computed<MomentGroup[]>(() => {
   const grouped: Record<MomentGroupKey, MomentListEntry[]> = {
+    pinned: [],
     today: [],
-    countup: [],
-    yearly: [],
-    countdown: []
+    countdown: [],
+    countup: []
   }
 
   momentEntries.value.forEach((entry) => {
@@ -186,16 +192,47 @@ const momentGroups = computed<MomentGroup[]>(() => {
 
 const hasError = computed(() => errorMessage.value.length > 0 && moments.value.length === 0)
 
-const introNote = computed(() => {
+const hasMoments = computed(() => moments.value.length > 0)
+
+const summaryCountCopy = computed(() => `已经悄悄记住 ${moments.value.length} 个小日子`)
+
+/** 最近的有意义小日子：今天发生的优先，其次剩余天数最小的倒计时；都没有时摘要只显示总数。 */
+const nearestEntry = computed<MomentListEntry | null>(() => {
+  const entries = momentEntries.value
+  const todayEntry = entries.find((entry) => entry.projection.isToday)
+  if (todayEntry) {
+    return todayEntry
+  }
+
+  let nearest: MomentListEntry | null = null
+  entries.forEach((entry) => {
+    if (entry.projection.direction !== "countdown") {
+      return
+    }
+
+    if (!nearest || entry.projection.remainingDays < nearest.projection.remainingDays) {
+      nearest = entry
+    }
+  })
+
+  return nearest
+})
+
+const summaryHintCopy = computed(() => {
   if (refreshing.value && moments.value.length > 0) {
     return "先翻着旧纸条，新的那几张在悄悄补。"
   }
 
-  if (moments.value.length > 0) {
-    return `已经悄悄记住 ${moments.value.length} 个小日子。`
+  const entry = nearestEntry.value
+  if (!entry) {
+    return ""
   }
 
-  return "这页还空着，等第一个小日子住进来。"
+  if (entry.projection.isToday) {
+    return `今天就是「${entry.moment.title}」`
+  }
+
+  return `下一次：「${entry.moment.title}」还有 ${entry.projection.remainingDays} 天`
 })
 
 const goCreateMoment = () => {
@@ -241,6 +278,7 @@ onPullDownRefresh(() => {
 .moments-intro,
 .moments-intro__copy,
 .moments-intro__foot,
+.moments-summary,
 .moments-content,
 .moments-groups,
 .moment-group,
@@ -349,6 +387,27 @@ onPullDownRefresh(() => {
 }
 
 .moments-intro__note {
+  display: block;
+  color: var(--app-accent);
+  font: var(--app-font-caption);
+}
+
+/* 有记录后的紧凑摘要条：一行总数 + 一行最近时刻，替代完整介绍卡。 */
+.moments-summary {
+  gap: var(--app-space-2);
+  padding: var(--app-space-6) var(--app-field-padding-x);
+  border: var(--app-panel-border-width) dashed var(--app-divider);
+  border-radius: var(--app-radius-input);
+  background: var(--app-field);
+}
+
+.moments-summary__count {
+  display: block;
+  color: var(--app-text);
+  font: var(--app-font-body);
+}
+
+.moments-summary__hint {
   display: block;
   color: var(--app-accent);
   font: var(--app-font-caption);

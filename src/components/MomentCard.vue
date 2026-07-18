@@ -9,7 +9,10 @@
     <view class="moment-card__paper-corner" />
     <view class="moment-card__head">
       <view class="moment-card__title-group">
-        <text class="moment-card__category">{{ categoryLabel }}</text>
+        <view class="moment-card__tags">
+          <text class="moment-card__category">{{ categoryLabel }}</text>
+          <text v-if="moment.recurrence === 'yearly'" class="moment-card__yearly">每年回来</text>
+        </view>
         <text class="moment-card__title">{{ moment.title }}</text>
       </view>
       <view v-if="moment.pinned" class="app-stamp-mark app-stamp-mark--primary">常看</view>
@@ -31,6 +34,11 @@
     <text v-if="metaLabel" class="moment-card__meta">{{ metaLabel }}</text>
 
     <text v-if="milestoneLabel" class="moment-card__milestone">{{ milestoneLabel }}</text>
+
+    <view v-if="interactive" class="moment-card__open-hint" aria-hidden="true">
+      <text class="moment-card__open-hint-text">翻开</text>
+      <view class="moment-card__open-hint-arrow" />
+    </view>
   </view>
 </template>
 
@@ -180,8 +188,14 @@ const milestoneLabel = computed(() =>
   gap: var(--app-space-5);
 }
 
+.moment-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--app-space-2);
+}
+
 .moment-card__category {
-  align-self: flex-start;
   padding: var(--app-space-2) var(--app-space-5);
   border: var(--app-panel-border-width) solid var(--app-accent);
   border-radius: var(--app-radius-badge);
@@ -191,15 +205,32 @@ const milestoneLabel = computed(() =>
   line-height: var(--app-line-height-none);
 }
 
+.moment-card__yearly {
+  padding: var(--app-space-2) var(--app-space-5);
+  border: var(--app-panel-border-width) dashed var(--app-border-strong);
+  border-radius: var(--app-radius-badge);
+  background: var(--app-field);
+  color: var(--app-text-soft);
+  font-size: var(--app-font-size-sm);
+  line-height: var(--app-line-height-none);
+}
+
 .moment-card__title {
+  display: -webkit-box;
+  overflow: hidden;
   color: var(--app-text);
   font: var(--app-font-card-title);
+  word-break: break-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .moment-card__hero {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--app-space-3);
+  gap: var(--app-space-2) var(--app-space-3);
 }
 
 .moment-card__lead,
@@ -209,10 +240,12 @@ const milestoneLabel = computed(() =>
 }
 
 .moment-card__value {
+  max-width: 100%;
   color: var(--app-primary);
   font-size: var(--app-font-size-5xl);
   font-weight: var(--app-font-weight-semibold);
   line-height: var(--app-line-height-none);
+  word-break: break-all;
 }
 
 .moment-card__today {
@@ -236,5 +269,29 @@ const milestoneLabel = computed(() =>
   background: var(--app-accent-soft);
   color: var(--app-accent);
   font: var(--app-font-caption);
+}
+
+/* 可打开的轻提示：只在 interactive 卡片出现，编辑预览不渲染。 */
+.moment-card__open-hint {
+  display: flex;
+  align-items: center;
+  align-self: flex-end;
+  gap: var(--app-space-2);
+  opacity: var(--app-muted-opacity);
+  pointer-events: none;
+}
+
+.moment-card__open-hint-text {
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+  transform: rotate(var(--app-rotate-stamp));
+}
+
+.moment-card__open-hint-arrow {
+  width: var(--app-space-4);
+  height: var(--app-space-4);
+  border-top: var(--app-border-width-focus) solid var(--app-text-soft);
+  border-right: var(--app-border-width-focus) solid var(--app-text-soft);
+  transform: rotate(45deg);
 }
 </style>
