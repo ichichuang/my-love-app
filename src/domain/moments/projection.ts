@@ -140,6 +140,9 @@ export const MOMENT_TEMPLATE_PRESETS = {
 
 export type MomentTemplatePresetKey = keyof typeof MOMENT_TEMPLATE_PRESETS
 
+/** 自定义句式的最大长度：编辑器输入框与保存校验共用这一个上界。 */
+export const MOMENT_TEMPLATE_MAX_LENGTH = 120
+
 /** 默认句式（空模板与 `{title}` 等价）：卡片与详情不额外渲染补充句。 */
 export const isDefaultMomentTemplate = (template: string): boolean => {
   const trimmed = template.trim()

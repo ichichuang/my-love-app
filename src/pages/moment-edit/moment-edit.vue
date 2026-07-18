@@ -220,7 +220,7 @@
                     :disabled="formDisabled"
                     placeholder="自己写一句，比如：{标题}已经{天数}{单位}啦"
                     :placeholder-style="placeholderStyle"
-                    :maxlength="120"
+                    :maxlength="MOMENT_TEMPLATE_MAX_LENGTH"
                     custom-class="moment-field__textarea-root"
                     custom-textarea-container-class="moment-field__textarea-box"
                     custom-textarea-class="moment-field__textarea-inner"
@@ -333,6 +333,7 @@ import {
   isSafeMomentTemplateText,
   isValidCalendarDate,
   MOMENT_MILESTONE_MAX_VALUE,
+  MOMENT_TEMPLATE_MAX_LENGTH,
   MOMENT_TEMPLATE_PRESETS,
   normalizeMilestoneValues,
   parseCalendarDate,
@@ -942,6 +943,12 @@ const saveMoment = async () => {
 
     if (!isSafeMomentTemplateText(customText)) {
       showAppWarning("这句话里有不能用的写法，换一句试试")
+      return
+    }
+
+    // 数据级不变量：即使历史记录或程序化水合带入了超长文本，不缩短就不允许落库。
+    if (customText.length > MOMENT_TEMPLATE_MAX_LENGTH) {
+      showAppWarning("这句话最多 120 字，先精简一点")
       return
     }
   }
