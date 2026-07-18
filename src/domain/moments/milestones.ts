@@ -5,13 +5,22 @@
  * 年度重复不会把序号重置为上一周年的发生日——“第 1000 天”永远指
  * 距原始源日期的第 1000 天，而不是距最近一次周年的第 1000 天。
  *
- * 归一化会剔除非数字、非正数、NaN、Infinity，去重并升序排列。
+ * 归一化会剔除非数字、非有限数、非安全整数、非正数和超过 1000000 的值，
+ * 去重并升序排列；不修改入参数组，永远返回新数组。
  *
  * 查询时忽略已经达到或超过的序号，返回最近的未来里程碑。
  */
 
 import { calendarDayDiff } from "./calendar"
 
+/** 单个里程碑允许的最大天数：编辑器、落库与展示都以这一个上界为准。 */
+export const MOMENT_MILESTONE_MAX_VALUE = 1000000
+
+/**
+ * 里程碑归一化的唯一权威实现：编辑器草稿、Repository 写入、投影计算与详情展示
+ * 都必须走这里。保留的值必须同时满足：数字、有限、安全整数、大于 0、不超过
+ * `MOMENT_MILESTONE_MAX_VALUE`；返回去重后的升序新数组。
+ */
 export const normalizeMilestoneValues = (values: unknown): number[] => {
   if (!Array.isArray(values)) {
     return []
@@ -19,7 +28,14 @@ export const normalizeMilestoneValues = (values: unknown): number[] => {
 
   const seen = new Set<number>()
   return values
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0)
+    .filter(
+      (value): value is number =>
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        Number.isSafeInteger(value) &&
+        value > 0 &&
+        value <= MOMENT_MILESTONE_MAX_VALUE
+    )
     .sort((left, right) => left - right)
     .filter((value) => {
       if (seen.has(value)) {

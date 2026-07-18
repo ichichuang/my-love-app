@@ -79,6 +79,21 @@ export const MOMENT_TEMPLATE_PLACEHOLDERS = [
 
 export type MomentTemplatePlaceholder = (typeof MOMENT_TEMPLATE_PLACEHOLDERS)[number]
 
+/**
+ * 中文占位符与英文占位符共用同一份取值，只登记这张表里的键；
+ * 未登记的中英文占位符一律原样保留，不存在表达式求值路径。
+ */
+export const MOMENT_TEMPLATE_PLACEHOLDER_ALIASES: Record<string, MomentTemplatePlaceholder> = {
+  标题: "title",
+  天数: "days",
+  单位: "unit",
+  日期: "sourceDateChinese",
+  下次日期: "nextOccurrenceChinese",
+  周年: "anniversary",
+  分类: "category",
+  备注: "content"
+}
+
 const isValidPlaceholder = (key: string): key is MomentTemplatePlaceholder =>
   MOMENT_TEMPLATE_PLACEHOLDERS.includes(key as MomentTemplatePlaceholder)
 
@@ -101,13 +116,79 @@ export const renderMomentTemplate = (
     content: record.content
   }
 
-  return source.replace(/\{([a-zA-Z]+)\}/g, (match, key: string) => {
-    if (isValidPlaceholder(key)) {
-      return tokens[key]
+  return source.replace(/\{([a-zA-Z\u4e00-\u9fff]+)\}/g, (match, key: string) => {
+    const canonicalKey = isValidPlaceholder(key) ? key : MOMENT_TEMPLATE_PLACEHOLDER_ALIASES[key]
+
+    if (canonicalKey) {
+      return tokens[canonicalKey]
     }
 
     return match
   })
+}
+
+/**
+ * 「想让它怎么说」的预设句式：除「自己写一句」外，可保存的模板都出自这张表，
+ * 句式本身只使用已登记的中英文占位符。
+ */
+export const MOMENT_TEMPLATE_PRESETS = {
+  default: "{title}",
+  elapsed: "{标题}已经{天数}{单位}啦",
+  ordinal: "今天是{标题}的第{天数}{单位}",
+  countdown: "距离{标题}还有{天数}{单位}"
+} as const
+
+export type MomentTemplatePresetKey = keyof typeof MOMENT_TEMPLATE_PRESETS
+
+/** 默认句式（空模板与 `{title}` 等价）：卡片与详情不额外渲染补充句。 */
+export const isDefaultMomentTemplate = (template: string): boolean => {
+  const trimmed = template.trim()
+  return trimmed === "" || trimmed === MOMENT_TEMPLATE_PRESETS.default
+}
+
+/** 由已保存模板反推编辑器句式模式；不在预设表里的内容一律视为「自己写一句」。 */
+export const resolveMomentTemplateKey = (template: string): MomentTemplatePresetKey | "custom" => {
+  const trimmed = template.trim()
+  if (trimmed === "") {
+    return "default"
+  }
+
+  const matched = (Object.keys(MOMENT_TEMPLATE_PRESETS) as MomentTemplatePresetKey[]).find(
+    (key) => MOMENT_TEMPLATE_PRESETS[key] === trimmed
+  )
+  return matched ?? "custom"
+}
+
+/**
+ * 自定义句式的安全闸（大小写不敏感，先转小写再做子串匹配），显式覆盖：
+ * - `${`（模板字符串注入起点）
+ * - script/embed 类标签：`<script`、`</script`、`<iframe`、`<object`、`<embed`、`<img`
+ * - 协议写法：`javascript:`、`vbscript:`
+ * - 执行入口：`eval(`、`Function(`（由 `function(` 覆盖）、`new Function(`（由 `new function` 覆盖）、
+ *   `setTimeout(`（由 `settimeout(` 覆盖）、`setInterval(`（由 `setinterval(` 覆盖）
+ * 渲染侧永远只做纯文本插值与固定占位符替换——没有 `eval`、`Function`、
+ * 动态表达式或 HTML 渲染路径，这道闸只是让落库内容提前远离这些写法。
+ */
+const UNSAFE_TEMPLATE_PATTERNS = [
+  "${",
+  "<script",
+  "</script",
+  "<iframe",
+  "<object",
+  "<embed",
+  "<img",
+  "javascript:",
+  "vbscript:",
+  "eval(",
+  "function(",
+  "new function",
+  "settimeout(",
+  "setinterval("
+]
+
+export const isSafeMomentTemplateText = (text: string): boolean => {
+  const lowered = text.toLowerCase()
+  return !UNSAFE_TEMPLATE_PATTERNS.some((pattern) => lowered.includes(pattern))
 }
 
 /**

@@ -29,6 +29,8 @@
       </template>
     </view>
 
+    <text v-if="templateNote" class="moment-card__template-note">{{ templateNote }}</text>
+
     <text v-if="calendarDurationLabel" class="moment-card__duration">{{ calendarDurationLabel }}</text>
 
     <text v-if="metaLabel" class="moment-card__meta">{{ metaLabel }}</text>
@@ -45,6 +47,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import {
+  isDefaultMomentTemplate,
   momentCategoryLabels,
   type MomentProjection,
   type MomentRecord
@@ -77,6 +80,14 @@ const handleOpen = () => {
 }
 
 const categoryLabel = computed(() => momentCategoryLabels[props.moment.category])
+
+/**
+ * 配置了非默认句式时，把渲染好的那句话作为克制的次要补充展示；
+ * 默认 `{title}` 不再额外渲染，避免和卡片标题重复。
+ */
+const templateNote = computed(() =>
+  isDefaultMomentTemplate(props.moment.template) ? "" : props.projection.renderedTemplate
+)
 
 /** 正计时的日历模式：把 `calendarDuration` 拼成「1 年 2 个月 3 天」，不重复日期运算。 */
 const calendarDurationLabel = computed(() => {
@@ -259,6 +270,17 @@ const milestoneLabel = computed(() =>
 .moment-card__meta {
   color: var(--app-text-soft);
   font: var(--app-font-caption);
+}
+
+.moment-card__template-note {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+  line-height: var(--app-line-height-normal);
+  word-break: break-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .moment-card__milestone {

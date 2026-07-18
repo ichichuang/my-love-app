@@ -48,6 +48,7 @@
           </template>
         </view>
 
+        <text v-if="templateNote" class="moment-ticket__template-note">{{ templateNote }}</text>
         <text v-if="calendarDurationLabel" class="moment-ticket__duration">{{ calendarDurationLabel }}</text>
         <text v-if="projection.secondaryCopy" class="moment-ticket__secondary">{{ projection.secondaryCopy }}</text>
       </view>
@@ -94,7 +95,11 @@ import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback, consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import {
+  isDefaultMomentTemplate,
   momentCategoryLabels,
+  momentLeapDayPolicyLabels,
+  normalizeMilestoneValues,
+  parseCalendarDate,
   projectMoment,
   todayCalendarDate,
   type MomentCounting,
@@ -177,6 +182,30 @@ const calendarDurationLabel = computed(() => {
   return parts.join(" ")
 })
 
+/**
+ * 配置了非默认句式时，票根上把渲染好的那句话作为次要补充展示，可正常换行阅读；
+ * 默认 `{title}` 不额外渲染，避免和票根标题重复。
+ */
+const templateNote = computed(() => {
+  const record = momentRecord.value
+  const currentProjection = projection.value
+  if (!record || !currentProjection || isDefaultMomentTemplate(record.template)) {
+    return ""
+  }
+
+  return currentProjection.renderedTemplate
+})
+
+/** 只有「每年重复 + 源日期是 2月29日」的记录才展示平年记法。 */
+const isYearlyLeapDayRecord = (record: MomentRecord): boolean => {
+  if (record.recurrence !== "yearly") {
+    return false
+  }
+
+  const parsed = parseCalendarDate(record.sourceDate)
+  return parsed !== null && parsed.month === 2 && parsed.day === 29
+}
+
 /** 信息行口径与编辑器选项文案保持一致；下一次发生日、周年数、里程碑由 projection 现场给出。 */
 const displayModeCopy: Record<MomentDisplayMode, string> = {
   auto: "让它自己判断",
@@ -219,6 +248,14 @@ const infoRows = computed<MomentInfoRow[]>(() => {
     { key: "recurrence", label: "重复", value: recurrenceCopy[record.recurrence] }
   ]
 
+  if (isYearlyLeapDayRecord(record)) {
+    rows.push({
+      key: "leapDayPolicy",
+      label: "平年怎么记",
+      value: momentLeapDayPolicyLabels[record.leapDayPolicy]
+    })
+  }
+
   // 当天算法与时间格式只影响正计时结果；纯倒计时记录不参与计算，不再展示。
   if (record.mode !== "countdown") {
     rows.push(
@@ -246,6 +283,15 @@ const infoRows = computed<MomentInfoRow[]>(() => {
       key: "anniversary",
       label: "周年",
       value: `已经走过 ${currentProjection.anniversaryCount} 周年`
+    })
+  }
+
+  const milestoneList = normalizeMilestoneValues(record.milestoneValues)
+  if (milestoneList.length > 0) {
+    rows.push({
+      key: "milestones",
+      label: "小里程碑",
+      value: milestoneList.map((value) => `第 ${value} 天`).join(" · ")
     })
   }
 
@@ -554,11 +600,17 @@ onShow(() => {
 }
 
 .moment-ticket__duration,
-.moment-ticket__secondary {
+.moment-ticket__secondary,
+.moment-ticket__template-note {
   position: relative;
   z-index: 1;
   color: var(--app-text-soft);
   font: var(--app-font-caption);
+}
+
+.moment-ticket__template-note {
+  line-height: var(--app-line-height-normal);
+  word-break: break-all;
 }
 
 .moment-info {

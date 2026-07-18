@@ -149,6 +149,22 @@
               </app-option-group>
             </view>
 
+            <view v-if="showLeapDayPolicy" class="moment-field">
+              <text class="moment-field__prompt">平年怎么记</text>
+              <text class="moment-field__hint">这一天是 2月29日，平年没有这一天，想怎么安排它？</text>
+              <app-option-group :columns="3" responsive="auto">
+                <app-option-button
+                  v-for="option in leapDayPolicyOptions"
+                  :key="option.value"
+                  :active="leapDayPolicy === option.value"
+                  :disabled="formDisabled"
+                  @click="leapDayPolicy = option.value"
+                >
+                  <text class="moment-choice__label">{{ option.label }}</text>
+                </app-option-button>
+              </app-option-group>
+            </view>
+
             <view class="moment-field">
               <text class="moment-field__prompt">当天算第几天？</text>
               <app-option-group :columns="2" responsive="auto">
@@ -177,6 +193,94 @@
                   <text class="moment-choice__label">{{ option.label }}</text>
                 </app-option-button>
               </app-option-group>
+            </view>
+
+            <view class="moment-field">
+              <text class="moment-field__prompt">想让它怎么说</text>
+              <app-option-group :columns="2" responsive="auto">
+                <app-option-button
+                  v-for="option in templateModeOptions"
+                  :key="option.value"
+                  :active="templateMode === option.value"
+                  :disabled="formDisabled"
+                  @click="applyTemplateMode(option.value)"
+                >
+                  <view class="moment-mode-option">
+                    <text class="moment-mode-option__title">{{ option.label }}</text>
+                    <text class="moment-mode-option__description">{{ option.description }}</text>
+                  </view>
+                </app-option-button>
+              </app-option-group>
+              <template v-if="templateMode === 'custom'">
+                <view id="moment-template-field" class="moment-field__textarea-hitarea">
+                  <wd-textarea
+                    v-model="customTemplate"
+                    no-border
+                    :adjust-position="false"
+                    :disabled="formDisabled"
+                    placeholder="自己写一句，比如：{标题}已经{天数}{单位}啦"
+                    :placeholder-style="placeholderStyle"
+                    :maxlength="120"
+                    custom-class="moment-field__textarea-root"
+                    custom-textarea-container-class="moment-field__textarea-box"
+                    custom-textarea-class="moment-field__textarea-inner"
+                    @focus="focusField('#moment-template-field')"
+                    @keyboardheightchange="syncKeyboardHeight"
+                  />
+                </view>
+                <text class="moment-field__hint">
+                  可以用 {标题} {天数} {单位} {日期} {下次日期} {周年} {分类} {备注} 拼句子，最多 120 字。
+                </text>
+              </template>
+            </view>
+
+            <view class="moment-field">
+              <text class="moment-field__prompt">小里程碑</text>
+              <text class="moment-field__hint">想被好好记住的第几天，点一下加上，再点一下摘掉。</text>
+              <app-option-group :columns="3" responsive="auto">
+                <app-option-button
+                  v-for="value in milestonePresetValues"
+                  :key="value"
+                  :active="milestoneValues.includes(value)"
+                  :disabled="formDisabled"
+                  @click="toggleMilestonePreset(value)"
+                >
+                  <text class="moment-choice__label">第 {{ value }} 天</text>
+                </app-option-button>
+              </app-option-group>
+              <view v-if="sortedMilestoneValues.length > 0" class="moment-milestone-tags">
+                <wd-tag
+                  v-for="value in sortedMilestoneValues"
+                  :key="value"
+                  type="primary"
+                  plain
+                  round
+                  closable
+                  @close="removeMilestone(value)"
+                >
+                  第 {{ value }} 天
+                </wd-tag>
+              </view>
+              <view class="moment-milestone-input">
+                <view id="moment-milestone-field" class="moment-field__input-hitarea moment-milestone-input__field">
+                  <wd-input
+                    v-model="customMilestone"
+                    type="digit"
+                    no-border
+                    :adjust-position="false"
+                    :disabled="formDisabled"
+                    placeholder="自己填一个天数"
+                    :placeholder-style="placeholderStyle"
+                    :maxlength="7"
+                    custom-class="moment-field__input-root"
+                    custom-input-class="moment-field__input-inner"
+                    @focus="focusField('#moment-milestone-field')"
+                    @keyboardheightchange="syncKeyboardHeight"
+                    @confirm="addCustomMilestone"
+                  />
+                </view>
+                <wd-button size="small" plain :disabled="formDisabled" @click="addCustomMilestone">加上这一天</wd-button>
+              </view>
             </view>
           </view>
         </app-collapse-section>
@@ -225,16 +329,25 @@ import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
 import {
+  isDefaultMomentTemplate,
+  isSafeMomentTemplateText,
   isValidCalendarDate,
+  MOMENT_MILESTONE_MAX_VALUE,
+  MOMENT_TEMPLATE_PRESETS,
+  normalizeMilestoneValues,
+  parseCalendarDate,
   projectMoment,
+  resolveMomentTemplateKey,
   todayCalendarDate,
   type MomentCategory,
   type MomentCounting,
   type MomentDisplay,
   type MomentDisplayMode,
   type MomentDraft,
+  type MomentLeapDayPolicy,
   type MomentRecord,
-  type MomentRecurrence
+  type MomentRecurrence,
+  type MomentTemplatePresetKey
 } from "@/domain/moments"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
@@ -303,6 +416,11 @@ const recurrence = shallowRef<MomentRecurrence>(initialBehavior.recurrence)
 const counting = shallowRef<MomentCounting>(initialBehavior.counting)
 const display = shallowRef<MomentDisplay>(initialBehavior.display)
 const content = shallowRef("")
+const templateMode = shallowRef<MomentTemplateMode>("default")
+const customTemplate = shallowRef("")
+const milestoneValues = shallowRef<number[]>([])
+const customMilestone = shallowRef("")
+const leapDayPolicy = shallowRef<MomentLeapDayPolicy>("feb28")
 
 const categoryPresets: Array<{
   value: MomentCategory
@@ -381,6 +499,62 @@ const displayOptions: Array<{
   }
 ]
 
+/** 「想让它怎么说」的句式模式：预设模式出自 MOMENT_TEMPLATE_PRESETS，其余内容是「自己写一句」。 */
+type MomentTemplateMode = MomentTemplatePresetKey | "custom"
+
+const templateModeOptions: Array<{
+  label: string
+  value: MomentTemplateMode
+  description: string
+}> = [
+  {
+    label: "系统默认",
+    value: "default",
+    description: "不额外加句子"
+  },
+  {
+    label: "已经走过",
+    value: "elapsed",
+    description: "例：看海已经 100 天啦"
+  },
+  {
+    label: "今天是第几天",
+    value: "ordinal",
+    description: "例：今天是看海的第 100 天"
+  },
+  {
+    label: "距离还有多久",
+    value: "countdown",
+    description: "例：距离看海还有 100 天"
+  },
+  {
+    label: "自己写一句",
+    value: "custom",
+    description: "用占位符拼一句自己的话"
+  }
+]
+
+/** 小里程碑预设天数：点一下加上、再点一下摘掉，落库前统一走 normalizeMilestoneValues。 */
+const milestonePresetValues = [100, 365, 520, 1000, 1314]
+
+const leapDayPolicyOptions: Array<{
+  label: string
+  value: MomentLeapDayPolicy
+}> = [
+  {
+    label: "记在2月28日",
+    value: "feb28"
+  },
+  {
+    label: "记在3月1日",
+    value: "mar1"
+  },
+  {
+    label: "只在闰年出现",
+    value: "skip"
+  }
+]
+
 const formDisabled = computed(() => saving.value || saved.value)
 const hasUnsavedDraft = computed(() => draftDirty.value && !saving.value && !saved.value)
 const pageEyebrow = computed(() => (isEditMode.value ? "改一个小日子" : "记一个日子"))
@@ -410,9 +584,20 @@ const discardDraftConfirmOptions = {
   }
 }
 
+/** 落库模板只来自预设句式表或「自己写一句」的文本；保存校验已拒绝空文本与不安全写法。 */
+const resolveTemplateForDraft = (): string => {
+  if (templateMode.value === "custom") {
+    return customTemplate.value.trim()
+  }
+
+  return MOMENT_TEMPLATE_PRESETS[templateMode.value]
+}
+
 /**
- * 新建时 M4B 仍未暴露的字段（模板/提醒/里程碑/文件/置顶/闰日策略）固定走安全默认值；
+ * 新建时仍未暴露的字段（提醒/文件/置顶）固定走安全默认值；
  * 编辑时这些隐藏字段必须沿用已加载记录的原值，绝不能被重置。
+ * 模板句式、小里程碑与平年记法由「再调一调」里的表单项给出；
+ * 平年记法选项隐藏时保留当前已水合的值，不会被重置。
  * 展示派生值永远只由 projectMoment 现场计算。
  */
 const buildDraft = (): MomentDraft => {
@@ -425,14 +610,14 @@ const buildDraft = (): MomentDraft => {
     sourceDate: sourceDate.value,
     pinned: existing?.pinned ?? false,
     files: existing?.files ?? [],
-    template: existing?.template ?? "{title}",
+    template: resolveTemplateForDraft(),
     reminderOffsets: existing?.reminderOffsets ?? [],
-    milestoneValues: existing?.milestoneValues ?? [],
+    milestoneValues: normalizeMilestoneValues(milestoneValues.value),
     mode: mode.value,
     recurrence: recurrence.value,
     counting: counting.value,
     display: display.value,
-    leapDayPolicy: existing?.leapDayPolicy ?? "feb28"
+    leapDayPolicy: leapDayPolicy.value
   }
 }
 
@@ -495,6 +680,93 @@ const toggleAdvanced = () => {
   advancedExpanded.value = !advancedExpanded.value
 }
 
+/**
+ * 用户主动点选句式预设时，把数法口径顺带对齐到与句式一致的语义：
+ * 「已经走过」看正计时已过天数，「今天是第几天」看正计时序数日，
+ * 「距离还有多久」看倒计时；「系统默认」和「自己写一句」不动数法。
+ * 这套对齐只发生在这一个点击入口——编辑水合、缓存刷新与已保存模板反推
+ * 都不会触发它，未触碰句式的记录在打开再保存后保持原样。
+ * 行为摘要与实时预览仍只通过同一组 mode/counting 引用响应，不做额外日期运算。
+ */
+const applyTemplateMode = (value: MomentTemplateMode) => {
+  templateMode.value = value
+
+  if (value === "elapsed") {
+    mode.value = "countup"
+    counting.value = "elapsed"
+    return
+  }
+
+  if (value === "ordinal") {
+    mode.value = "countup"
+    counting.value = "ordinal"
+    return
+  }
+
+  if (value === "countdown") {
+    mode.value = "countdown"
+  }
+}
+
+/** 小里程碑始终升序展示；预设点选与自定义输入都先过 normalizeMilestoneValues。 */
+const sortedMilestoneValues = computed(() => normalizeMilestoneValues(milestoneValues.value))
+
+const toggleMilestonePreset = (value: number) => {
+  if (milestoneValues.value.includes(value)) {
+    milestoneValues.value = milestoneValues.value.filter((item) => item !== value)
+    return
+  }
+
+  milestoneValues.value = normalizeMilestoneValues([...milestoneValues.value, value])
+}
+
+const removeMilestone = (value: number) => {
+  if (formDisabled.value) {
+    return
+  }
+
+  milestoneValues.value = milestoneValues.value.filter((item) => item !== value)
+}
+
+/**
+ * 自定义里程碑的输入级校验只负责给出具体提示，上界复用领域常量；
+ * 真正的归一权威始终是 normalizeMilestoneValues——重复、零、负数、小数、
+ * 非数字和超限值即使在旧数据里也会在入列/落库时被剔除。
+ */
+const addCustomMilestone = () => {
+  if (formDisabled.value) {
+    return
+  }
+
+  const raw = customMilestone.value.trim()
+  if (!/^\d+$/.test(raw)) {
+    showAppWarning("小里程碑要填一个整数天数")
+    return
+  }
+
+  const value = Number(raw)
+  if (!Number.isSafeInteger(value) || value <= 0 || value > MOMENT_MILESTONE_MAX_VALUE) {
+    showAppWarning("小里程碑要在 1 到 1000000 之间")
+    return
+  }
+
+  if (milestoneValues.value.includes(value)) {
+    showAppWarning("这一天已经在小里程碑里了")
+    return
+  }
+
+  milestoneValues.value = normalizeMilestoneValues([...milestoneValues.value, value])
+  customMilestone.value = ""
+}
+
+const isLeapDaySourceDate = (value: string): boolean => {
+  const parsed = parseCalendarDate(normalizeCalendarDate(value))
+  return parsed !== null && parsed.month === 2 && parsed.day === 29
+}
+
+/** 只有「每年重复 + 源日期是 2月29日」才展示平年记法；隐藏时保留当前值，不重置已保存策略。 */
+const showLeapDayPolicy = computed(() => recurrence.value === "yearly" && isLeapDaySourceDate(sourceDate.value))
+
 const decodeQueryId = (value: unknown): string => {
   if (typeof value !== "string") {
     return ""
@@ -519,18 +791,24 @@ const updateDraftWithoutTracking = (update: () => void) => {
   draftDirty.value = false
 }
 
-/** 记录的数法组合与分类预设不一致时自动展开「再调一调」，让已保存的自定义配置可见。 */
+/**
+ * 记录的数法组合、句式、小里程碑或平年记法与默认不一致时自动展开「再调一调」，
+ * 让已保存的自定义配置可见。
+ */
 const shouldExpandAdvanced = (moment: MomentRecord): boolean => {
   const preset = momentBehaviorPresets[moment.category]
   return (
     moment.mode !== preset.mode ||
     moment.recurrence !== preset.recurrence ||
     moment.counting !== preset.counting ||
-    moment.display !== preset.display
+    moment.display !== preset.display ||
+    !isDefaultMomentTemplate(moment.template) ||
+    normalizeMilestoneValues(moment.milestoneValues).length > 0 ||
+    (moment.recurrence === "yearly" && isLeapDaySourceDate(moment.sourceDate) && moment.leapDayPolicy !== "feb28")
   )
 }
 
-/** 编辑模式水合：逐字段写入记录原值，绝不套用分类预设，也不触碰隐藏字段。 */
+/** 编辑模式水合：逐字段写入记录原值，绝不套用分类预设，也不触碰提醒/文件/置顶等隐藏字段。 */
 const hydrateMoment = (moment: MomentRecord) => {
   updateDraftWithoutTracking(() => {
     category.value = moment.category
@@ -541,6 +819,11 @@ const hydrateMoment = (moment: MomentRecord) => {
     counting.value = moment.counting
     display.value = moment.display
     content.value = moment.content
+    const templateKey = resolveMomentTemplateKey(moment.template)
+    templateMode.value = templateKey
+    customTemplate.value = templateKey === "custom" ? moment.template : ""
+    milestoneValues.value = normalizeMilestoneValues(moment.milestoneValues)
+    leapDayPolicy.value = moment.leapDayPolicy
     advancedExpanded.value = shouldExpandAdvanced(moment)
     saved.value = false
   })
@@ -567,7 +850,20 @@ const loadMoment = async () => {
 }
 
 watch(
-  [category, title, sourceDate, mode, recurrence, counting, display, content],
+  [
+    category,
+    title,
+    sourceDate,
+    mode,
+    recurrence,
+    counting,
+    display,
+    content,
+    templateMode,
+    customTemplate,
+    milestoneValues,
+    leapDayPolicy
+  ],
   () => {
     if (!hydratingDraft.value && !formDisabled.value) {
       draftDirty.value = true
@@ -635,6 +931,19 @@ const saveMoment = async () => {
   if (!isValidCalendarDate(trimmedDate)) {
     showAppWarning("先挑好这个日子的日期")
     return
+  }
+
+  if (templateMode.value === "custom") {
+    const customText = customTemplate.value.trim()
+    if (!customText) {
+      showAppWarning("先写一句想让它说的话")
+      return
+    }
+
+    if (!isSafeMomentTemplateText(customText)) {
+      showAppWarning("这句话里有不能用的写法，换一句试试")
+      return
+    }
   }
 
   saving.value = true
@@ -891,6 +1200,24 @@ onBackPress((options) => {
   display: flex;
   flex-direction: column;
   gap: var(--app-option-group-gap);
+}
+
+.moment-milestone-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--app-space-3);
+}
+
+.moment-milestone-input {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-4);
+}
+
+.moment-milestone-input__field {
+  min-width: 0;
+  flex: 1;
 }
 
 .moment-advanced-toggle-row {
