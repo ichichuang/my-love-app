@@ -1,0 +1,50 @@
+{"phase":"M4B","name":"device info","pass":true,"detail":"iPhone 12/13 (Pro) window=390x844"}
+{"phase":"M4B","name":"list route open","pass":true,"detail":"pages/moments/moments"}
+{"phase":"M4B","name":"list has real records","pass":true,"detail":"1 card(s)"}
+{"phase":"M4B","mark":"screenshot m4b-01-list.png timed out after 25s; continuing"}
+{"phase":"M4B","mark":"target record: 「距离 lss 的生日」 restore-to: 「距离 lss 的生日」 pinned=false index=0"}
+{"phase":"M4B","name":"card opens detail page","pass":true,"detail":"pages/moment-detail/moment-detail"}
+{"phase":"M4B","name":"detail shows tapped record title","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B","name":"detail hero renders projection","pass":true,"detail":"356"}
+{"phase":"M4B","name":"detail info rows present","pass":true,"detail":"7 rows"}
+{"phase":"M4B","name":"nav action is 改一改","pass":true,"detail":"改一改"}
+{"phase":"M4B","name":"改一改 opens edit page","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"M4B","name":"edit eyebrow is 改一个小日子","pass":true,"detail":"改一个小日子"}
+{"phase":"M4B","name":"edit hydrates record title","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B","name":"edit hydrates record date","pass":true,"detail":"2006年7月8日"}
+{"phase":"M4B","name":"edit save copy is 收好这张票根","pass":true,"detail":"收好这张票根"}
+{"phase":"M4B","name":"save returns to detail with new title","pass":true,"detail":"page=pages/moment-detail/moment-detail title=距离 lss 的生日·改"}
+{"phase":"M4B","name":"list route feedback after edit","pass":true,"detail":"这个小日子已经改好了"}
+{"phase":"M4B","name":"card updated without restart","pass":true,"detail":"距离 lss 的生日·改"}
+{"phase":"M4B","mark":"restore original title"}
+{"phase":"M4B","name":"title restored on detail","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B","mark":"pin flow"}
+{"phase":"M4B","name":"detail reopened for pin","pass":true,"detail":"pages/moment-detail/moment-detail"}
+{"phase":"M4B","name":"pin action shows 贴到上面","pass":true,"detail":"贴到上面"}
+{"phase":"M4B","name":"pin returns to list","pass":true,"detail":"pages/moments/moments"}
+{"phase":"M4B","name":"pin route feedback","pass":true,"detail":"已经贴到上面啦"}
+{"phase":"M4B","name":"pinned card carries 常看 stamp and sits before unpinned cards","pass":true,"detail":"pinnedIndex=0 firstUnpinnedIndex=-1"}
+{"phase":"M4B","mark":"unpin flow"}
+{"phase":"M4B","name":"unpin action shows 放回纸堆","pass":true,"detail":"放回纸堆"}
+{"phase":"M4B","name":"unpin returns to list with stamp removed","pass":false,"detail":"path=pages/moment-detail/moment-detail stillPinned=false"}
+{"phase":"M4B","mark":"delete cancel flow"}
+{"phase":"M4B","name":"danger action shows 删除这个日子","pass":true,"detail":"删除这个日子"}
+{"phase":"M4B","name":"delete confirmation shown","pass":true,"detail":"dialog visible"}
+{"phase":"M4B","name":"cancel keeps record on detail","pass":true,"detail":"cancel=取消 page=pages/moment-detail/moment-detail title=距离 lss 的生日"}
+{"phase":"M4B","mark":"M4B runtime QA done (no real deletion performed)"}
+{"phase":"M4B-verify","fatal":"Error: timeout\n    at Connection.onMessage (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/miniprogram-automator/out/Connection.js:1:985)\n    at Transport.emit (node:events:509:20)\n    at WebSocket.<anonymous> (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/miniprogram-automator/out/Transport.js:1:220)\n    at WebSocket.onMessage (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/ws/lib/event-target.js:120:16)\n    at WebSocket.emit (node:events:509:20)\n    at Receiver.receiverOnMessage (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/ws/lib/websocket.js:807:20)\n    at Receiver.emit (node:events:509:20)\n    at Receiver.dataMessage (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/ws/lib/receiver.js:447:14)\n    at Receiver.getData (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/ws/lib/receiver.js:377:17)\n    at Receiver.startLoop (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/node_modules/ws/lib/receiver.js:158:22)"}
+{"phase":"M4B-capture","name":"list route open","pass":true,"detail":"pages/moments/moments"}
+{"phase":"M4B-capture","name":"target record present","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B-capture","mark":"pin state entering capture pass: pinned=false"}
+{"phase":"M4B-capture","mark":"screenshot m4b-01-list.png: ok"}
+{"phase":"M4B-capture","name":"open detail","pass":true,"detail":"pages/moment-detail/moment-detail"}
+{"phase":"M4B-capture","mark":"screenshot m4b-02-detail.png: ok"}
+{"phase":"M4B-capture","name":"edit page open","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"M4B-capture","mark":"screenshot m4b-03-edit-hydrated.png: ok"}
+{"phase":"M4B-capture","name":"back on detail after edit preview","pass":true,"detail":"pages/moment-detail/moment-detail"}
+{"phase":"M4B-capture","name":"delete confirmation shown","pass":true,"detail":"dialog visible"}
+{"phase":"M4B-capture","mark":"screenshot m4b-08-delete-confirm.png: ok"}
+{"phase":"M4B-capture","name":"cancel keeps record on detail","pass":true,"detail":"page=pages/moment-detail/moment-detail title=距离 lss 的生日"}
+{"phase":"M4B-capture","name":"record already unpinned","pass":true,"detail":"no normalization needed"}
+{"phase":"M4B-capture","mark":"screenshot m4b-07-list-after-unpin.png: ok"}
+{"phase":"M4B-capture","mark":"capture pass done (no data changed besides restoring unpinned state)"}

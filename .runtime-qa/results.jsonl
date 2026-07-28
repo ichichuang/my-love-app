@@ -1,0 +1,77 @@
+{"phase":"A3","name":"device info","pass":true,"detail":"iPhone 12/13 (Pro) window=390x844"}
+{"phase":"A3","name":"route open","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"A3","name":"initial summary = anniversary behavior","pass":true,"detail":"从这一天开始往后数，看已经走了多久，每年都会再过一次，当天算第 1 天，只看总天数。"}
+{"phase":"A3","name":"advanced collapsed on entry","pass":true,"detail":"app-collapse-section AppCollapseSection--app-collapse-section data-v-c16765d2 AppCollapseSection--data-v-c16765d2 app-collapse-section--collapsed AppCollapseSection--app-collapse-section--collapsed"}
+{"phase":"A3","mark":"tap preset birthday"}
+{"phase":"A3","name":"preset birthday applies documented behavior","pass":true,"detail":"一直倒数，看还有多久到这一天，每年都会再过一次。"}
+{"phase":"A3","name":"preset birthday card active","pass":true,"detail":"app-option-button AppOptionButton--app-option-button data-v-8696f7fb AppOptionButton--data-v-8696f7fb app-option-button--default AppOptionButton--app-option-button--default app-option-button--active AppOptionButton--app-option-button--active"}
+{"phase":"A3","mark":"tap preset first"}
+{"phase":"A3","name":"preset first applies documented behavior","pass":true,"detail":"从这一天开始往后数，看已经走了多久，只记这一次，当天算第 1 天，只看总天数。"}
+{"phase":"A3","mark":"tap preset travel"}
+{"phase":"A3","name":"preset travel applies documented behavior","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，只记这一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","mark":"tap preset daily"}
+{"phase":"A3","name":"preset daily applies documented behavior","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，只记这一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","mark":"tap preset custom"}
+{"phase":"A3","name":"preset custom applies documented behavior","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，只记这一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","name":"custom expands advanced settings","pass":true,"detail":"app-collapse-section AppCollapseSection--app-collapse-section data-v-c16765d2 AppCollapseSection--data-v-c16765d2 app-collapse-section--expanded AppCollapseSection--app-collapse-section--expanded"}
+{"phase":"A3","name":"mode countdown copy","pass":true,"detail":"一直倒数，看还有多久到这一天，只记这一次。"}
+{"phase":"A3","name":"recurrence yearly copy","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，每年都会再过一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","name":"counting ordinal copy","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，每年都会再过一次，当天算第 1 天，只看总天数。"}
+{"phase":"A3","name":"display calendar copy","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，每年都会再过一次，当天算第 1 天，按几年几个月几天给你看。"}
+{"phase":"A3","mark":"keyboard title input"}
+{"phase":"A3","name":"title input exists","pass":true,"detail":"found"}
+{"phase":"A3","name":"save blocked without date","pass":true,"detail":"先挑好这个日子的日期"}
+{"phase":"A3","mark":"open date picker"}
+{"phase":"A3","name":"picker year range 1900-2100","pass":true,"detail":"first=1900年 last=2100年 count=201"}
+{"phase":"A3","name":"picker confirm writes date","pass":true,"detail":"2026年7月17日"}
+{"phase":"A3","name":"preview updates immediately after date","pass":true,"detail":"hero=就是今天 meta=2026年7月17日 · 自定义"}
+{"phase":"A3","name":"save button enabled with valid form","pass":true,"detail":"data-v-161f130c wd-button is-primary is-large is-round is-block"}
+{"phase":"A3","mark":"leave confirmation"}
+{"phase":"A3","name":"leave confirmation shown","pass":true,"detail":"dialog visible"}
+{"phase":"A3","name":"stay after cancel","pass":true,"detail":"cancel=继续写 page=pages/moment-edit/moment-edit"}
+{"phase":"A3","mark":"phase A3 done"}
+{"phase":"B","mark":"read current theme storage"}
+{"phase":"B","name":"read theme storage","pass":true,"detail":"{\"mode\":\"dark\",\"paletteId\":\"wisteria-tea\",\"density\":\"compact\",\"fontScale\":\"normal\"}"}
+{"phase":"B","mark":"switch to dark"}
+{"phase":"B","fatal":"TypeError: miniProgram.restart is not a function\n    at main (/Users/cc/MyPorject/珊瑚行动/my-love-app/.runtime-qa/run-theme.js:37:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}
+{"phase":"B2","name":"read theme storage","pass":true,"detail":"{\"mode\":\"dark\",\"paletteId\":\"wisteria-tea\",\"density\":\"compact\",\"fontScale\":\"normal\"}"}
+{"phase":"B2","mark":"reopen with dark mode"}
+{"phase":"B2","name":"dark mode page alive","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"B2","name":"dark mode route","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"B2","mark":"reopen with large font"}
+{"phase":"B2","name":"large font page alive + advanced expands","pass":true,"detail":"pages/moment-edit/moment-edit app-collapse-section AppCollapseSection--app-collapse-section data-v-c16765d2 AppCollapseSection--data-v-c16765d2 app-collapse-section--expanded AppCollapseSection--app-collapse-section--expanded"}
+{"phase":"B2","mark":"restore theme"}
+{"phase":"B2","name":"theme restored","pass":true,"detail":"{\"mode\":\"system\",\"paletteId\":\"wisteria-tea\",\"density\":\"compact\",\"fontScale\":\"normal\"}"}
+{"phase":"B2","mark":"phase B2 done"}
+{"phase":"A3","name":"device info","pass":true,"detail":"iPhone 12/13 (Pro) window=390x844"}
+{"phase":"A3","name":"route open","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"A3","name":"initial summary = anniversary behavior","pass":true,"detail":"从这一天开始往后数，看已经走了多久，每年都会再过一次，当天算第 1 天，只看总天数。"}
+{"phase":"A3","name":"advanced collapsed on entry","pass":true,"detail":"app-collapse-section AppCollapseSection--app-collapse-section data-v-a139eb0c AppCollapseSection--data-v-a139eb0c app-collapse-section--collapsed AppCollapseSection--app-collapse-section--collapsed"}
+{"phase":"A3","mark":"tap preset birthday"}
+{"phase":"A3","name":"preset birthday applies documented behavior","pass":true,"detail":"一直倒数，看还有多久到这一天，每年都会再过一次。"}
+{"phase":"A3","name":"preset birthday card active","pass":true,"detail":"app-option-button AppOptionButton--app-option-button data-v-1717198e AppOptionButton--data-v-1717198e app-option-button--default AppOptionButton--app-option-button--default app-option-button--active AppOptionButton--app-option-button--active"}
+{"phase":"A3","mark":"tap preset first"}
+{"phase":"A3","name":"preset first applies documented behavior","pass":true,"detail":"从这一天开始往后数，看已经走了多久，只记这一次，当天算第 1 天，只看总天数。"}
+{"phase":"A3","mark":"tap preset travel"}
+{"phase":"A3","name":"preset travel applies documented behavior","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，只记这一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","mark":"tap preset daily"}
+{"phase":"A3","name":"preset daily applies documented behavior","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，只记这一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","mark":"tap preset custom"}
+{"phase":"A3","name":"preset custom applies documented behavior","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，只记这一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","name":"custom expands advanced settings","pass":true,"detail":"app-collapse-section AppCollapseSection--app-collapse-section data-v-a139eb0c AppCollapseSection--data-v-a139eb0c app-collapse-section--expanded AppCollapseSection--app-collapse-section--expanded"}
+{"phase":"A3","name":"mode countdown copy","pass":true,"detail":"一直倒数，看还有多久到这一天，只记这一次。"}
+{"phase":"A3","name":"recurrence yearly copy","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，每年都会再过一次，从 0 天开始数，只看总天数。"}
+{"phase":"A3","name":"counting ordinal copy","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，每年都会再过一次，当天算第 1 天，只看总天数。"}
+{"phase":"A3","name":"display calendar copy","pass":true,"detail":"它自己会判断：过去了看走了多久，还没到看还要等多久，每年都会再过一次，当天算第 1 天，按几年几个月几天给你看。"}
+{"phase":"A3","mark":"keyboard title input"}
+{"phase":"A3","name":"title input exists","pass":true,"detail":"found"}
+{"phase":"A3","name":"save blocked without date","pass":true,"detail":"先挑好这个日子的日期"}
+{"phase":"A3","mark":"open date picker"}
+{"phase":"A3","name":"picker year range 1900-2100","pass":true,"detail":"first=1900年 last=2100年 count=201"}
+{"phase":"A3","name":"picker confirm writes date","pass":true,"detail":"2026年7月18日"}
+{"phase":"A3","name":"preview updates immediately after date","pass":true,"detail":"hero=就是今天 meta=2026年7月18日 · 自定义"}
+{"phase":"A3","name":"save button enabled with valid form","pass":true,"detail":"data-v-aa3a6253 wd-button is-primary is-large is-round is-block"}
+{"phase":"A3","mark":"leave confirmation"}
+{"phase":"A3","name":"leave confirmation shown","pass":true,"detail":"dialog visible"}
+{"phase":"A3","name":"stay after cancel","pass":true,"detail":"cancel=继续写 page=pages/moment-edit/moment-edit"}
+{"phase":"A3","mark":"phase A3 done"}

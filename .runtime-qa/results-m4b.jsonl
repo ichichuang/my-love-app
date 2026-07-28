@@ -1,0 +1,33 @@
+{"phase":"M4B","name":"device info","pass":true,"detail":"iPhone 12/13 (Pro) window=390x844"}
+{"phase":"M4B","name":"list route open","pass":true,"detail":"pages/moments/moments"}
+{"phase":"M4B","name":"list has real records","pass":true,"detail":"1 card(s)"}
+{"phase":"M4B","mark":"target record: 「距离 lss 的生日」 restore-to: 「距离 lss 的生日」 pinned=false index=0"}
+{"phase":"M4B","name":"card opens detail page","pass":true,"detail":"pages/moment-detail/moment-detail"}
+{"phase":"M4B","name":"detail shows tapped record title","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B","name":"detail hero renders projection","pass":true,"detail":"355"}
+{"phase":"M4B","name":"detail info rows present","pass":true,"detail":"7 rows"}
+{"phase":"M4B","name":"nav action is 改一改","pass":true,"detail":"改一改"}
+{"phase":"M4B","name":"改一改 opens edit page","pass":true,"detail":"pages/moment-edit/moment-edit"}
+{"phase":"M4B","name":"edit eyebrow is 改一个小日子","pass":true,"detail":"改一个小日子"}
+{"phase":"M4B","name":"edit hydrates record title","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B","name":"edit hydrates record date","pass":true,"detail":"2006年7月8日"}
+{"phase":"M4B","name":"edit save copy is 收好这张票根","pass":true,"detail":"收好这张票根"}
+{"phase":"M4B","name":"save returns to detail with new title","pass":true,"detail":"page=pages/moment-detail/moment-detail title=距离 lss 的生日·改"}
+{"phase":"M4B","name":"list route feedback after edit","pass":true,"detail":"这个小日子已经改好了"}
+{"phase":"M4B","name":"card updated without restart","pass":true,"detail":"距离 lss 的生日·改"}
+{"phase":"M4B","mark":"restore original title"}
+{"phase":"M4B","name":"title restored on detail","pass":true,"detail":"距离 lss 的生日"}
+{"phase":"M4B","mark":"pin flow"}
+{"phase":"M4B","name":"detail reopened for pin","pass":true,"detail":"pages/moment-detail/moment-detail"}
+{"phase":"M4B","name":"pin action shows 贴到上面","pass":true,"detail":"贴到上面"}
+{"phase":"M4B","name":"pin returns to list","pass":true,"detail":"pages/moments/moments"}
+{"phase":"M4B","name":"pin route feedback","pass":true,"detail":"已经贴到上面啦"}
+{"phase":"M4B","name":"pinned card carries 常看 stamp and sits before unpinned cards","pass":true,"detail":"pinnedIndex=0 firstUnpinnedIndex=-1"}
+{"phase":"M4B","mark":"unpin flow"}
+{"phase":"M4B","name":"unpin action shows 放回纸堆","pass":true,"detail":"放回纸堆"}
+{"phase":"M4B","name":"unpin returns to list with stamp removed","pass":true,"detail":"path=pages/moments/moments stillPinned=false"}
+{"phase":"M4B","mark":"delete cancel flow"}
+{"phase":"M4B","name":"danger action shows 删除这个日子","pass":true,"detail":"删除这个日子"}
+{"phase":"M4B","name":"delete confirmation shown","pass":true,"detail":"dialog visible"}
+{"phase":"M4B","name":"cancel keeps record on detail","pass":true,"detail":"cancel=取消 page=pages/moment-detail/moment-detail title=距离 lss 的生日"}
+{"phase":"M4B","mark":"M4B runtime QA done (no real deletion performed)"}

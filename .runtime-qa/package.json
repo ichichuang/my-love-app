@@ -1,0 +1,9 @@
+{
+  "name": "runtime-qa-tooling",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "miniprogram-automator": "^0.12.1"
+  }
+}
