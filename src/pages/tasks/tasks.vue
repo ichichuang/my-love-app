@@ -152,7 +152,7 @@
           class="tasks-list-footer tasks-list-footer--retry"
           @click="retryLoadMoreTasks"
         >
-          <text>后面的小约定暂时没拿到，请再试一次。</text>
+          <text>{{ errorMessage || "后面的小约定暂时没拿到，请再试一次。" }}</text>
         </view>
 
         <view v-else-if="!hasMore" class="tasks-list-footer">
@@ -175,6 +175,7 @@ import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSig
 import { appConfig } from "@/config/app"
 import { countDocuments } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
+import { compareCreatedAtIdCursors } from "@/services/pagination-cursor"
 import {
   compareTasks,
   listTasksPage,
@@ -218,7 +219,7 @@ const {
   loadPage: listTasksPage,
   getItemId: (item) => item.id,
   compareItems: compareTasks,
-  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  compareCursors: compareCreatedAtIdCursors,
   revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.taskPagination,
   cacheVersion: TASK_PAGINATION_CACHE_VERSION,
@@ -278,8 +279,11 @@ type TaskCountState =
   | { status: "error" }
 
 const taskCountState = shallowRef<TaskCountState>({ status: "loading" })
+let taskCountRequestId = 0
 
 const loadTaskCounts = async (): Promise<void> => {
+  // Only the newest request may write state; stale responses are discarded.
+  const requestId = (taskCountRequestId += 1)
   try {
     const [total, done] = await Promise.all([
       countDocuments(appConfig.entriesCollection, {
@@ -289,9 +293,18 @@ const loadTaskCounts = async (): Promise<void> => {
         where: { coupleId: appConfig.coupleId, kind: "task", taskDone: true }
       })
     ])
+    if (requestId !== taskCountRequestId) {
+      return
+    }
     taskCountState.value = { status: "ready", total, done }
   } catch {
-    taskCountState.value = { status: "error" }
+    if (requestId !== taskCountRequestId) {
+      return
+    }
+    // A failed recount must not downgrade a previously confirmed number.
+    if (taskCountState.value.status !== "ready") {
+      taskCountState.value = { status: "error" }
+    }
   }
 }
 
@@ -417,6 +430,9 @@ const toggleTask = async (task: TaskRecord) => {
     if (state.status === "ready") {
       taskCountState.value = { ...state, done: Math.max(0, state.done + (nextDone ? 1 : -1)) }
     }
+    // Local increment gives instant feedback; the recount is authoritative and
+    // supersedes any count request that was still in flight during the toggle.
+    void loadTaskCounts()
     showAppSuccess(nextDone ? "已经轻轻勾上。" : "已经放回清单。")
   } catch {
     showAppWarning("小约定暂时没改好，请稍后再试。")

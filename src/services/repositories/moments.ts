@@ -79,14 +79,20 @@ const DEFAULT_MOMENT_TEMPLATE = "{title}"
 const INVALID_SOURCE_DATE_MESSAGE = "这个小日子的日期不太对，请检查后再试。"
 
 const MOMENT_UNAVAILABLE_MESSAGE = "这个小日子暂时打不开，请稍后再试一次。"
+const MOMENT_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const momentUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(MOMENT_UNAVAILABLE_MESSAGE)
 
 export const isMomentUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === MOMENT_UNAVAILABLE_MESSAGE
 
+// Legacy-record cursor failures carry a user-actionable message; keep it
+// visible instead of replacing it with the generic fallback.
+const isMomentCursorInvalidError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === MOMENT_CURSOR_INVALID_MESSAGE
+
 const wrapMomentCloudError = (message: string, error: unknown): never => {
-  if (isMomentUnavailableError(error)) {
+  if (isMomentUnavailableError(error) || isMomentCursorInvalidError(error)) {
     throw error
   }
 
@@ -370,8 +376,6 @@ export interface MomentListPage {
 const MOMENT_PAGE_SIZE = 20
 
 export const MOMENT_PAGINATION_CACHE_VERSION = 2
-
-const MOMENT_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const isValidMomentCursorDocument = (
   document: StoredMomentDocument | undefined

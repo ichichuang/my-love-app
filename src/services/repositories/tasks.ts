@@ -61,14 +61,20 @@ const normalizeKind = (value: unknown): LoveEntryKind =>
 const taskMood = (done: boolean): string => (done ? "已完成" : "未完成")
 
 const TASK_UNAVAILABLE_MESSAGE = "这张小票根暂时打不开，请稍后再试一次。"
+const TASK_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const taskUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(TASK_UNAVAILABLE_MESSAGE)
 
 export const isTaskUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === TASK_UNAVAILABLE_MESSAGE
 
+// Legacy-record cursor failures carry a user-actionable message; keep it
+// visible instead of replacing it with the generic fallback.
+const isTaskCursorInvalidError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === TASK_CURSOR_INVALID_MESSAGE
+
 const wrapTaskCloudError = (message: string, error: unknown): never => {
-  if (isTaskUnavailableError(error)) {
+  if (isTaskUnavailableError(error) || isTaskCursorInvalidError(error)) {
     throw error
   }
 
@@ -210,8 +216,6 @@ export interface TaskListPage {
 const TASK_PAGE_SIZE = 20
 
 export const TASK_PAGINATION_CACHE_VERSION = 2
-
-const TASK_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const isValidTaskCursorDocument = (
   document: StoredTaskDocument | undefined

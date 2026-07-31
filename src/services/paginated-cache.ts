@@ -5,6 +5,10 @@ export interface PaginatedCachePayload<TItem, TCursor> {
   items: TItem[]
   nextCursor: TCursor | undefined
   hasMore: boolean
+  // Monotonic revision bumped by every item-level cache mutation (repository
+  // write-through and engine list mutations). Network paths capture it at
+  // request start and discard their response when it has moved on.
+  mutationRevision: number
 }
 
 interface PaginatedCacheMutationOptions<TItem, TCursor> {
@@ -34,6 +38,18 @@ const isPaginatedCachePayload = <TItem, TCursor>(
   )
 }
 
+// Revision normalization contract for stored v2 payloads: a missing revision
+// (legacy payload) reads as 0; a present one must be a non-negative safe
+// integer, otherwise the whole payload is treated as corrupt. Callers always
+// receive a payload whose mutationRevision is a concrete number.
+const normalizeMutationRevision = (value: unknown): number | null => {
+  if (typeof value === "undefined") {
+    return 0
+  }
+
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null
+}
+
 export const readPaginatedCache = <TItem, TCursor>(
   key: string,
   version: number
@@ -43,8 +59,19 @@ export const readPaginatedCache = <TItem, TCursor>(
     return null
   }
 
-  return payload
+  const mutationRevision = normalizeMutationRevision(payload.mutationRevision)
+  if (mutationRevision === null) {
+    return null
+  }
+
+  return {
+    ...payload,
+    mutationRevision
+  }
 }
+
+export const readPaginatedCacheMutationRevision = (key: string, version: number): number =>
+  readPaginatedCache(key, version)?.mutationRevision ?? 0
 
 export const writePaginatedCache = <TItem, TCursor>(
   key: string,
@@ -79,7 +106,8 @@ export const upsertPaginatedCacheItem = <TItem, TCursor>(
 
   writePaginatedCache<TItem, TCursor>(key, {
     ...payload,
-    items: options.compareItems ? [...nextItems].sort(options.compareItems) : nextItems
+    items: options.compareItems ? [...nextItems].sort(options.compareItems) : nextItems,
+    mutationRevision: payload.mutationRevision + 1
   })
 }
 
@@ -100,6 +128,7 @@ export const removePaginatedCacheItem = <TItem, TCursor>(
 
   writePaginatedCache<TItem, TCursor>(key, {
     ...payload,
-    items: nextItems
+    items: nextItems,
+    mutationRevision: payload.mutationRevision + 1
   })
 }

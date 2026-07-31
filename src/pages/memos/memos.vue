@@ -148,7 +148,7 @@
             class="memos-list-footer memos-list-footer--retry"
             @click="retryLoadMoreMemos"
           >
-            <text>后面的小线索暂时没拿到，请再试一次。</text>
+            <text>{{ errorMessage || "后面的小线索暂时没拿到，请再试一次。" }}</text>
           </view>
 
           <view v-else-if="!hasMore" class="memos-list-footer">
@@ -170,6 +170,7 @@ import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { dataCacheKeys } from "@/services/data-cache"
+import { compareCreatedAtIdCursors } from "@/services/pagination-cursor"
 import {
   compareMemos,
   listMemosPage,
@@ -212,7 +213,7 @@ const {
   loadPage: listMemosPage,
   getItemId: (item) => item.id,
   compareItems: compareMemos,
-  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  compareCursors: compareCreatedAtIdCursors,
   revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.memoPagination,
   cacheVersion: MEMO_PAGINATION_CACHE_VERSION,

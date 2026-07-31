@@ -60,7 +60,8 @@ const migrateLegacyTimelineCache = (() => {
       version: TIMELINE_CACHE_VERSION,
       items: legacy.items,
       nextCursor: legacy.hasMore ? { rawOffset: legacy.rawOffset } : undefined,
-      hasMore: legacy.hasMore
+      hasMore: legacy.hasMore,
+      mutationRevision: 0
     })
   }
 })()

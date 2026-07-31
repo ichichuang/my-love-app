@@ -131,7 +131,7 @@
           class="songs-list-footer songs-list-footer--retry"
           @click="retryLoadMoreSongs"
         >
-          <text>后面的歌暂时没拿到，请再试一次。</text>
+          <text>{{ errorMessage || "后面的歌暂时没拿到，请再试一次。" }}</text>
         </view>
 
         <view v-else-if="!hasMore" class="songs-list-footer">
@@ -152,6 +152,7 @@ import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
 import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { dataCacheKeys } from "@/services/data-cache"
+import { compareCreatedAtIdCursors } from "@/services/pagination-cursor"
 import {
   compareSongs,
   listSongsPage,
@@ -202,7 +203,7 @@ const {
   loadPage: listSongsPage,
   getItemId: (item) => item.id,
   compareItems: compareSongs,
-  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  compareCursors: compareCreatedAtIdCursors,
   revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.songPagination,
   cacheVersion: SONG_PAGINATION_CACHE_VERSION,

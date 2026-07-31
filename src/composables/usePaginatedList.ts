@@ -1,6 +1,10 @@
 import { nextTick, shallowRef, type ShallowRef } from "vue"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
-import { readPaginatedCache, writePaginatedCache } from "@/services/paginated-cache"
+import {
+  readPaginatedCache,
+  readPaginatedCacheMutationRevision,
+  writePaginatedCache
+} from "@/services/paginated-cache"
 
 export interface PaginatedPage<TItem, TCursor> {
   items: TItem[]
@@ -89,12 +93,19 @@ export const usePaginatedList = <TItem, TCursor>(
     })
   }
 
-  const persistCache = (): void => {
+  const readMutationRevision = (): number =>
+    readPaginatedCacheMutationRevision(options.cacheKey(), options.cacheVersion)
+
+  // Every cache write carries the current mutation revision forward; item-level
+  // mutations bump it so in-flight network responses can detect they are stale.
+  const persistCache = (bumpMutationRevision = false): void => {
+    const currentRevision = readMutationRevision()
     writePaginatedCache<TItem, TCursor>(options.cacheKey(), {
       version: options.cacheVersion,
       items: items.value,
       nextCursor: nextCursor.value,
-      hasMore: hasMore.value
+      hasMore: hasMore.value,
+      mutationRevision: bumpMutationRevision ? currentRevision + 1 : currentRevision
     })
   }
 
@@ -138,10 +149,18 @@ export const usePaginatedList = <TItem, TCursor>(
   const handlePageError = (error: unknown, fallbackMessage: string, isLoadMore: boolean): void => {
     if (isLoadMore) {
       loadMoreError.value = true
-    } else {
-      errorMessage.value = getFriendlyErrorMessage(error) || fallbackMessage
     }
+
+    // Load-more failures also surface their message so specific errors (e.g.
+    // unrepairable legacy cursor records) can be shown instead of fixed copy.
+    errorMessage.value = getFriendlyErrorMessage(error) || fallbackMessage
   }
+
+  // A captured pair is stale when the list was restarted (generation moved) or
+  // when an item-level mutation (same-page or edit-page write-through) changed
+  // the cache while the request was in flight.
+  const isCapturedStateStale = (capturedGeneration: number, capturedRevision: number): boolean =>
+    capturedGeneration !== generation || capturedRevision !== readMutationRevision()
 
   // Silent background revalidation after a cache restore. Walks from the top of
   // the collection until it reaches the previously restored cursor boundary (or
@@ -153,6 +172,7 @@ export const usePaginatedList = <TItem, TCursor>(
     }
 
     const capturedGeneration = generation
+    const capturedRevision = readMutationRevision()
     revalidating.value = true
 
     try {
@@ -161,7 +181,7 @@ export const usePaginatedList = <TItem, TCursor>(
       let exhausted = false
 
       for (let pageIndex = 0; pageIndex < REVALIDATE_MAX_PAGES; pageIndex += 1) {
-        if (capturedGeneration !== generation) {
+        if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
           return
         }
 
@@ -185,7 +205,7 @@ export const usePaginatedList = <TItem, TCursor>(
         }
       }
 
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return
       }
 
@@ -209,6 +229,7 @@ export const usePaginatedList = <TItem, TCursor>(
 
     generation += 1
     const capturedGeneration = generation
+    const capturedRevision = readMutationRevision()
 
     const cached = readPaginatedCache<TItem, TCursor>(options.cacheKey(), options.cacheVersion)
     if (cached) {
@@ -227,14 +248,14 @@ export const usePaginatedList = <TItem, TCursor>(
       await nextTick()
       const page = await options.loadPage(undefined)
 
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return
       }
 
       applyPage(page, false)
       updateStateFromPage(page)
     } catch (error) {
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return
       }
 
@@ -251,6 +272,7 @@ export const usePaginatedList = <TItem, TCursor>(
 
     generation += 1
     const capturedGeneration = generation
+    const capturedRevision = readMutationRevision()
     refreshing.value = true
     errorMessage.value = ""
     loadMoreError.value = false
@@ -259,14 +281,14 @@ export const usePaginatedList = <TItem, TCursor>(
       await nextTick()
       const page = await options.loadPage(undefined)
 
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return
       }
 
       applyPage(page, false)
       updateStateFromPage(page)
     } catch (error) {
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return
       }
 
@@ -290,8 +312,10 @@ export const usePaginatedList = <TItem, TCursor>(
     }
 
     const capturedGeneration = generation
+    const capturedRevision = readMutationRevision()
     loadingMore.value = true
     loadMoreError.value = false
+    errorMessage.value = ""
 
     if (import.meta.env.DEV && options.debugTag) {
       console.info(`[${options.debugTag}-load-more] loadingMore=true`)
@@ -302,7 +326,7 @@ export const usePaginatedList = <TItem, TCursor>(
       await yieldToRenderer()
       const page = await options.loadPage(nextCursor.value)
 
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return {
           appendedItems: [],
           appendedCount: 0
@@ -323,7 +347,7 @@ export const usePaginatedList = <TItem, TCursor>(
         appendedCount: appendedItems.length
       }
     } catch (error) {
-      if (capturedGeneration !== generation) {
+      if (isCapturedStateStale(capturedGeneration, capturedRevision)) {
         return {
           appendedItems: [],
           appendedCount: 0
@@ -361,11 +385,12 @@ export const usePaginatedList = <TItem, TCursor>(
 
   const prependItem = (item: TItem): void => {
     const itemId = options.getItemId(item)
+    generation += 1
     items.value = sortItems([
       item,
       ...items.value.filter((existingItem) => options.getItemId(existingItem) !== itemId)
     ])
-    persistCache()
+    persistCache(true)
   }
 
   const replaceItem = (item: TItem): void => {
@@ -375,10 +400,11 @@ export const usePaginatedList = <TItem, TCursor>(
       return
     }
 
+    generation += 1
     items.value = sortItems(
       items.value.map((existingItem) => (options.getItemId(existingItem) === itemId ? item : existingItem))
     )
-    persistCache()
+    persistCache(true)
   }
 
   const removeItem = (id: string): void => {
@@ -387,8 +413,9 @@ export const usePaginatedList = <TItem, TCursor>(
       return
     }
 
+    generation += 1
     items.value = items.value.filter((existingItem) => options.getItemId(existingItem) !== id)
-    persistCache()
+    persistCache(true)
   }
 
   // Cold launch: load the first page immediately.

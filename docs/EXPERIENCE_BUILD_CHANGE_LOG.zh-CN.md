@@ -136,3 +136,39 @@ pnpm scan:design-tokens
 pnpm scan:ui-copy
 pnpm build:mp-weixin
 ```
+
+## 追加：分页异步一致性修正（2026-07-31，远端二次验收返工）
+
+### 背景
+
+远端验收（`9f27572`）判定 keyset 主体通过，但剩三处异步一致性问题：仓库写穿透可能被后台重校验覆盖、小日子自动补齐预算在主动刷新后不重置、云端统计请求存在旧响应覆盖新结果；另有游标边界比较使用 `localeCompare`（与 CloudBase `_id` ASCII 排序不同合同）及游标修复提示被包装层吞掉两处硬化项。
+
+### 本次变更
+
+- 分页缓存 payload 新增 `mutationRevision` 单调递增字段：读取时缺失规范为 0、存在则校验非负安全整数（非法整包判坏），对外合同为必填 `number`，全部写入持久化该字段；版本保持 v2 不升级。仓库 `upsert/remove` 写穿透仅在实际改写时 +1。
+- 引擎四个网络路径（`loadInitial`/`refresh`/`loadMore`/后台重校验）统一在请求开始捕获 `generation + mutationRevision`，应用响应、改状态或写缓存前重新核验，任一过期即丢弃；引擎 `prependItem/replaceItem/removeItem` 同时递增 generation 与 revision。覆盖列表页内行内变更与隐藏期间编辑页写穿透两类窗口。
+- 小日子页：`loadMoments` 主动刷新前重置自动补齐预算；onShow 信号路径同样重置并在 `syncFromCache()` 完成后主动恢复自动补齐（原 watcher 在 hasMore 不变时不会重触发）。
+- 统计请求（tasks/moments）增加独立 requestId 守卫，仅最新请求可写状态；Task 勾选成功后保留本地即时增量并立即发起权威重数；重数失败不再把已确认数字降级为"数量暂时没整理好"。
+- 新增中立模块 `src/services/pagination-cursor.ts`：`_id` 改用码元关系比较（替代 `localeCompare`），四页 `compareCursors` 统一接入。
+- 游标修复提示真正可见：四个仓库 `wrapXxxCloudError` 对"部分旧记录暂时无法继续翻页，请先修复记录时间。"原样重抛；引擎 load-more 失败同时写 `errorMessage`，四页重试 footer 改为动态文案，重试时清除、成功后由 `updateStateFromPage` 清除。
+
+### 保留不变
+
+- 首页行为与 `rawOffset` 适配、产品范围、CloudBase CRUD/上传/临时链接/心动反应、路由及访问控制冻结状态均未改动；首页重试 footer 维持固定文案（首页无 keyset 游标错误路径）。
+
+### 发布阻断项（手动，未变化）
+
+- 云控制台需为 `love_entries` 建立组合索引：`coupleId ASC + kind ASC + createdAt DESC + _id DESC`。
+
+### 验证命令
+
+```bash
+pnpm type-check
+pnpm type-check:strict
+pnpm scan:project-ui
+pnpm scan:design-tokens
+pnpm scan:ui-copy
+pnpm scan:security-baseline
+pnpm scan:access-control
+pnpm build:mp-weixin
+```

@@ -101,14 +101,20 @@ const formatDate = (timestamp: number): string => {
 }
 
 const SONG_UNAVAILABLE_MESSAGE = "这首歌暂时打不开，请稍后再试一次。"
+const SONG_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const songUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(SONG_UNAVAILABLE_MESSAGE)
 
 export const isSongUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === SONG_UNAVAILABLE_MESSAGE
 
+// Legacy-record cursor failures carry a user-actionable message; keep it
+// visible instead of replacing it with the generic fallback.
+const isSongCursorInvalidError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === SONG_CURSOR_INVALID_MESSAGE
+
 const wrapSongCloudError = (message: string, error: unknown): never => {
-  if (isSongUnavailableError(error)) {
+  if (isSongUnavailableError(error) || isSongCursorInvalidError(error)) {
     throw error
   }
 
@@ -235,8 +241,6 @@ export interface SongListPage {
 const SONG_PAGE_SIZE = 20
 
 export const SONG_PAGINATION_CACHE_VERSION = 2
-
-const SONG_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const isValidSongCursorDocument = (
   document: StoredSongDocument | undefined

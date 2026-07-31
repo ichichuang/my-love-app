@@ -87,7 +87,7 @@
             class="moments-list-footer moments-list-footer--retry"
             @click="retryLoadMoreMoments"
           >
-            <text>后面的小日子暂时没拿到，请再试一次。</text>
+            <text>{{ errorMessage || "后面的小日子暂时没拿到，请再试一次。" }}</text>
           </view>
 
           <view v-else-if="!hasMore" class="moments-list-footer">
@@ -116,6 +116,7 @@ import {
 import { appConfig } from "@/config/app"
 import { countDocuments } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
+import { compareCreatedAtIdCursors } from "@/services/pagination-cursor"
 import {
   compareMoments,
   listMomentsPage,
@@ -148,7 +149,7 @@ const {
   loadPage: listMomentsPage,
   getItemId: (item) => item.id,
   compareItems: (left, right) => compareMoments(left, right, today.value),
-  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  compareCursors: compareCreatedAtIdCursors,
   revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.momentPagination,
   cacheVersion: MOMENT_PAGINATION_CACHE_VERSION,
@@ -251,15 +252,27 @@ type MomentCountState =
   | { status: "error" }
 
 const momentCountState = shallowRef<MomentCountState>({ status: "loading" })
+let momentCountRequestId = 0
 
 const loadMomentCounts = async (): Promise<void> => {
+  // Only the newest request may write state; stale responses are discarded.
+  const requestId = (momentCountRequestId += 1)
   try {
     const value = await countDocuments(appConfig.entriesCollection, {
       where: { coupleId: appConfig.coupleId, kind: "moment" }
     })
+    if (requestId !== momentCountRequestId) {
+      return
+    }
     momentCountState.value = { status: "ready", value }
   } catch {
-    momentCountState.value = { status: "error" }
+    if (requestId !== momentCountRequestId) {
+      return
+    }
+    // A failed recount must not downgrade a previously confirmed number.
+    if (momentCountState.value.status !== "ready") {
+      momentCountState.value = { status: "error" }
+    }
   }
 }
 
@@ -329,6 +342,8 @@ const openMoment = (id: string) => {
 }
 
 const loadMoments = async (notifyFailure = false) => {
+  // An explicit refresh restarts the cycle, so the auto-fill budget restarts too.
+  autoLoadedPages.value = 0
   await refresh()
   void loadMomentCounts()
   if (notifyFailure && errorMessage.value.length > 0) {
@@ -350,18 +365,22 @@ const retryLoadMoreMoments = () => {
 }
 
 // 小日子页的分组与摘要都依赖全量数据，空闲时自动往后补齐，最多 10 页；
-// 达到上限仍有更多时停止，由用户滚动或重试继续。
+// 达到上限仍有更多时停止，由用户滚动或重试继续。主动刷新或缓存同步会重置本轮预算。
 const MOMENT_AUTOLOAD_PAGE_LIMIT = 10
 const autoLoadedPages = shallowRef(0)
+
+const tryAutoLoadMomentPages = (): void => {
+  if (!hasMore.value || loadMoreError.value) return
+  if (loadingMore.value || loading.value || refreshing.value || revalidating.value) return
+  if (autoLoadedPages.value >= MOMENT_AUTOLOAD_PAGE_LIMIT) return
+  autoLoadedPages.value += 1
+  void loadMore()
+}
 
 watch(
   [hasMore, loadingMore, loading, refreshing, revalidating, loadMoreError],
   () => {
-    if (!hasMore.value || loadMoreError.value) return
-    if (loadingMore.value || loading.value || refreshing.value || revalidating.value) return
-    if (autoLoadedPages.value >= MOMENT_AUTOLOAD_PAGE_LIMIT) return
-    autoLoadedPages.value += 1
-    void loadMore()
+    tryAutoLoadMomentPages()
   }
 )
 
@@ -371,7 +390,11 @@ onShow(() => {
   today.value = todayCalendarDate()
   consumeRouteFeedback(momentsRoute)
   if (consumeTimelineNeedsRefresh(momentsRoute)) {
-    void syncFromCache()
+    // The sync restarts the cycle: fresh auto-fill budget, then resume filling.
+    autoLoadedPages.value = 0
+    void syncFromCache().then(() => {
+      tryAutoLoadMomentPages()
+    })
     void loadMomentCounts()
   }
 })

@@ -82,14 +82,20 @@ const formatDate = (timestamp: number): string => {
 }
 
 const MEMO_UNAVAILABLE_MESSAGE = "这张小线索暂时打不开，请稍后再试一次。"
+const MEMO_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const memoUnavailableError = (): CloudBaseUserError => new CloudBaseUserError(MEMO_UNAVAILABLE_MESSAGE)
 
 export const isMemoUnavailableError = (error: unknown): boolean =>
   error instanceof CloudBaseUserError && error.message === MEMO_UNAVAILABLE_MESSAGE
 
+// Legacy-record cursor failures carry a user-actionable message; keep it
+// visible instead of replacing it with the generic fallback.
+const isMemoCursorInvalidError = (error: unknown): boolean =>
+  error instanceof CloudBaseUserError && error.message === MEMO_CURSOR_INVALID_MESSAGE
+
 const wrapMemoCloudError = (message: string, error: unknown): never => {
-  if (isMemoUnavailableError(error)) {
+  if (isMemoUnavailableError(error) || isMemoCursorInvalidError(error)) {
     throw error
   }
 
@@ -187,8 +193,6 @@ export interface MemoListPage {
 const MEMO_PAGE_SIZE = 20
 
 export const MEMO_PAGINATION_CACHE_VERSION = 2
-
-const MEMO_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
 
 const isValidMemoCursorDocument = (
   document: StoredMemoDocument | undefined
