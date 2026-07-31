@@ -172,3 +172,20 @@ pnpm scan:security-baseline
 pnpm scan:access-control
 pnpm build:mp-weixin
 ```
+
+## 追加：mutationRevision 无变化短路（2026-07-31，小范围修补）
+
+- `upsertPaginatedCacheItem()` 在替换内容完全一致（内容与排序均不变）时不再写缓存、不递增 revision，避免编辑页保存未改动记录等场景无故中止后台重校验与在途 loadMore。
+- 引擎 `prependItem()/replaceItem()` 先比较最终排序结果，无变化时不递增 generation/revision、不触发列表重渲染；`removeItem()` 既有未命中短路保持不变。
+- `syncFromCache()` 兜底修正：无缓存且首载仍在途时，generation 递增已废弃该首载，现同步清除 `initialLoading` 标记，保证 fallback `refresh()` 真正发出新请求而不是被首载守卫跳过。
+
+```bash
+pnpm type-check
+pnpm type-check:strict
+pnpm scan:project-ui
+pnpm scan:design-tokens
+pnpm scan:ui-copy
+pnpm scan:security-baseline
+pnpm scan:access-control
+pnpm build:mp-weixin
+```

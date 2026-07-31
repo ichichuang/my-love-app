@@ -99,6 +99,13 @@ export const upsertPaginatedCacheItem = <TItem, TCursor>(
     return
   }
 
+  // Identical replacement leaves content and sorted order unchanged; writing it
+  // back would bump the revision for nothing and needlessly abort in-flight
+  // network paths (background revalidation, loadMore).
+  if (existingIndex >= 0 && JSON.stringify(payload.items[existingIndex]) === JSON.stringify(item)) {
+    return
+  }
+
   const nextItems =
     existingIndex >= 0
       ? payload.items.map((cachedItem) => (options.getItemId(cachedItem) === itemId ? item : cachedItem))

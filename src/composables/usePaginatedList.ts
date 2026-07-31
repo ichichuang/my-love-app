@@ -93,6 +93,12 @@ export const usePaginatedList = <TItem, TCursor>(
     })
   }
 
+  // Content-and-order equality for mutation results; records are plain JSON
+  // data built by the repository normalizers, so stringify comparison is exact.
+  const areItemListsEqual = (left: TItem[], right: TItem[]): boolean =>
+    left.length === right.length &&
+    left.every((item, index) => JSON.stringify(item) === JSON.stringify(right[index]))
+
   const readMutationRevision = (): number =>
     readPaginatedCacheMutationRevision(options.cacheKey(), options.cacheVersion)
 
@@ -374,6 +380,10 @@ export const usePaginatedList = <TItem, TCursor>(
 
     const cached = readPaginatedCache<TItem, TCursor>(options.cacheKey(), options.cacheVersion)
     if (!cached) {
+      // The generation bump above discards an in-flight initial load; clear its
+      // flag so the fallback refresh actually issues a new request instead of
+      // being skipped by the initialLoading guard.
+      initialLoading.value = false
       await refresh()
       return false
     }
@@ -385,11 +395,17 @@ export const usePaginatedList = <TItem, TCursor>(
 
   const prependItem = (item: TItem): void => {
     const itemId = options.getItemId(item)
-    generation += 1
-    items.value = sortItems([
+    const nextItems = sortItems([
       item,
       ...items.value.filter((existingItem) => options.getItemId(existingItem) !== itemId)
     ])
+    // No-op mutations must not bump generation/revision or trigger re-renders.
+    if (areItemListsEqual(nextItems, items.value)) {
+      return
+    }
+
+    generation += 1
+    items.value = nextItems
     persistCache(true)
   }
 
@@ -400,10 +416,15 @@ export const usePaginatedList = <TItem, TCursor>(
       return
     }
 
-    generation += 1
-    items.value = sortItems(
+    const nextItems = sortItems(
       items.value.map((existingItem) => (options.getItemId(existingItem) === itemId ? item : existingItem))
     )
+    if (areItemListsEqual(nextItems, items.value)) {
+      return
+    }
+
+    generation += 1
+    items.value = nextItems
     persistCache(true)
   }
 
