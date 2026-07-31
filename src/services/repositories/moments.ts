@@ -351,13 +351,13 @@ const removeMomentCache = (id: string): void => {
   removeDataCache(dataCacheKeys.momentDetail(id))
   removePaginatedCacheItem<MomentRecord, MomentListCursor>(dataCacheKeys.momentPagination(), id, {
     version: MOMENT_PAGINATION_CACHE_VERSION,
-    getItemId: (item) => item.id,
-    adjustCursor: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) })
+    getItemId: (item) => item.id
   })
 }
 
 export interface MomentListCursor {
-  offset: number
+  createdAt: number
+  id: string
 }
 
 export interface MomentListPage {
@@ -369,34 +369,62 @@ export interface MomentListPage {
 // CloudBase returns at most 20 documents per request in the current environment.
 const MOMENT_PAGE_SIZE = 20
 
-export const MOMENT_PAGINATION_CACHE_VERSION = 1
+export const MOMENT_PAGINATION_CACHE_VERSION = 2
 
-// Fetch order uses the immutable createdAt field so the offset cursor stays stable
-// while items are edited; display order is re-applied by compareMoments on the page.
+const MOMENT_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
+
+const isValidMomentCursorDocument = (
+  document: StoredMomentDocument | undefined
+): document is StoredMomentDocument & { _id: string; createdAt: number } =>
+  typeof document?._id === "string" &&
+  document._id.length > 0 &&
+  typeof document.createdAt === "number" &&
+  Number.isFinite(document.createdAt)
+
+// Stable keyset pagination: createdAt desc with _id desc as the tie-breaker, so
+// the cursor stays valid while records are created, edited, or deleted.
 export const listMomentsPage = async (cursor?: MomentListCursor): Promise<MomentListPage> => {
-  const offset = cursor?.offset ?? 0
+  const coupleId = appConfig.coupleId
 
   try {
     const documents = await listDocuments<StoredMomentDocument>(appConfig.entriesCollection, {
-      where: {
-        coupleId: appConfig.coupleId,
-        kind: "moment"
-      },
-      orderBy: {
-        field: "createdAt",
-        direction: "desc"
-      },
-      skip: offset,
+      where: (command) =>
+        cursor
+          ? command.or([
+              { coupleId, kind: "moment", createdAt: command.lt(cursor.createdAt) },
+              { coupleId, kind: "moment", createdAt: cursor.createdAt, _id: command.lt(cursor.id) }
+            ])
+          : { coupleId, kind: "moment" },
+      orderBy: [
+        { field: "createdAt", direction: "desc" },
+        { field: "_id", direction: "desc" }
+      ],
       limit: MOMENT_PAGE_SIZE
     })
 
     const items = documents.map(normalizeMoment).filter((moment): moment is MomentRecord => moment !== null)
-    const consumed = offset + documents.length
     const hasMore = documents.length === MOMENT_PAGE_SIZE
+    if (!hasMore) {
+      return {
+        items,
+        nextCursor: undefined,
+        hasMore
+      }
+    }
+
+    // The cursor must come from the last raw document (not the last normalized
+    // moment) so filtered-out documents still advance the database read boundary.
+    const lastDocument = documents[documents.length - 1]
+    if (!isValidMomentCursorDocument(lastDocument)) {
+      throw new CloudBaseUserError(MOMENT_CURSOR_INVALID_MESSAGE)
+    }
 
     return {
       items,
-      nextCursor: hasMore ? { offset: consumed } : undefined,
+      nextCursor: {
+        createdAt: lastDocument.createdAt,
+        id: lastDocument._id
+      },
       hasMore
     }
   } catch (error) {

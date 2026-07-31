@@ -12,7 +12,6 @@ interface PaginatedCacheMutationOptions<TItem, TCursor> {
   getItemId: (item: TItem) => string
   compareItems?: (left: TItem, right: TItem) => number
   insertIfMissing?: boolean
-  adjustCursor?: (cursor: TCursor) => TCursor
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -101,10 +100,6 @@ export const removePaginatedCacheItem = <TItem, TCursor>(
 
   writePaginatedCache<TItem, TCursor>(key, {
     ...payload,
-    items: nextItems,
-    nextCursor:
-      payload.hasMore && typeof payload.nextCursor !== "undefined" && options.adjustCursor
-        ? options.adjustCursor(payload.nextCursor)
-        : payload.nextCursor
+    items: nextItems
   })
 }

@@ -191,13 +191,13 @@ const removeTaskCache = (id: string): void => {
   removeDataCache(dataCacheKeys.taskDetail(id))
   removePaginatedCacheItem<TaskRecord, TaskListCursor>(dataCacheKeys.taskPagination(), id, {
     version: TASK_PAGINATION_CACHE_VERSION,
-    getItemId: (item) => item.id,
-    adjustCursor: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) })
+    getItemId: (item) => item.id
   })
 }
 
 export interface TaskListCursor {
-  offset: number
+  createdAt: number
+  id: string
 }
 
 export interface TaskListPage {
@@ -209,34 +209,62 @@ export interface TaskListPage {
 // CloudBase returns at most 20 documents per request in the current environment.
 const TASK_PAGE_SIZE = 20
 
-export const TASK_PAGINATION_CACHE_VERSION = 1
+export const TASK_PAGINATION_CACHE_VERSION = 2
 
-// Fetch order uses the immutable createdAt field so the offset cursor stays stable
-// while items are edited; display order is re-applied by compareTasks on the page.
+const TASK_CURSOR_INVALID_MESSAGE = "部分旧记录暂时无法继续翻页，请先修复记录时间。"
+
+const isValidTaskCursorDocument = (
+  document: StoredTaskDocument | undefined
+): document is StoredTaskDocument & { _id: string; createdAt: number } =>
+  typeof document?._id === "string" &&
+  document._id.length > 0 &&
+  typeof document.createdAt === "number" &&
+  Number.isFinite(document.createdAt)
+
+// Stable keyset pagination: createdAt desc with _id desc as the tie-breaker, so
+// the cursor stays valid while records are created, edited, or deleted.
 export const listTasksPage = async (cursor?: TaskListCursor): Promise<TaskListPage> => {
-  const offset = cursor?.offset ?? 0
+  const coupleId = appConfig.coupleId
 
   try {
     const documents = await listDocuments<StoredTaskDocument>(appConfig.entriesCollection, {
-      where: {
-        coupleId: appConfig.coupleId,
-        kind: "task"
-      },
-      orderBy: {
-        field: "createdAt",
-        direction: "desc"
-      },
-      skip: offset,
+      where: (command) =>
+        cursor
+          ? command.or([
+              { coupleId, kind: "task", createdAt: command.lt(cursor.createdAt) },
+              { coupleId, kind: "task", createdAt: cursor.createdAt, _id: command.lt(cursor.id) }
+            ])
+          : { coupleId, kind: "task" },
+      orderBy: [
+        { field: "createdAt", direction: "desc" },
+        { field: "_id", direction: "desc" }
+      ],
       limit: TASK_PAGE_SIZE
     })
 
     const items = documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null)
-    const consumed = offset + documents.length
     const hasMore = documents.length === TASK_PAGE_SIZE
+    if (!hasMore) {
+      return {
+        items,
+        nextCursor: undefined,
+        hasMore
+      }
+    }
+
+    // The cursor must come from the last raw document (not the last normalized
+    // task) so filtered-out documents still advance the database read boundary.
+    const lastDocument = documents[documents.length - 1]
+    if (!isValidTaskCursorDocument(lastDocument)) {
+      throw new CloudBaseUserError(TASK_CURSOR_INVALID_MESSAGE)
+    }
 
     return {
       items,
-      nextCursor: hasMore ? { offset: consumed } : undefined,
+      nextCursor: {
+        createdAt: lastDocument.createdAt,
+        id: lastDocument._id
+      },
       hasMore
     }
   } catch (error) {

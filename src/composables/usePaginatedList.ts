@@ -26,7 +26,10 @@ interface UsePaginatedListOptions<TItem, TCursor> {
   cacheVersion: number
   fallbackMessages: UsePaginatedListFallbackMessages
   compareItems?: (left: TItem, right: TItem) => number
-  adjustCursorAfterRemove?: (cursor: TCursor, removed: TItem) => TCursor
+  // Fetch-order comparison between two cursors: negative when `left` is fetched
+  // before `right`. Required for background revalidation.
+  compareCursors?: (left: TCursor, right: TCursor) => number
+  revalidateOnCacheRestore?: boolean
   debugTag?: string
 }
 
@@ -35,6 +38,7 @@ export interface UsePaginatedListResult<TItem, TCursor> {
   initialLoading: ShallowRef<boolean>
   refreshing: ShallowRef<boolean>
   loadingMore: ShallowRef<boolean>
+  revalidating: ShallowRef<boolean>
   hasMore: ShallowRef<boolean>
   loadMoreError: ShallowRef<boolean>
   nextCursor: ShallowRef<TCursor | undefined>
@@ -43,10 +47,14 @@ export interface UsePaginatedListResult<TItem, TCursor> {
   refresh: () => Promise<void>
   loadMore: () => Promise<PaginatedLoadMoreResult<TItem>>
   retryLoadMore: () => Promise<PaginatedLoadMoreResult<TItem>>
+  syncFromCache: () => Promise<boolean>
   prependItem: (item: TItem) => void
   replaceItem: (item: TItem) => void
   removeItem: (id: string) => void
 }
+
+// Safety bound for the sequential background revalidation walk.
+const REVALIDATE_MAX_PAGES = 50
 
 export const usePaginatedList = <TItem, TCursor>(
   options: UsePaginatedListOptions<TItem, TCursor>
@@ -55,16 +63,31 @@ export const usePaginatedList = <TItem, TCursor>(
   const initialLoading = shallowRef(false)
   const refreshing = shallowRef(false)
   const loadingMore = shallowRef(false)
+  const revalidating = shallowRef(false)
   const hasMore = shallowRef(true)
   const loadMoreError = shallowRef(false)
   const nextCursor = shallowRef<TCursor | undefined>(undefined)
   const errorMessage = shallowRef("")
 
-  // Monotonic generation: loadInitial/refresh invalidate any in-flight loadMore response.
+  // Monotonic generation: loadInitial/refresh/syncFromCache bump it, every async
+  // operation captures it and discards its response when it has moved on.
   let generation = 0
 
   const sortItems = (list: TItem[]): TItem[] =>
     options.compareItems ? [...list].sort(options.compareItems) : list
+
+  const dedupeItems = (list: TItem[]): TItem[] => {
+    const seenIds = new Set<string>()
+    return list.filter((item) => {
+      const id = options.getItemId(item)
+      if (seenIds.has(id)) {
+        return false
+      }
+
+      seenIds.add(id)
+      return true
+    })
+  }
 
   const persistCache = (): void => {
     writePaginatedCache<TItem, TCursor>(options.cacheKey(), {
@@ -73,6 +96,18 @@ export const usePaginatedList = <TItem, TCursor>(
       nextCursor: nextCursor.value,
       hasMore: hasMore.value
     })
+  }
+
+  const restoreFromPayload = (payload: {
+    items: TItem[]
+    nextCursor: TCursor | undefined
+    hasMore: boolean
+  }): void => {
+    items.value = sortItems(dedupeItems(payload.items))
+    nextCursor.value = payload.hasMore ? payload.nextCursor : undefined
+    hasMore.value = payload.hasMore
+    loadMoreError.value = false
+    errorMessage.value = ""
   }
 
   const applyPage = (page: PaginatedPage<TItem, TCursor>, append: boolean): TItem[] => {
@@ -87,18 +122,7 @@ export const usePaginatedList = <TItem, TCursor>(
       return appendedItems
     }
 
-    const seenIds = new Set<string>()
-    items.value = sortItems(
-      page.items.filter((item) => {
-        const id = options.getItemId(item)
-        if (seenIds.has(id)) {
-          return false
-        }
-
-        seenIds.add(id)
-        return true
-      })
-    )
+    items.value = sortItems(dedupeItems(page.items))
 
     return items.value
   }
@@ -119,20 +143,79 @@ export const usePaginatedList = <TItem, TCursor>(
     }
   }
 
+  // Silent background revalidation after a cache restore. Walks from the top of
+  // the collection until it reaches the previously restored cursor boundary (or
+  // the data is exhausted), so records added on another device are picked up
+  // without losing the previously loaded depth.
+  const revalidateRestoredDepth = async (boundary: TCursor | undefined): Promise<void> => {
+    if (revalidating.value) {
+      return
+    }
+
+    const capturedGeneration = generation
+    revalidating.value = true
+
+    try {
+      const collected: TItem[] = []
+      let cursor: TCursor | undefined
+      let exhausted = false
+
+      for (let pageIndex = 0; pageIndex < REVALIDATE_MAX_PAGES; pageIndex += 1) {
+        if (capturedGeneration !== generation) {
+          return
+        }
+
+        const page = await options.loadPage(cursor)
+        collected.push(...page.items)
+        cursor = page.nextCursor
+
+        if (!page.hasMore || typeof page.nextCursor === "undefined") {
+          exhausted = true
+          break
+        }
+
+        if (
+          typeof boundary !== "undefined" &&
+          options.compareCursors &&
+          options.compareCursors(page.nextCursor, boundary) >= 0
+        ) {
+          // Reached the previously restored depth; items beyond the old boundary
+          // remain loadable through this continuation cursor.
+          break
+        }
+      }
+
+      if (capturedGeneration !== generation) {
+        return
+      }
+
+      items.value = sortItems(dedupeItems(collected))
+      nextCursor.value = exhausted ? undefined : cursor
+      hasMore.value = !exhausted
+      loadMoreError.value = false
+      errorMessage.value = ""
+      persistCache()
+    } catch {
+      // Revalidation is best-effort; the restored cache content stays on screen.
+    } finally {
+      revalidating.value = false
+    }
+  }
+
   const loadInitial = async (): Promise<void> => {
     if (initialLoading.value || refreshing.value) {
       return
     }
 
     generation += 1
+    const capturedGeneration = generation
 
     const cached = readPaginatedCache<TItem, TCursor>(options.cacheKey(), options.cacheVersion)
     if (cached) {
-      items.value = cached.items
-      nextCursor.value = cached.hasMore ? cached.nextCursor : undefined
-      hasMore.value = cached.hasMore
-      loadMoreError.value = false
-      errorMessage.value = ""
+      restoreFromPayload(cached)
+      if (options.revalidateOnCacheRestore && options.compareCursors) {
+        void revalidateRestoredDepth(cached.hasMore ? cached.nextCursor : undefined)
+      }
       return
     }
 
@@ -143,9 +226,18 @@ export const usePaginatedList = <TItem, TCursor>(
     try {
       await nextTick()
       const page = await options.loadPage(undefined)
+
+      if (capturedGeneration !== generation) {
+        return
+      }
+
       applyPage(page, false)
       updateStateFromPage(page)
     } catch (error) {
+      if (capturedGeneration !== generation) {
+        return
+      }
+
       handlePageError(error, options.fallbackMessages.initial, false)
     } finally {
       initialLoading.value = false
@@ -153,11 +245,12 @@ export const usePaginatedList = <TItem, TCursor>(
   }
 
   const refresh = async (): Promise<void> => {
-    if (refreshing.value) {
+    if (refreshing.value || initialLoading.value) {
       return
     }
 
     generation += 1
+    const capturedGeneration = generation
     refreshing.value = true
     errorMessage.value = ""
     loadMoreError.value = false
@@ -165,9 +258,18 @@ export const usePaginatedList = <TItem, TCursor>(
     try {
       await nextTick()
       const page = await options.loadPage(undefined)
+
+      if (capturedGeneration !== generation) {
+        return
+      }
+
       applyPage(page, false)
       updateStateFromPage(page)
     } catch (error) {
+      if (capturedGeneration !== generation) {
+        return
+      }
+
       handlePageError(error, options.fallbackMessages.refresh, false)
     } finally {
       refreshing.value = false
@@ -180,7 +282,7 @@ export const usePaginatedList = <TItem, TCursor>(
     })
 
   const loadMore = async (): Promise<PaginatedLoadMoreResult<TItem>> => {
-    if (initialLoading.value || refreshing.value || loadingMore.value || !hasMore.value) {
+    if (initialLoading.value || refreshing.value || revalidating.value || loadingMore.value || !hasMore.value) {
       return {
         appendedItems: [],
         appendedCount: 0
@@ -201,7 +303,6 @@ export const usePaginatedList = <TItem, TCursor>(
       const page = await options.loadPage(nextCursor.value)
 
       if (capturedGeneration !== generation) {
-        // A refresh/initial load started while this page was in flight; discard the stale page.
         return {
           appendedItems: [],
           appendedCount: 0
@@ -242,6 +343,22 @@ export const usePaginatedList = <TItem, TCursor>(
 
   const retryLoadMore = (): Promise<PaginatedLoadMoreResult<TItem>> => loadMore()
 
+  // Applies repository write-through cache content (create/update/delete from
+  // edit pages) without a network request, preserving the loaded depth.
+  const syncFromCache = async (): Promise<boolean> => {
+    generation += 1
+
+    const cached = readPaginatedCache<TItem, TCursor>(options.cacheKey(), options.cacheVersion)
+    if (!cached) {
+      await refresh()
+      return false
+    }
+
+    restoreFromPayload(cached)
+    persistCache()
+    return true
+  }
+
   const prependItem = (item: TItem): void => {
     const itemId = options.getItemId(item)
     items.value = sortItems([
@@ -271,9 +388,6 @@ export const usePaginatedList = <TItem, TCursor>(
     }
 
     items.value = items.value.filter((existingItem) => options.getItemId(existingItem) !== id)
-    if (options.adjustCursorAfterRemove && typeof nextCursor.value !== "undefined") {
-      nextCursor.value = options.adjustCursorAfterRemove(nextCursor.value, removed)
-    }
     persistCache()
   }
 
@@ -285,6 +399,7 @@ export const usePaginatedList = <TItem, TCursor>(
     initialLoading,
     refreshing,
     loadingMore,
+    revalidating,
     hasMore,
     loadMoreError,
     nextCursor,
@@ -293,6 +408,7 @@ export const usePaginatedList = <TItem, TCursor>(
     refresh,
     loadMore,
     retryLoadMore,
+    syncFromCache,
     prependItem,
     replaceItem,
     removeItem

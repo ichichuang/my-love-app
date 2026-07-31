@@ -22,6 +22,15 @@ declare global {
       total: number
     }
 
+    interface Command {
+      lt(value: unknown): Command
+      lte(value: unknown): Command
+      gt(value: unknown): Command
+      gte(value: unknown): Command
+      and(...conditions: unknown[]): Command
+      or(conditions: unknown[]): Command
+    }
+
     interface DocumentResult<T extends object> {
       data: T
     }
@@ -38,7 +47,7 @@ declare global {
     }
 
     interface QueryRef<T extends object> {
-      where(query: UnknownRecord): QueryRef<T>
+      where(query: UnknownRecord | Command): QueryRef<T>
       orderBy(field: string, direction: SortDirection): QueryRef<T>
       skip(count: number): QueryRef<T>
       limit(count: number): QueryRef<T>
@@ -58,6 +67,7 @@ declare global {
     }
 
     interface Database {
+      command: Command
       collection<T extends object>(name: string): CollectionRef<T>
     }
 

@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import { showAppWarning } from "@/composables/useAppToast"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
@@ -136,16 +136,20 @@ const {
   initialLoading: loading,
   refreshing,
   loadingMore,
+  revalidating,
   hasMore,
   loadMoreError,
   errorMessage,
   refresh,
   loadMore,
-  retryLoadMore
+  retryLoadMore,
+  syncFromCache
 } = usePaginatedList<MomentRecord, MomentListCursor>({
   loadPage: listMomentsPage,
   getItemId: (item) => item.id,
   compareItems: (left, right) => compareMoments(left, right, today.value),
+  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.momentPagination,
   cacheVersion: MOMENT_PAGINATION_CACHE_VERSION,
   fallbackMessages: {
@@ -153,7 +157,6 @@ const {
     refresh: "小日子暂时没更新好，请稍后再试。",
     loadMore: "后面的小日子暂时没拿到，请稍后再试。"
   },
-  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
   debugTag: "moments"
 })
 
@@ -242,21 +245,32 @@ const hasError = computed(() => errorMessage.value.length > 0 && moments.value.l
 
 const hasMoments = computed(() => moments.value.length > 0)
 
-const cloudMomentCount = shallowRef<number | null>(null)
+type MomentCountState =
+  | { status: "loading" }
+  | { status: "ready"; value: number }
+  | { status: "error" }
 
-const displayedMomentCount = computed(() => cloudMomentCount.value ?? moments.value.length)
+const momentCountState = shallowRef<MomentCountState>({ status: "loading" })
 
 const loadMomentCounts = async (): Promise<void> => {
   try {
-    cloudMomentCount.value = await countDocuments(appConfig.entriesCollection, {
+    const value = await countDocuments(appConfig.entriesCollection, {
       where: { coupleId: appConfig.coupleId, kind: "moment" }
     })
+    momentCountState.value = { status: "ready", value }
   } catch {
-    // The count is decorative; fall back to the loaded-item count.
+    momentCountState.value = { status: "error" }
   }
 }
 
-const summaryCountCopy = computed(() => `已经悄悄记住 ${displayedMomentCount.value} 个小日子`)
+const summaryCountCopy = computed(() => {
+  const state = momentCountState.value
+  if (state.status === "ready") {
+    return `已经悄悄记住 ${state.value} 个小日子`
+  }
+
+  return state.status === "loading" ? "正在整理小日子数量" : "数量暂时没整理好"
+})
 
 /** 最近的有意义小日子：今天发生的优先，其次剩余天数最小的倒计时；都没有时摘要只显示总数。 */
 const nearestEntry = computed<MomentListEntry | null>(() => {
@@ -283,6 +297,11 @@ const nearestEntry = computed<MomentListEntry | null>(() => {
 const summaryHintCopy = computed(() => {
   if (refreshing.value && moments.value.length > 0) {
     return "先翻着旧纸条，新的那几张在悄悄补。"
+  }
+
+  // 还没拉全（含自动补齐达到上限仍有更多）时，绝不能凭部分数据推断「今天就是/下一次」。
+  if (hasMore.value) {
+    return "正在整理最近的小日子…"
   }
 
   const entry = nearestEntry.value
@@ -330,13 +349,30 @@ const retryLoadMoreMoments = () => {
   void retryLoadMore()
 }
 
+// 小日子页的分组与摘要都依赖全量数据，空闲时自动往后补齐，最多 10 页；
+// 达到上限仍有更多时停止，由用户滚动或重试继续。
+const MOMENT_AUTOLOAD_PAGE_LIMIT = 10
+const autoLoadedPages = shallowRef(0)
+
+watch(
+  [hasMore, loadingMore, loading, refreshing, revalidating, loadMoreError],
+  () => {
+    if (!hasMore.value || loadMoreError.value) return
+    if (loadingMore.value || loading.value || refreshing.value || revalidating.value) return
+    if (autoLoadedPages.value >= MOMENT_AUTOLOAD_PAGE_LIMIT) return
+    autoLoadedPages.value += 1
+    void loadMore()
+  }
+)
+
 void loadMomentCounts()
 
 onShow(() => {
   today.value = todayCalendarDate()
   consumeRouteFeedback(momentsRoute)
   if (consumeTimelineNeedsRefresh(momentsRoute)) {
-    void loadMoments()
+    void syncFromCache()
+    void loadMomentCounts()
   }
 })
 

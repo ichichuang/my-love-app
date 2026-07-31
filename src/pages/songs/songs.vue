@@ -52,13 +52,27 @@
 
       <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter, phase }">
         <view class="songs-swap-container">
-          <empty-state
-            v-if="getFilteredSongs(currentFilter).length === 0"
-            title="这个分类暂时还空着"
-            body="换个分类看看，或者先加一首想听的。"
-          >
-            <wd-button custom-class="songs-state__button" @click="goSongEdit">加一首歌</wd-button>
-          </empty-state>
+          <template v-if="getFilteredSongs(currentFilter).length === 0">
+            <view v-if="isFilterBackfilling" class="songs-status app-anim-breath">
+              <text>正在翻这个状态里的歌……</text>
+            </view>
+
+            <empty-state
+              v-else-if="isFilterBackfillPaused"
+              title="后面可能还有这个状态的歌"
+              body="刚自动翻了几页都没翻到，可以再往后找找。"
+            >
+              <wd-button custom-class="songs-state__button" @click="continueFilterBackfill">继续翻找</wd-button>
+            </empty-state>
+
+            <empty-state
+              v-else
+              title="这个分类暂时还空着"
+              body="换个分类看看，或者先加一首想听的。"
+            >
+              <wd-button custom-class="songs-state__button" @click="goSongEdit">加一首歌</wd-button>
+            </empty-state>
+          </template>
 
           <view v-else class="song-list">
             <view
@@ -175,17 +189,21 @@ const {
   initialLoading: loading,
   refreshing,
   loadingMore,
+  revalidating,
   hasMore,
   loadMoreError,
   errorMessage,
   refresh,
   loadMore,
   retryLoadMore,
+  syncFromCache,
   replaceItem
 } = usePaginatedList<SongRecord, SongListCursor>({
   loadPage: listSongsPage,
   getItemId: (item) => item.id,
   compareItems: compareSongs,
+  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.songPagination,
   cacheVersion: SONG_PAGINATION_CACHE_VERSION,
   fallbackMessages: {
@@ -193,7 +211,6 @@ const {
     refresh: "小歌单暂时没更新好，请稍后再试。",
     loadMore: "后面的歌暂时没拿到，请稍后再试。"
   },
-  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
   debugTag: "songs"
 })
 const activeFilter = shallowRef<FilterValue>("all")
@@ -312,6 +329,7 @@ const loadSongs = async (notifyFailure = false) => {
 }
 
 const setActiveFilter = (filter: FilterValue) => {
+  resetFilterBackfill()
   activeFilter.value = filter
 }
 
@@ -374,26 +392,73 @@ const retryLoadMoreSongs = () => {
   void retryLoadMore()
 }
 
-// Auto-backfill pages while the active filter has no matching items yet.
+const FILTER_BACKFILL_PAGE_LIMIT = 4
+const backfillPagesWithoutMatch = shallowRef(0)
+const backfillPaused = shallowRef(false)
+
+const resetFilterBackfill = () => {
+  backfillPagesWithoutMatch.value = 0
+  backfillPaused.value = false
+}
+
+const isFilterBackfilling = computed(
+  () =>
+    loading.value ||
+    refreshing.value ||
+    revalidating.value ||
+    loadingMore.value ||
+    (hasMore.value && !backfillPaused.value && !loadMoreError.value)
+)
+
+const isFilterBackfillPaused = computed(
+  () =>
+    hasMore.value &&
+    (backfillPaused.value || loadMoreError.value) &&
+    !loading.value &&
+    !refreshing.value &&
+    !revalidating.value &&
+    !loadingMore.value
+)
+
+const continueFilterBackfill = () => {
+  resetFilterBackfill()
+  if (loadMoreError.value) {
+    void retryLoadMore()
+  }
+}
+
+// Auto-backfill pages while the active filter has no matching items yet, up to
+// FILTER_BACKFILL_PAGE_LIMIT consecutive pages; the user can then continue manually.
 watch(
-  [filteredSongs, hasMore, loadingMore, loading, refreshing, loadMoreError],
+  [filteredSongs, hasMore, loadingMore, loading, refreshing, revalidating, loadMoreError, backfillPaused],
   () => {
     if (filteredSongs.value.length > 0) {
+      resetFilterBackfill()
       return
     }
 
-    if (!hasMore.value || loadingMore.value || loading.value || refreshing.value || loadMoreError.value) {
+    if (!hasMore.value || backfillPaused.value || loadMoreError.value) {
       return
     }
 
-    loadMoreSongs()
+    if (loadingMore.value || loading.value || refreshing.value || revalidating.value) {
+      return
+    }
+
+    if (backfillPagesWithoutMatch.value >= FILTER_BACKFILL_PAGE_LIMIT) {
+      backfillPaused.value = true
+      return
+    }
+
+    backfillPagesWithoutMatch.value += 1
+    void loadMore()
   }
 )
 
 onShow(() => {
   consumeRouteFeedback(songsRoute)
   if (consumeTimelineNeedsRefresh(songsRoute)) {
-    void loadSongs()
+    void syncFromCache()
   }
 })
 

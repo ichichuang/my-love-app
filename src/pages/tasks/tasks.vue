@@ -29,10 +29,10 @@
     </empty-state>
 
     <view v-else class="tasks-content">
-      <view v-if="totalCount > 0" class="tasks-progress app-reveal-1">
+      <view v-if="showProgress" class="tasks-progress app-reveal-1">
         <view class="tasks-progress__head">
           <view class="tasks-progress__copy">
-            <text class="tasks-progress__title">已经轻轻勾上 {{ doneCount }} / {{ totalCount }}</text>
+            <text class="tasks-progress__title">{{ progressTitle }}</text>
             <text class="tasks-progress__body">小约定慢慢完成中</text>
           </view>
           <text class="tasks-progress__note">{{ undoneCountText }}</text>
@@ -66,13 +66,27 @@
 
         <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter, phase }">
           <view class="tasks-swap-container">
-            <empty-state
-              v-if="getFilteredTasks(currentFilter).length === 0"
-              title="这个小分类暂时空着"
-              body="换个分类看看，或者再写下一件想一起做的小事。"
-            >
-              <wd-button custom-class="tasks-state__button" @click="goTaskEdit">加一件事</wd-button>
-            </empty-state>
+            <template v-if="getFilteredTasks(currentFilter).length === 0">
+              <view v-if="isFilterBackfilling" class="tasks-status app-anim-breath">
+                <text>正在翻这个清单里的小约定……</text>
+              </view>
+
+              <empty-state
+                v-else-if="isFilterBackfillPaused"
+                title="后面可能还有这个分类的小约定"
+                body="刚自动翻了几页都没翻到，可以再往后找找。"
+              >
+                <wd-button custom-class="tasks-state__button" @click="continueFilterBackfill">继续翻找</wd-button>
+              </empty-state>
+
+              <empty-state
+                v-else
+                title="这个小分类暂时空着"
+                body="换个分类看看，或者再写下一件想一起做的小事。"
+              >
+                <wd-button custom-class="tasks-state__button" @click="goTaskEdit">加一件事</wd-button>
+              </empty-state>
+            </template>
 
             <view v-else class="task-list">
               <view
@@ -191,17 +205,21 @@ const {
   initialLoading: loading,
   refreshing,
   loadingMore,
+  revalidating,
   hasMore,
   loadMoreError,
   errorMessage,
   refresh,
   loadMore,
   retryLoadMore,
+  syncFromCache,
   replaceItem
 } = usePaginatedList<TaskRecord, TaskListCursor>({
   loadPage: listTasksPage,
   getItemId: (item) => item.id,
   compareItems: compareTasks,
+  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.taskPagination,
   cacheVersion: TASK_PAGINATION_CACHE_VERSION,
   fallbackMessages: {
@@ -209,7 +227,6 @@ const {
     refresh: "小约定暂时没更新好，请稍后再试。",
     loadMore: "后面的小约定暂时没拿到，请稍后再试。"
   },
-  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
   debugTag: "tasks"
 })
 const activeFilter = shallowRef<FilterValue>("all")
@@ -255,8 +272,12 @@ const formatTimestampText = (timestamp?: number): string => {
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
 
-const cloudTotalCount = shallowRef<number | null>(null)
-const cloudDoneCount = shallowRef<number | null>(null)
+type TaskCountState =
+  | { status: "loading" }
+  | { status: "ready"; total: number; done: number }
+  | { status: "error" }
+
+const taskCountState = shallowRef<TaskCountState>({ status: "loading" })
 
 const loadTaskCounts = async (): Promise<void> => {
   try {
@@ -268,24 +289,47 @@ const loadTaskCounts = async (): Promise<void> => {
         where: { coupleId: appConfig.coupleId, kind: "task", taskDone: true }
       })
     ])
-    cloudTotalCount.value = total
-    cloudDoneCount.value = done
+    taskCountState.value = { status: "ready", total, done }
   } catch {
-    // Counts are decorative; fall back to the loaded-item counts below.
+    taskCountState.value = { status: "error" }
   }
 }
 
-const totalCount = computed(() => cloudTotalCount.value ?? tasks.value.length)
-const doneCount = computed(() => cloudDoneCount.value ?? tasks.value.filter((task) => task.taskDone === true).length)
-const undoneCount = computed(() => totalCount.value - doneCount.value)
-const progressPercent = computed(() => (totalCount.value > 0 ? Math.round((doneCount.value / totalCount.value) * 100) : 0))
-const progressWidth = computed(() => `${progressPercent.value}%`)
+const showProgress = computed(() => {
+  const state = taskCountState.value
+  if (state.status === "ready") {
+    return state.total > 0
+  }
+
+  return tasks.value.length > 0
+})
+
+const progressTitle = computed(() => {
+  const state = taskCountState.value
+  if (state.status === "ready") {
+    return `已经轻轻勾上 ${state.done} / ${state.total}`
+  }
+
+  return state.status === "loading" ? "正在整理小约定数量" : "数量暂时没整理好"
+})
+
 const undoneCountText = computed(() => {
-  if (totalCount.value === 0) {
+  const state = taskCountState.value
+  if (state.status !== "ready" || state.total === 0) {
     return ""
   }
 
-  return undoneCount.value > 0 ? `还有 ${undoneCount.value} 件等我们` : "这页小约定都收好啦"
+  const undone = state.total - state.done
+  return undone > 0 ? `还有 ${undone} 件等我们` : "这页小约定都收好啦"
+})
+
+const progressWidth = computed(() => {
+  const state = taskCountState.value
+  if (state.status !== "ready" || state.total <= 0) {
+    return "0%"
+  }
+
+  return `${Math.round((state.done / state.total) * 100)}%`
 })
 
 const decoratedTasks = computed<TaskListItem[]>(() =>
@@ -340,6 +384,7 @@ const loadTasks = async (notifyFailure = false) => {
 }
 
 const setActiveFilter = (filter: FilterValue) => {
+  resetFilterBackfill()
   activeFilter.value = filter
 }
 
@@ -368,8 +413,9 @@ const toggleTask = async (task: TaskRecord) => {
   try {
     const nextTask = await toggleTaskDone(task.id, nextDone)
     replaceItem(nextTask)
-    if (cloudDoneCount.value !== null) {
-      cloudDoneCount.value = Math.max(0, cloudDoneCount.value + (nextDone ? 1 : -1))
+    const state = taskCountState.value
+    if (state.status === "ready") {
+      taskCountState.value = { ...state, done: Math.max(0, state.done + (nextDone ? 1 : -1)) }
     }
     showAppSuccess(nextDone ? "已经轻轻勾上。" : "已经放回清单。")
   } catch {
@@ -403,19 +449,66 @@ const retryLoadMoreTasks = () => {
   void retryLoadMore()
 }
 
-// Auto-backfill pages while the active filter has no matching items yet.
+const FILTER_BACKFILL_PAGE_LIMIT = 4
+const backfillPagesWithoutMatch = shallowRef(0)
+const backfillPaused = shallowRef(false)
+
+const resetFilterBackfill = () => {
+  backfillPagesWithoutMatch.value = 0
+  backfillPaused.value = false
+}
+
+const isFilterBackfilling = computed(
+  () =>
+    loading.value ||
+    refreshing.value ||
+    revalidating.value ||
+    loadingMore.value ||
+    (hasMore.value && !backfillPaused.value && !loadMoreError.value)
+)
+
+const isFilterBackfillPaused = computed(
+  () =>
+    hasMore.value &&
+    (backfillPaused.value || loadMoreError.value) &&
+    !loading.value &&
+    !refreshing.value &&
+    !revalidating.value &&
+    !loadingMore.value
+)
+
+const continueFilterBackfill = () => {
+  resetFilterBackfill()
+  if (loadMoreError.value) {
+    void retryLoadMore()
+  }
+}
+
+// Auto-backfill pages while the active filter has no matching items yet, up to
+// FILTER_BACKFILL_PAGE_LIMIT consecutive pages; the user can then continue manually.
 watch(
-  [filteredTasks, hasMore, loadingMore, loading, refreshing, loadMoreError],
+  [filteredTasks, hasMore, loadingMore, loading, refreshing, revalidating, loadMoreError, backfillPaused],
   () => {
     if (filteredTasks.value.length > 0) {
+      resetFilterBackfill()
       return
     }
 
-    if (!hasMore.value || loadingMore.value || loading.value || refreshing.value || loadMoreError.value) {
+    if (!hasMore.value || backfillPaused.value || loadMoreError.value) {
       return
     }
 
-    loadMoreTasks()
+    if (loadingMore.value || loading.value || refreshing.value || revalidating.value) {
+      return
+    }
+
+    if (backfillPagesWithoutMatch.value >= FILTER_BACKFILL_PAGE_LIMIT) {
+      backfillPaused.value = true
+      return
+    }
+
+    backfillPagesWithoutMatch.value += 1
+    void loadMore()
   }
 )
 
@@ -424,7 +517,8 @@ void loadTaskCounts()
 onShow(() => {
   consumeRouteFeedback(tasksRoute)
   if (consumeTimelineNeedsRefresh(tasksRoute)) {
-    void loadTasks()
+    void syncFromCache()
+    void loadTaskCounts()
   }
 })
 

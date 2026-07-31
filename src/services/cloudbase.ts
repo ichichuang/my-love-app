@@ -19,12 +19,18 @@ export interface UploadCloudFileInput {
   size?: number
 }
 
+export interface QueryOrder {
+  field: string
+  direction: WxCloudNative.SortDirection
+}
+
+export type CloudWhere = WxCloudNative.UnknownRecord | WxCloudNative.Command
+
+export type CloudWhereInput = CloudWhere | ((command: WxCloudNative.Command) => CloudWhere)
+
 export interface QueryOptions {
-  where?: Record<string, unknown>
-  orderBy?: {
-    field: string
-    direction: WxCloudNative.SortDirection
-  }
+  where?: CloudWhereInput
+  orderBy?: QueryOrder | QueryOrder[]
   limit?: number
   skip?: number
 }
@@ -166,17 +172,35 @@ const database = (): WxCloudNative.Database => {
   })
 }
 
+const resolveWhereInput = (
+  db: WxCloudNative.Database,
+  where: CloudWhereInput | undefined
+): CloudWhere | undefined => {
+  if (typeof where === "function") {
+    return where(db.command)
+  }
+
+  return where
+}
+
 export const listDocuments = async <T extends object>(collectionName: string, options: QueryOptions = {}): Promise<T[]> => {
   try {
-    const collection = database().collection<T>(collectionName)
+    const db = database()
+    const collection = db.collection<T>(collectionName)
     let query: WxCloudNative.QueryRef<T> = collection
 
-    if (options.where) {
-      query = query.where(options.where)
+    const resolvedWhere = resolveWhereInput(db, options.where)
+    if (resolvedWhere) {
+      query = query.where(resolvedWhere)
     }
 
-    if (options.orderBy) {
-      query = query.orderBy(options.orderBy.field, options.orderBy.direction)
+    const orderByList = Array.isArray(options.orderBy)
+      ? options.orderBy
+      : options.orderBy
+        ? [options.orderBy]
+        : []
+    for (const orderBy of orderByList) {
+      query = query.orderBy(orderBy.field, orderBy.direction)
     }
 
     if (typeof options.skip === "number" && options.skip > 0) {
@@ -199,8 +223,10 @@ export const countDocuments = async (
   options: Pick<QueryOptions, "where"> = {}
 ): Promise<number> => {
   try {
-    const collection = database().collection(collectionName)
-    const query = options.where ? collection.where(options.where) : collection
+    const db = database()
+    const collection = db.collection(collectionName)
+    const resolvedWhere = resolveWhereInput(db, options.where)
+    const query = resolvedWhere ? collection.where(resolvedWhere) : collection
     const result = await query.count()
     return result.total
   } catch (error) {

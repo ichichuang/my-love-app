@@ -66,13 +66,27 @@
 
         <app-animated-swap :value="activeFilter" v-slot="{ displayValue: currentFilter, phase }">
           <view class="memos-swap-container">
-            <empty-state
-              v-if="getFilteredMemos(currentFilter).length === 0"
-              title="这个小标签还空着"
-              body="换个标签看看，或者先记下一条新的小线索。"
-            >
-              <wd-button custom-class="memos-state__button" @click="goMemoEdit">记一条小线索</wd-button>
-            </empty-state>
+            <template v-if="getFilteredMemos(currentFilter).length === 0">
+              <view v-if="isFilterBackfilling" class="memos-status app-anim-breath">
+                <text>正在翻这个标签里的内容……</text>
+              </view>
+
+              <empty-state
+                v-else-if="isFilterBackfillPaused"
+                title="后面可能还有这个分类的内容"
+                body="刚自动翻了几页都没翻到，可以再往后找找。"
+              >
+                <wd-button custom-class="memos-state__button" @click="continueFilterBackfill">继续翻找</wd-button>
+              </empty-state>
+
+              <empty-state
+                v-else
+                title="这个小标签还空着"
+                body="换个标签看看，或者先记下一条新的小线索。"
+              >
+                <wd-button custom-class="memos-state__button" @click="goMemoEdit">记一条小线索</wd-button>
+              </empty-state>
+            </template>
 
             <view v-else class="memo-list">
               <view
@@ -185,17 +199,21 @@ const {
   initialLoading: loading,
   refreshing,
   loadingMore,
+  revalidating,
   hasMore,
   loadMoreError,
   errorMessage,
   refresh,
   loadMore,
   retryLoadMore,
+  syncFromCache,
   replaceItem
 } = usePaginatedList<MemoRecord, MemoListCursor>({
   loadPage: listMemosPage,
   getItemId: (item) => item.id,
   compareItems: compareMemos,
+  compareCursors: (left, right) => right.createdAt - left.createdAt || right.id.localeCompare(left.id),
+  revalidateOnCacheRestore: true,
   cacheKey: dataCacheKeys.memoPagination,
   cacheVersion: MEMO_PAGINATION_CACHE_VERSION,
   fallbackMessages: {
@@ -203,7 +221,6 @@ const {
     refresh: "小线索暂时没更新好，请稍后再试。",
     loadMore: "后面的小线索暂时没拿到，请稍后再试。"
   },
-  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
   debugTag: "memos"
 })
 const activeFilter = shallowRef<FilterValue>("all")
@@ -309,7 +326,9 @@ const introNote = computed(() => {
   }
 
   if (memos.value.length > 0) {
-    return `已经收着 ${memos.value.length} 张小线索。`
+    return hasMore.value
+      ? `已加载 ${memos.value.length} 张小线索，后面还在继续翻。`
+      : `已经收着 ${memos.value.length} 张小线索。`
   }
 
   return "先把第一张小线索夹进来，之后慢慢翻。"
@@ -324,6 +343,7 @@ const loadMemos = async (notifyFailure = false) => {
 }
 
 const setActiveFilter = (filter: FilterValue) => {
+  resetFilterBackfill()
   activeFilter.value = filter
 }
 
@@ -384,26 +404,73 @@ const retryLoadMoreMemos = () => {
   void retryLoadMore()
 }
 
-// Auto-backfill pages while the active filter has no matching items yet.
+const FILTER_BACKFILL_PAGE_LIMIT = 4
+const backfillPagesWithoutMatch = shallowRef(0)
+const backfillPaused = shallowRef(false)
+
+const resetFilterBackfill = () => {
+  backfillPagesWithoutMatch.value = 0
+  backfillPaused.value = false
+}
+
+const isFilterBackfilling = computed(
+  () =>
+    loading.value ||
+    refreshing.value ||
+    revalidating.value ||
+    loadingMore.value ||
+    (hasMore.value && !backfillPaused.value && !loadMoreError.value)
+)
+
+const isFilterBackfillPaused = computed(
+  () =>
+    hasMore.value &&
+    (backfillPaused.value || loadMoreError.value) &&
+    !loading.value &&
+    !refreshing.value &&
+    !revalidating.value &&
+    !loadingMore.value
+)
+
+const continueFilterBackfill = () => {
+  resetFilterBackfill()
+  if (loadMoreError.value) {
+    void retryLoadMore()
+  }
+}
+
+// Auto-backfill pages while the active filter has no matching items yet, up to
+// FILTER_BACKFILL_PAGE_LIMIT consecutive pages; the user can then continue manually.
 watch(
-  [filteredMemos, hasMore, loadingMore, loading, refreshing, loadMoreError],
+  [filteredMemos, hasMore, loadingMore, loading, refreshing, revalidating, loadMoreError, backfillPaused],
   () => {
     if (filteredMemos.value.length > 0) {
+      resetFilterBackfill()
       return
     }
 
-    if (!hasMore.value || loadingMore.value || loading.value || refreshing.value || loadMoreError.value) {
+    if (!hasMore.value || backfillPaused.value || loadMoreError.value) {
       return
     }
 
-    loadMoreMemos()
+    if (loadingMore.value || loading.value || refreshing.value || revalidating.value) {
+      return
+    }
+
+    if (backfillPagesWithoutMatch.value >= FILTER_BACKFILL_PAGE_LIMIT) {
+      backfillPaused.value = true
+      return
+    }
+
+    backfillPagesWithoutMatch.value += 1
+    void loadMore()
   }
 )
 
 onShow(() => {
   consumeRouteFeedback(memosRoute)
   if (consumeTimelineNeedsRefresh(memosRoute)) {
-    void loadMemos()
+    void syncFromCache()
   }
 })
 

@@ -99,3 +99,40 @@ pnpm scan:design-tokens
 pnpm scan:ui-copy
 pnpm build:mp-weixin
 ```
+
+## 追加：分页稳定游标与列表语义收紧（2026-07-31，远端验收返工）
+
+### 背景
+
+远端验收（`1d87cbc`）判定：offset 游标在同 `createdAt` 或并发删除时可能重复/漏项；编辑深分页记录后返回列表被第一页覆盖；小日子"下一次"基于已加载子集；筛选补页期间误显最终空态且无上限；统计在未就绪时用已加载数冒充全量；首载与刷新存在竞态；缓存命中后不再后台校验新鲜度。
+
+### 本次变更
+
+- `cloudbase.ts` 新增查询条件 builder（`where` 可传 `(command) => ...`，command 仅在封装内部解析，不向仓库泄漏原生对象）与多字段 `orderBy`；`wx-cloud.d.ts` 补 `Command` 类型。既有 CRUD 行为不变。
+- 四个仓库（memos/songs/tasks/moments）改为 `createdAt desc + _id desc` keyset 游标（`{createdAt, id}`），`or` 两个分支均带完整等值条件；游标取自最后一个原始文档并做运行时校验（缺失/非法 `createdAt`/`_id` 时显式报错，不静默截断）；分页缓存版本升至 v2，旧 offset 缓存自动失效重拉。
+- 引擎 `usePaginatedList`：generation 全闭环（loadInitial/refresh/syncFromCache 递增并校验，loadMore/后台重校验捕获校验，过期响应不得改状态或写缓存）；refresh 在首载期间不再并发；缓存恢复统一去重+重排。
+- 引擎新增 `syncFromCache()`：编辑/删除/置顶后返回列表时从分页缓存恢复完整已加载深度（仓库写穿透已含变更），零网络、不覆盖深分页。
+- 引擎新增后台重校验（`revalidateOnCacheRestore`，仅四个业务列表开启，首页保持冻结行为）：缓存命中后从顶部按旧 `nextCursor` 边界（`compareCursors`）重建已加载深度，跨设备新增可收敛，旧深度不丢失。
+- 四个列表页 onShow 消费信号改为 `syncFromCache()`；tasks/moments 同时后台刷新 count。
+- 筛选补页（memos/songs/tasks）：连续 4 页未命中即暂停并提供"继续翻找"手动入口；补页期间显示"正在翻找"中间态；仅数据穷尽后显示最终空状态。
+- moments：进页自动补齐（上限 10 页/200 条）后才计算"今天就是/下一次"，未拉全时显示中性摘要"正在整理最近的小日子…"，绝不声称局部"下一次"。
+- 统计三态（tasks/moments）：loading/ready/error 显式状态机——loading"正在整理…数量"、ready 显示真实数字、error"数量暂时没整理好"；不再用已加载数冒充全量。memos 简介计数改为 hasMore 感知文案（未加载完显示"已加载 N 张"）。
+
+### 保留不变
+
+- 首页行为、`entries.ts` rawOffset 查询、CloudBase CRUD/上传/临时链接/心动反应、路由与访问控制冻结状态均未改动。
+
+### 发布阻断项（手动）
+
+- 云控制台需为 `love_entries` 建立组合索引：`coupleId ASC + kind ASC + createdAt DESC + _id DESC`，否则 keyset 查询会报错。
+
+### 验证命令
+
+```bash
+pnpm type-check
+pnpm type-check:strict
+pnpm scan:project-ui
+pnpm scan:design-tokens
+pnpm scan:ui-copy
+pnpm build:mp-weixin
+```
