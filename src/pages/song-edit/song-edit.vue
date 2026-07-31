@@ -189,6 +189,7 @@ import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -487,6 +488,7 @@ const saveSong = async () => {
     saving.value = false
     saved.value = true
     setRouteSuccessFeedback(songsRoute, "这首歌已经放进小歌单")
+    setTimelineNeedsRefresh(songsRoute)
     backToSongs()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
@@ -507,6 +509,7 @@ const deleteCurrentSong = async () => {
   try {
     await deleteSong(songId.value)
     setRouteSuccessFeedback(songsRoute, "已经从小歌单移走")
+    setTimelineNeedsRefresh(songsRoute)
     backToSongs()
   } catch {
     showAppError("这首歌暂时没删掉，请稍后再试。")

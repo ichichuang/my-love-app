@@ -105,24 +105,47 @@
           </view>
         </view>
       </app-animated-swap>
+
+      <template v-if="songs.length > 0">
+        <view v-if="loadingMore" class="songs-list-footer songs-list-footer--loading">
+          <wd-loading size="20" />
+          <text>正在翻后面的歌…</text>
+        </view>
+
+        <view
+          v-else-if="loadMoreError"
+          class="songs-list-footer songs-list-footer--retry"
+          @click="retryLoadMoreSongs"
+        >
+          <text>后面的歌暂时没拿到，请再试一次。</text>
+        </view>
+
+        <view v-else-if="!hasMore" class="songs-list-footer">
+          <text>没有更多啦~</text>
+        </view>
+      </template>
     </view>
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { computed, shallowRef, watch } from "vue"
+import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import { showAppWarning } from "@/composables/useAppToast"
-import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { usePaginatedList } from "@/composables/usePaginatedList"
 import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
+import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
-  listSongs,
+  compareSongs,
+  listSongsPage,
+  SONG_PAGINATION_CACHE_VERSION,
   songPriorityLabels,
   songStatusLabels,
   updateSongStatus,
+  type SongListCursor,
   type SongPriority,
   type SongRecord,
   type SongStatus
@@ -147,9 +170,31 @@ interface SongStatusAction {
   value: SongStatus
 }
 
-const { items: songs, loading, errorMessage, reload } = useCachedList<SongRecord>({
-  cacheKey: dataCacheKeys.songList,
-  loader: listSongs
+const {
+  items: songs,
+  initialLoading: loading,
+  refreshing,
+  loadingMore,
+  hasMore,
+  loadMoreError,
+  errorMessage,
+  refresh,
+  loadMore,
+  retryLoadMore,
+  replaceItem
+} = usePaginatedList<SongRecord, SongListCursor>({
+  loadPage: listSongsPage,
+  getItemId: (item) => item.id,
+  compareItems: compareSongs,
+  cacheKey: dataCacheKeys.songPagination,
+  cacheVersion: SONG_PAGINATION_CACHE_VERSION,
+  fallbackMessages: {
+    initial: "小歌单暂时没翻到，请稍后再试。",
+    refresh: "小歌单暂时没更新好，请稍后再试。",
+    loadMore: "后面的歌暂时没拿到，请稍后再试。"
+  },
+  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
+  debugTag: "songs"
 })
 const activeFilter = shallowRef<FilterValue>("all")
 const statusUpdatingById = shallowRef<Partial<Record<string, SongStatus>>>({})
@@ -258,17 +303,12 @@ const getFilteredSongs = (filterVal: FilterValue) => {
 
 const hasError = computed(() => errorMessage.value.length > 0 && songs.value.length === 0)
 
-const loadSongs = async (notifyCachedFailure = false) => {
-  try {
-    const result = await reload()
-    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      showAppWarning("小纸条暂时没更新好，请稍后再试。")
-    }
-  } catch {
-    return
-  } finally {
-    uni.stopPullDownRefresh()
+const loadSongs = async (notifyFailure = false) => {
+  await refresh()
+  if (notifyFailure && errorMessage.value.length > 0) {
+    showAppWarning("小歌单暂时没更新好，请稍后再试。")
   }
+  uni.stopPullDownRefresh()
 }
 
 const setActiveFilter = (filter: FilterValue) => {
@@ -293,10 +333,6 @@ const setSongStatusUpdating = (id: string, status: SongStatus | null) => {
   statusUpdatingById.value = nextState
 }
 
-const replaceSong = (nextSong: SongRecord) => {
-  songs.value = songs.value.map((song) => (song.id === nextSong.id ? nextSong : song))
-}
-
 const changeSongStatus = async (id: string, status: SongStatus) => {
   if (isSongStatusUpdating(id)) {
     return
@@ -306,7 +342,7 @@ const changeSongStatus = async (id: string, status: SongStatus) => {
 
   try {
     const nextSong = await updateSongStatus(id, status)
-    replaceSong(nextSong)
+    replaceItem(nextSong)
   } catch {
     showAppWarning("这首歌暂时没改好，请稍后再试。")
   } finally {
@@ -326,13 +362,47 @@ const openSong = (id: string) => {
   })
 }
 
+const loadMoreSongs = () => {
+  if (loading.value || refreshing.value || loadingMore.value || !hasMore.value) {
+    return
+  }
+
+  void loadMore()
+}
+
+const retryLoadMoreSongs = () => {
+  void retryLoadMore()
+}
+
+// Auto-backfill pages while the active filter has no matching items yet.
+watch(
+  [filteredSongs, hasMore, loadingMore, loading, refreshing, loadMoreError],
+  () => {
+    if (filteredSongs.value.length > 0) {
+      return
+    }
+
+    if (!hasMore.value || loadingMore.value || loading.value || refreshing.value || loadMoreError.value) {
+      return
+    }
+
+    loadMoreSongs()
+  }
+)
+
 onShow(() => {
   consumeRouteFeedback(songsRoute)
-  void loadSongs()
+  if (consumeTimelineNeedsRefresh(songsRoute)) {
+    void loadSongs()
+  }
 })
 
 onPullDownRefresh(() => {
   void loadSongs(true)
+})
+
+onReachBottom(() => {
+  loadMoreSongs()
 })
 </script>
 
@@ -385,6 +455,26 @@ onPullDownRefresh(() => {
 
 .song-list {
   gap: var(--app-list-gap);
+}
+
+.songs-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-4);
+  margin-top: var(--app-list-gap);
+  padding: var(--app-space-6) var(--app-space-0);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.songs-list-footer--loading {
+  color: var(--app-text-muted);
+}
+
+.songs-list-footer--retry {
+  @include pressable;
+  color: var(--app-accent);
 }
 
 .song-card {

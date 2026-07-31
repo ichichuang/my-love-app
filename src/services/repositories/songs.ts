@@ -7,13 +7,8 @@ import {
   removeDocument,
   updateDocument
 } from "@/services/cloudbase"
-import {
-  dataCacheKeys,
-  removeCachedListItem,
-  removeDataCache,
-  upsertCachedListItem,
-  writeDataCache
-} from "@/services/data-cache"
+import { dataCacheKeys, removeDataCache, writeDataCache } from "@/services/data-cache"
+import { removePaginatedCacheItem, upsertPaginatedCacheItem } from "@/services/paginated-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
 
 export type SongStatus = "wanted" | "sung" | "paused"
@@ -157,7 +152,7 @@ const normalizeSong = (document: StoredSongDocument): SongRecord | null => {
   return record
 }
 
-const compareSongs = (left: SongRecord, right: SongRecord): number =>
+export const compareSongs = (left: SongRecord, right: SongRecord): number =>
   songStatusRank[left.songStatus] - songStatusRank[right.songStatus] ||
   songPriorityRank[left.songPriority] - songPriorityRank[right.songPriority] ||
   right.updatedAt - left.updatedAt ||
@@ -209,33 +204,66 @@ const toStoredSong = (
 
 const writeSongCache = (song: SongRecord, insertIfMissing = true): void => {
   writeDataCache(dataCacheKeys.songDetail(song.id), song)
-  upsertCachedListItem(dataCacheKeys.songList(), song, {
-    insertIfMissing,
-    sort: compareSongs
+  upsertPaginatedCacheItem<SongRecord, SongListCursor>(dataCacheKeys.songPagination(), song, {
+    version: SONG_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    compareItems: compareSongs,
+    insertIfMissing
   })
 }
 
 const removeSongCache = (id: string): void => {
   removeDataCache(dataCacheKeys.songDetail(id))
-  removeCachedListItem(dataCacheKeys.songList(), id)
+  removePaginatedCacheItem<SongRecord, SongListCursor>(dataCacheKeys.songPagination(), id, {
+    version: SONG_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    adjustCursor: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) })
+  })
 }
 
-export const listSongs = async (): Promise<SongRecord[]> => {
+export interface SongListCursor {
+  offset: number
+}
+
+export interface SongListPage {
+  items: SongRecord[]
+  nextCursor: SongListCursor | undefined
+  hasMore: boolean
+}
+
+// CloudBase returns at most 20 documents per request in the current environment.
+const SONG_PAGE_SIZE = 20
+
+export const SONG_PAGINATION_CACHE_VERSION = 1
+
+// Fetch order uses the immutable createdAt field so the offset cursor stays stable
+// while items are edited; display order is re-applied by compareSongs on the page.
+export const listSongsPage = async (cursor?: SongListCursor): Promise<SongListPage> => {
+  const offset = cursor?.offset ?? 0
+
   try {
     const documents = await listDocuments<StoredSongDocument>(appConfig.entriesCollection, {
       where: {
-        coupleId: appConfig.coupleId
+        coupleId: appConfig.coupleId,
+        kind: "song"
       },
       orderBy: {
-        field: "updatedAt",
+        field: "createdAt",
         direction: "desc"
       },
-      limit: 100
+      skip: offset,
+      limit: SONG_PAGE_SIZE
     })
 
-    const songs = documents.map(normalizeSong).filter((song): song is SongRecord => song !== null).sort(compareSongs)
-    writeDataCache(dataCacheKeys.songList(), songs)
-    return songs
+    const items = documents.map(normalizeSong).filter((song): song is SongRecord => song !== null)
+    const consumed = offset + documents.length
+    const hasMore = documents.length === SONG_PAGE_SIZE
+
+    return {
+      items,
+      nextCursor: hasMore ? { offset: consumed } : undefined,
+      hasMore
+    }
   } catch (error) {
     return wrapSongCloudError("小歌单暂时没翻到，请稍后再试。", error)
   }

@@ -194,6 +194,20 @@ export const listDocuments = async <T extends object>(collectionName: string, op
   }
 }
 
+export const countDocuments = async (
+  collectionName: string,
+  options: Pick<QueryOptions, "where"> = {}
+): Promise<number> => {
+  try {
+    const collection = database().collection(collectionName)
+    const query = options.where ? collection.where(options.where) : collection
+    const result = await query.count()
+    return result.total
+  } catch (error) {
+    throw friendlyError("统计记录数量失败，请稍后再试。", error)
+  }
+}
+
 export const getDocument = async <T extends object>(collectionName: string, id: string): Promise<T> => {
   try {
     const result = await database().collection<T>(collectionName).doc(id).get()

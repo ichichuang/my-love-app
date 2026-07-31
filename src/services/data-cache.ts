@@ -7,7 +7,7 @@ export interface DataCacheEnvelope<T> {
 }
 
 type DataCacheKind = "memory" | "song" | "task" | "memo" | "moment"
-type DataCacheScope = "list" | "detail" | "timeline" | "timeline-v2" | "timeline-v3"
+type DataCacheScope = "list" | "detail" | "timeline" | "timeline-v2" | "timeline-v3" | "pagination"
 
 const MEMORY_TIMELINE_SCOPE = "timeline-v3"
 type SemanticData = boolean | number | string | null | SemanticData[] | { [key: string]: SemanticData }
@@ -52,7 +52,11 @@ export const dataCacheKeys = {
   memoList: (): string => makeDataCacheKey("memo", "list"),
   memoDetail: (id: string): string => makeDataCacheKey("memo", "detail", id),
   momentList: (): string => makeDataCacheKey("moment", "list"),
-  momentDetail: (id: string): string => makeDataCacheKey("moment", "detail", id)
+  momentDetail: (id: string): string => makeDataCacheKey("moment", "detail", id),
+  memoPagination: (): string => makeDataCacheKey("memo", "pagination"),
+  songPagination: (): string => makeDataCacheKey("song", "pagination"),
+  taskPagination: (): string => makeDataCacheKey("task", "pagination"),
+  momentPagination: (): string => makeDataCacheKey("moment", "pagination")
 }
 
 const isCacheEnvelope = <T>(value: unknown): value is DataCacheEnvelope<T> => {

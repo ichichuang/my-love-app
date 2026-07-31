@@ -75,6 +75,25 @@
             </view>
           </view>
         </view>
+
+        <template v-if="moments.length > 0">
+          <view v-if="loadingMore" class="moments-list-footer moments-list-footer--loading">
+            <wd-loading size="20" />
+            <text>正在翻后面的小日子…</text>
+          </view>
+
+          <view
+            v-else-if="loadMoreError"
+            class="moments-list-footer moments-list-footer--retry"
+            @click="retryLoadMoreMoments"
+          >
+            <text>后面的小日子暂时没拿到，请再试一次。</text>
+          </view>
+
+          <view v-else-if="!hasMore" class="moments-list-footer">
+            <text>没有更多啦~</text>
+          </view>
+        </template>
       </view>
     </view>
   </app-shell>
@@ -82,32 +101,61 @@
 
 <script setup lang="ts">
 import { computed, shallowRef } from "vue"
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import { showAppWarning } from "@/composables/useAppToast"
-import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { usePaginatedList } from "@/composables/usePaginatedList"
 import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
+import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import {
   projectMoment,
   todayCalendarDate,
   type MomentProjection,
   type MomentRecord
 } from "@/domain/moments"
+import { appConfig } from "@/config/app"
+import { countDocuments } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
-import { listMoments } from "@/services/repositories/moments"
+import {
+  compareMoments,
+  listMomentsPage,
+  MOMENT_PAGINATION_CACHE_VERSION,
+  type MomentListCursor
+} from "@/services/repositories/moments"
 
 const theme = useNativeChromeSync()
 const momentsRoute = "/pages/moments/moments"
 const momentEditRoute = "/pages/moment-edit/moment-edit"
 const momentDetailRoute = "/pages/moment-detail/moment-detail"
 
-const { items: moments, loading, refreshing, errorMessage, reload } = useCachedList<MomentRecord>({
-  cacheKey: dataCacheKeys.momentList,
-  loader: listMoments
-})
-
 /** 「今天」在每次 onShow 重新锚定；所有派生值仍只由 projectMoment(moment, today) 现场计算。 */
 const today = shallowRef(todayCalendarDate())
+
+const {
+  items: moments,
+  initialLoading: loading,
+  refreshing,
+  loadingMore,
+  hasMore,
+  loadMoreError,
+  errorMessage,
+  refresh,
+  loadMore,
+  retryLoadMore
+} = usePaginatedList<MomentRecord, MomentListCursor>({
+  loadPage: listMomentsPage,
+  getItemId: (item) => item.id,
+  compareItems: (left, right) => compareMoments(left, right, today.value),
+  cacheKey: dataCacheKeys.momentPagination,
+  cacheVersion: MOMENT_PAGINATION_CACHE_VERSION,
+  fallbackMessages: {
+    initial: "小日子暂时没翻到，请稍后再试。",
+    refresh: "小日子暂时没更新好，请稍后再试。",
+    loadMore: "后面的小日子暂时没拿到，请稍后再试。"
+  },
+  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
+  debugTag: "moments"
+})
 
 type MomentGroupKey = "pinned" | "today" | "countdown" | "countup"
 
@@ -152,7 +200,7 @@ const momentEntries = computed<MomentListEntry[]>(() =>
 )
 
 /**
- * 每条记录按顺序只落进一个分组，组内保持仓储返回顺序：
+ * 每条记录按顺序只落进一个分组，组内保持分页引擎按 compareMoments 排好的顺序：
  * 1. 常看（置顶）；2. 就是今天（projection.isToday）；
  * 3. 快要到了（倒计时）；4. 正在累计（其余正计时记录）。
  * 是否每年重复不再单独分组，由卡片上的「每年回来」小标签表达。
@@ -194,7 +242,21 @@ const hasError = computed(() => errorMessage.value.length > 0 && moments.value.l
 
 const hasMoments = computed(() => moments.value.length > 0)
 
-const summaryCountCopy = computed(() => `已经悄悄记住 ${moments.value.length} 个小日子`)
+const cloudMomentCount = shallowRef<number | null>(null)
+
+const displayedMomentCount = computed(() => cloudMomentCount.value ?? moments.value.length)
+
+const loadMomentCounts = async (): Promise<void> => {
+  try {
+    cloudMomentCount.value = await countDocuments(appConfig.entriesCollection, {
+      where: { coupleId: appConfig.coupleId, kind: "moment" }
+    })
+  } catch {
+    // The count is decorative; fall back to the loaded-item count.
+  }
+}
+
+const summaryCountCopy = computed(() => `已经悄悄记住 ${displayedMomentCount.value} 个小日子`)
 
 /** 最近的有意义小日子：今天发生的优先，其次剩余天数最小的倒计时；都没有时摘要只显示总数。 */
 const nearestEntry = computed<MomentListEntry | null>(() => {
@@ -247,27 +309,43 @@ const openMoment = (id: string) => {
   })
 }
 
-const loadMoments = async (notifyCachedFailure = false) => {
-  try {
-    const result = await reload()
-    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      showAppWarning("小日子暂时没更新好，请稍后再试。")
-    }
-  } catch {
-    return
-  } finally {
-    uni.stopPullDownRefresh()
+const loadMoments = async (notifyFailure = false) => {
+  await refresh()
+  void loadMomentCounts()
+  if (notifyFailure && errorMessage.value.length > 0) {
+    showAppWarning("小日子暂时没更新好，请稍后再试。")
   }
+  uni.stopPullDownRefresh()
 }
+
+const loadMoreMoments = () => {
+  if (loading.value || refreshing.value || loadingMore.value || !hasMore.value) {
+    return
+  }
+
+  void loadMore()
+}
+
+const retryLoadMoreMoments = () => {
+  void retryLoadMore()
+}
+
+void loadMomentCounts()
 
 onShow(() => {
   today.value = todayCalendarDate()
   consumeRouteFeedback(momentsRoute)
-  void loadMoments()
+  if (consumeTimelineNeedsRefresh(momentsRoute)) {
+    void loadMoments()
+  }
 })
 
 onPullDownRefresh(() => {
   void loadMoments(true)
+})
+
+onReachBottom(() => {
+  loadMoreMoments()
 })
 </script>
 
@@ -449,6 +527,26 @@ onPullDownRefresh(() => {
 
 .moment-group__list {
   gap: var(--app-list-gap);
+}
+
+.moments-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-4);
+  margin-top: var(--app-list-gap);
+  padding: var(--app-space-6) var(--app-space-0);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.moments-list-footer--loading {
+  color: var(--app-text-muted);
+}
+
+.moments-list-footer--retry {
+  @include pressable;
+  color: var(--app-accent);
 }
 
 :deep(.moments-state__button) {

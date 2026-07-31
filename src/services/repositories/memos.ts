@@ -7,13 +7,8 @@ import {
   removeDocument,
   updateDocument
 } from "@/services/cloudbase"
-import {
-  dataCacheKeys,
-  removeCachedListItem,
-  removeDataCache,
-  upsertCachedListItem,
-  writeDataCache
-} from "@/services/data-cache"
+import { dataCacheKeys, removeDataCache, writeDataCache } from "@/services/data-cache"
+import { removePaginatedCacheItem, upsertPaginatedCacheItem } from "@/services/paginated-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
 
 export type MemoCategory = "favorite" | "profile" | "avoid" | "gift" | "date" | "note"
@@ -128,7 +123,7 @@ const normalizeMemo = (document: StoredMemoDocument): MemoRecord | null => {
   }
 }
 
-const compareMemos = (left: MemoRecord, right: MemoRecord): number => {
+export const compareMemos = (left: MemoRecord, right: MemoRecord): number => {
   if (left.memoPinned !== right.memoPinned) {
     return left.memoPinned ? -1 : 1
   }
@@ -161,33 +156,66 @@ const toStoredMemo = (
 
 const writeMemoCache = (memo: MemoRecord, insertIfMissing = true): void => {
   writeDataCache(dataCacheKeys.memoDetail(memo.id), memo)
-  upsertCachedListItem(dataCacheKeys.memoList(), memo, {
-    insertIfMissing,
-    sort: compareMemos
+  upsertPaginatedCacheItem<MemoRecord, MemoListCursor>(dataCacheKeys.memoPagination(), memo, {
+    version: MEMO_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    compareItems: compareMemos,
+    insertIfMissing
   })
 }
 
 const removeMemoCache = (id: string): void => {
   removeDataCache(dataCacheKeys.memoDetail(id))
-  removeCachedListItem(dataCacheKeys.memoList(), id)
+  removePaginatedCacheItem<MemoRecord, MemoListCursor>(dataCacheKeys.memoPagination(), id, {
+    version: MEMO_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    adjustCursor: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) })
+  })
 }
 
-export const listMemos = async (): Promise<MemoRecord[]> => {
+export interface MemoListCursor {
+  offset: number
+}
+
+export interface MemoListPage {
+  items: MemoRecord[]
+  nextCursor: MemoListCursor | undefined
+  hasMore: boolean
+}
+
+// CloudBase returns at most 20 documents per request in the current environment.
+const MEMO_PAGE_SIZE = 20
+
+export const MEMO_PAGINATION_CACHE_VERSION = 1
+
+// Fetch order uses the immutable createdAt field so the offset cursor stays stable
+// while items are edited; display order is re-applied by compareMemos on the page.
+export const listMemosPage = async (cursor?: MemoListCursor): Promise<MemoListPage> => {
+  const offset = cursor?.offset ?? 0
+
   try {
     const documents = await listDocuments<StoredMemoDocument>(appConfig.entriesCollection, {
       where: {
-        coupleId: appConfig.coupleId
+        coupleId: appConfig.coupleId,
+        kind: "memo"
       },
       orderBy: {
-        field: "updatedAt",
+        field: "createdAt",
         direction: "desc"
       },
-      limit: 100
+      skip: offset,
+      limit: MEMO_PAGE_SIZE
     })
 
-    const memos = documents.map(normalizeMemo).filter((memo): memo is MemoRecord => memo !== null).sort(compareMemos)
-    writeDataCache(dataCacheKeys.memoList(), memos)
-    return memos
+    const items = documents.map(normalizeMemo).filter((memo): memo is MemoRecord => memo !== null)
+    const consumed = offset + documents.length
+    const hasMore = documents.length === MEMO_PAGE_SIZE
+
+    return {
+      items,
+      nextCursor: hasMore ? { offset: consumed } : undefined,
+      hasMore
+    }
   } catch (error) {
     return wrapMemoCloudError("小线索暂时没翻到，请稍后再试。", error)
   }

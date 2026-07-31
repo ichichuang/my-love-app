@@ -65,3 +65,37 @@ pnpm build:mp-weixin
 pnpm scan:access-control
 pnpm scan:security-baseline
 ```
+
+## 追加：列表分页统一修复（2026-07-31）
+
+### 背景
+
+小线索、小歌单、小约定、小日子四个列表页此前只发一次 `limit: 100` 查询，而微信云开发小程序端单次最多返回 20 条，导致超过 20 条的记录永远无法加载；四个页面也没有触底加载、筛选只作用于已加载子集，任务进度与小日子总数统计同样失真。
+
+### 本次变更
+
+- 新增通用分页引擎 `src/composables/usePaginatedList.ts`，从首页 `usePaginatedTimeline` 提取：首载、下拉刷新、触底追加、`hasMore`、加载更多错误、ID 去重、分页缓存恢复、请求互斥与过期响应丢弃、`prependItem`/`replaceItem`/`removeItem` 变更接口。
+- 新增分页缓存结构 `src/services/paginated-cache.ts`（`{version, items, nextCursor, hasMore}`），各列表使用独立缓存 key（`memo/song/task/moment` 的 `pagination` scope）；首页时间线缓存由 `usePaginatedTimeline` 适配旧格式，不丢既有缓存。
+- 首页 `usePaginatedTimeline` 改为通用引擎的薄适配器，对外接口与行为不变，`index.vue` 与 `entries.ts` 的 rawOffset 查询逻辑未改动。
+- 四个仓库（`memos/songs/tasks/moments`）的 `listXxx` 替换为 `listXxxPage(cursor)`：保留 `coupleId + kind` 服务端过滤，按不可变字段 `createdAt` 倒序 + offset 游标翻页，每页 20 条；写穿透切换为分页缓存；moments 移除了旧 `mergeStableList` 合并缓存逻辑。
+- 四个列表页接入引擎：新增 `onReachBottom` 触底加载与底部三态（加载中/点击重试/没有更多啦）；`onShow` 改为消费刷新信号后才刷新，未变更时保留已加载数据；行内变更（置顶、状态、勾选）通过引擎 `replaceItem` 自动归位。
+- 编辑/详情页（`memo-edit`、`song-edit`、`task-edit`、`moment-edit`、`moment-detail`）在保存、删除、置顶成功后写入 `setTimelineNeedsRefresh` 信号。
+- `src/pages.json` 为小线索、小歌单、小约定三页补开 `enablePullDownRefresh`（此前 `onPullDownRefresh` 为死代码）。
+- 筛选自动补页：筛选结果为空且还有更多数据时自动加载下一页（小线索/小歌单/小约定）。
+- 统计真实全量：`cloudbase.ts` 新增 `countDocuments`（纯新增封装，未改动既有 CRUD）；任务进度 X/Y 与小日子总数改为云端 count，行内勾选本地 ±1。
+- 修正小歌单页刷新失败提示的错域文案（"小纸条"→"小歌单"）。
+
+### 保留不变
+
+- CloudBase CRUD、上传、临时链接、心动反应、路由结构、`love_entries` 集合、`coupleId: "main"`、存储前缀均未改动。
+- 首页行为逐项不变；四页游标本阶段使用 offset 方案，后续如需 keyset 只需替换各仓库 loader。
+
+### 验证命令
+
+```bash
+pnpm type-check
+pnpm scan:project-ui
+pnpm scan:design-tokens
+pnpm scan:ui-copy
+pnpm build:mp-weixin
+```

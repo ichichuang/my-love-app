@@ -122,25 +122,48 @@
             </view>
           </view>
         </app-animated-swap>
+
+        <template v-if="memos.length > 0">
+          <view v-if="loadingMore" class="memos-list-footer memos-list-footer--loading">
+            <wd-loading size="20" />
+            <text>正在翻后面的小线索…</text>
+          </view>
+
+          <view
+            v-else-if="loadMoreError"
+            class="memos-list-footer memos-list-footer--retry"
+            @click="retryLoadMoreMemos"
+          >
+            <text>后面的小线索暂时没拿到，请再试一次。</text>
+          </view>
+
+          <view v-else-if="!hasMore" class="memos-list-footer">
+            <text>没有更多啦~</text>
+          </view>
+        </template>
       </view>
     </view>
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { computed, shallowRef, watch } from "vue"
+import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import { showAppSuccess, showAppWarning } from "@/composables/useAppToast"
-import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { usePaginatedList } from "@/composables/usePaginatedList"
 import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
+import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
-  listMemos,
+  compareMemos,
+  listMemosPage,
+  MEMO_PAGINATION_CACHE_VERSION,
   memoCategoryLabels,
   toggleMemoPinned,
   type MemoCategory,
+  type MemoListCursor,
   type MemoRecord
 } from "@/services/repositories/memos"
 
@@ -157,9 +180,31 @@ interface MemoListItem extends MemoRecord {
   stampText: string
 }
 
-const { items: memos, loading, refreshing, errorMessage, reload } = useCachedList<MemoRecord>({
-  cacheKey: dataCacheKeys.memoList,
-  loader: listMemos
+const {
+  items: memos,
+  initialLoading: loading,
+  refreshing,
+  loadingMore,
+  hasMore,
+  loadMoreError,
+  errorMessage,
+  refresh,
+  loadMore,
+  retryLoadMore,
+  replaceItem
+} = usePaginatedList<MemoRecord, MemoListCursor>({
+  loadPage: listMemosPage,
+  getItemId: (item) => item.id,
+  compareItems: compareMemos,
+  cacheKey: dataCacheKeys.memoPagination,
+  cacheVersion: MEMO_PAGINATION_CACHE_VERSION,
+  fallbackMessages: {
+    initial: "小线索暂时没翻到，请稍后再试。",
+    refresh: "小线索暂时没更新好，请稍后再试。",
+    loadMore: "后面的小线索暂时没拿到，请稍后再试。"
+  },
+  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
+  debugTag: "memos"
 })
 const activeFilter = shallowRef<FilterValue>("all")
 const pinUpdatingById = shallowRef<Partial<Record<string, boolean>>>({})
@@ -231,14 +276,6 @@ const resolveMemoDateLabel = (memo: MemoRecord): string => {
   return createdAtText ? `记于 ${createdAtText}` : ""
 }
 
-const compareMemos = (left: MemoRecord, right: MemoRecord): number => {
-  if (left.memoPinned !== right.memoPinned) {
-    return left.memoPinned ? -1 : 1
-  }
-
-  return right.updatedAt - left.updatedAt || right.createdAt - left.createdAt || left.id.localeCompare(right.id)
-}
-
 const decoratedMemos = computed<MemoListItem[]>(() =>
   memos.value.map((memo) => ({
     ...memo,
@@ -278,17 +315,12 @@ const introNote = computed(() => {
   return "先把第一张小线索夹进来，之后慢慢翻。"
 })
 
-const loadMemos = async (notifyCachedFailure = false) => {
-  try {
-    const result = await reload()
-    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      showAppWarning("小线索暂时没更新好，请稍后再试。")
-    }
-  } catch {
-    return
-  } finally {
-    uni.stopPullDownRefresh()
+const loadMemos = async (notifyFailure = false) => {
+  await refresh()
+  if (notifyFailure && errorMessage.value.length > 0) {
+    showAppWarning("小线索暂时没更新好，请稍后再试。")
   }
+  uni.stopPullDownRefresh()
 }
 
 const setActiveFilter = (filter: FilterValue) => {
@@ -309,10 +341,6 @@ const setMemoPinUpdating = (id: string, updating: boolean) => {
   pinUpdatingById.value = nextState
 }
 
-const replaceMemo = (nextMemo: MemoRecord) => {
-  memos.value = [...memos.value.filter((memo) => memo.id !== nextMemo.id), nextMemo].sort(compareMemos)
-}
-
 const changeMemoPinned = async (memo: MemoRecord) => {
   if (isMemoPinUpdating(memo.id)) {
     return
@@ -323,7 +351,7 @@ const changeMemoPinned = async (memo: MemoRecord) => {
 
   try {
     const nextMemo = await toggleMemoPinned(memo.id, nextPinned)
-    replaceMemo(nextMemo)
+    replaceItem(nextMemo)
     showAppSuccess(nextPinned ? "已经贴到上面。" : "已经放回纸堆。")
   } catch {
     showAppWarning("这张小线索暂时没贴好，请稍后再试。")
@@ -344,13 +372,47 @@ const openMemo = (id: string) => {
   })
 }
 
+const loadMoreMemos = () => {
+  if (loading.value || refreshing.value || loadingMore.value || !hasMore.value) {
+    return
+  }
+
+  void loadMore()
+}
+
+const retryLoadMoreMemos = () => {
+  void retryLoadMore()
+}
+
+// Auto-backfill pages while the active filter has no matching items yet.
+watch(
+  [filteredMemos, hasMore, loadingMore, loading, refreshing, loadMoreError],
+  () => {
+    if (filteredMemos.value.length > 0) {
+      return
+    }
+
+    if (!hasMore.value || loadingMore.value || loading.value || refreshing.value || loadMoreError.value) {
+      return
+    }
+
+    loadMoreMemos()
+  }
+)
+
 onShow(() => {
   consumeRouteFeedback(memosRoute)
-  void loadMemos()
+  if (consumeTimelineNeedsRefresh(memosRoute)) {
+    void loadMemos()
+  }
 })
 
 onPullDownRefresh(() => {
   void loadMemos(true)
+})
+
+onReachBottom(() => {
+  loadMoreMemos()
 })
 </script>
 
@@ -527,6 +589,26 @@ onPullDownRefresh(() => {
 
 .memo-list {
   gap: var(--app-list-gap);
+}
+
+.memos-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-4);
+  margin-top: var(--app-list-gap);
+  padding: var(--app-space-6) var(--app-space-0);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.memos-list-footer--loading {
+  color: var(--app-text-muted);
+}
+
+.memos-list-footer--retry {
+  @include pressable;
+  color: var(--app-accent);
 }
 
 .memo-card {

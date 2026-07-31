@@ -7,13 +7,8 @@ import {
   removeDocument,
   updateDocument
 } from "@/services/cloudbase"
-import {
-  dataCacheKeys,
-  removeCachedListItem,
-  removeDataCache,
-  upsertCachedListItem,
-  writeDataCache
-} from "@/services/data-cache"
+import { dataCacheKeys, removeDataCache, writeDataCache } from "@/services/data-cache"
+import { removePaginatedCacheItem, upsertPaginatedCacheItem } from "@/services/paginated-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
 import { normalizeCalendarDate } from "@/utils/date"
 
@@ -133,7 +128,7 @@ const compareIncompleteTasks = (left: TaskRecord, right: TaskRecord): number => 
   return right.createdAt - left.createdAt || left.id.localeCompare(right.id)
 }
 
-const compareTasks = (left: TaskRecord, right: TaskRecord): number => {
+export const compareTasks = (left: TaskRecord, right: TaskRecord): number => {
   if (left.taskDone !== right.taskDone) {
     return left.taskDone ? 1 : -1
   }
@@ -184,33 +179,66 @@ const toStoredTask = (
 
 const writeTaskCache = (task: TaskRecord, insertIfMissing = true): void => {
   writeDataCache(dataCacheKeys.taskDetail(task.id), task)
-  upsertCachedListItem(dataCacheKeys.taskList(), task, {
-    insertIfMissing,
-    sort: compareTasks
+  upsertPaginatedCacheItem<TaskRecord, TaskListCursor>(dataCacheKeys.taskPagination(), task, {
+    version: TASK_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    compareItems: compareTasks,
+    insertIfMissing
   })
 }
 
 const removeTaskCache = (id: string): void => {
   removeDataCache(dataCacheKeys.taskDetail(id))
-  removeCachedListItem(dataCacheKeys.taskList(), id)
+  removePaginatedCacheItem<TaskRecord, TaskListCursor>(dataCacheKeys.taskPagination(), id, {
+    version: TASK_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    adjustCursor: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) })
+  })
 }
 
-export const listTasks = async (): Promise<TaskRecord[]> => {
+export interface TaskListCursor {
+  offset: number
+}
+
+export interface TaskListPage {
+  items: TaskRecord[]
+  nextCursor: TaskListCursor | undefined
+  hasMore: boolean
+}
+
+// CloudBase returns at most 20 documents per request in the current environment.
+const TASK_PAGE_SIZE = 20
+
+export const TASK_PAGINATION_CACHE_VERSION = 1
+
+// Fetch order uses the immutable createdAt field so the offset cursor stays stable
+// while items are edited; display order is re-applied by compareTasks on the page.
+export const listTasksPage = async (cursor?: TaskListCursor): Promise<TaskListPage> => {
+  const offset = cursor?.offset ?? 0
+
   try {
     const documents = await listDocuments<StoredTaskDocument>(appConfig.entriesCollection, {
       where: {
-        coupleId: appConfig.coupleId
+        coupleId: appConfig.coupleId,
+        kind: "task"
       },
       orderBy: {
-        field: "updatedAt",
+        field: "createdAt",
         direction: "desc"
       },
-      limit: 100
+      skip: offset,
+      limit: TASK_PAGE_SIZE
     })
 
-    const tasks = documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null).sort(compareTasks)
-    writeDataCache(dataCacheKeys.taskList(), tasks)
-    return tasks
+    const items = documents.map(normalizeTask).filter((task): task is TaskRecord => task !== null)
+    const consumed = offset + documents.length
+    const hasMore = documents.length === TASK_PAGE_SIZE
+
+    return {
+      items,
+      nextCursor: hasMore ? { offset: consumed } : undefined,
+      hasMore
+    }
   } catch (error) {
     return wrapTaskCloudError("小约定暂时没翻到，请稍后再试。", error)
   }

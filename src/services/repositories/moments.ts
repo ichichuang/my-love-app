@@ -42,14 +42,12 @@ import {
 import { queueCloudFilesForCleanup } from "@/services/cloud-file-cleanup"
 import {
   dataCacheKeys,
-  mergeStableList,
   mergeStableRecord,
   readDataCache,
-  removeCachedListItem,
   removeDataCache,
-  upsertCachedListItem,
   writeDataCache
 } from "@/services/data-cache"
+import { removePaginatedCacheItem, upsertPaginatedCacheItem } from "@/services/paginated-cache"
 import type { LoveEntryKind } from "@/services/repositories/entries"
 
 interface StoredMomentDocument {
@@ -340,27 +338,44 @@ const writeMomentCache = (moment: MomentRecord, insertIfMissing = true): MomentR
   const cachedDetail = readDataCache<MomentRecord>(detailKey)
   const mergedMoment = cachedDetail ? mergeStableRecord(cachedDetail, moment) : moment
   writeDataCache(detailKey, mergedMoment)
-  upsertCachedListItem(dataCacheKeys.momentList(), mergedMoment, {
-    insertIfMissing,
-    sort: compareMomentsForToday()
+  upsertPaginatedCacheItem<MomentRecord, MomentListCursor>(dataCacheKeys.momentPagination(), mergedMoment, {
+    version: MOMENT_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    compareItems: compareMomentsForToday(),
+    insertIfMissing
   })
   return mergedMoment
 }
 
-const writeMomentListCache = (moments: MomentRecord[]): MomentRecord[] => {
-  const listKey = dataCacheKeys.momentList()
-  const cachedList = readDataCache<MomentRecord[]>(listKey)
-  const mergedList = cachedList ? mergeStableList(cachedList, moments) : moments
-  writeDataCache(listKey, mergedList)
-  return mergedList
-}
-
 const removeMomentCache = (id: string): void => {
   removeDataCache(dataCacheKeys.momentDetail(id))
-  removeCachedListItem(dataCacheKeys.momentList(), id)
+  removePaginatedCacheItem<MomentRecord, MomentListCursor>(dataCacheKeys.momentPagination(), id, {
+    version: MOMENT_PAGINATION_CACHE_VERSION,
+    getItemId: (item) => item.id,
+    adjustCursor: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) })
+  })
 }
 
-export const listMoments = async (): Promise<MomentRecord[]> => {
+export interface MomentListCursor {
+  offset: number
+}
+
+export interface MomentListPage {
+  items: MomentRecord[]
+  nextCursor: MomentListCursor | undefined
+  hasMore: boolean
+}
+
+// CloudBase returns at most 20 documents per request in the current environment.
+const MOMENT_PAGE_SIZE = 20
+
+export const MOMENT_PAGINATION_CACHE_VERSION = 1
+
+// Fetch order uses the immutable createdAt field so the offset cursor stays stable
+// while items are edited; display order is re-applied by compareMoments on the page.
+export const listMomentsPage = async (cursor?: MomentListCursor): Promise<MomentListPage> => {
+  const offset = cursor?.offset ?? 0
+
   try {
     const documents = await listDocuments<StoredMomentDocument>(appConfig.entriesCollection, {
       where: {
@@ -368,19 +383,22 @@ export const listMoments = async (): Promise<MomentRecord[]> => {
         kind: "moment"
       },
       orderBy: {
-        field: "updatedAt",
+        field: "createdAt",
         direction: "desc"
       },
-      limit: 100
+      skip: offset,
+      limit: MOMENT_PAGE_SIZE
     })
 
-    const today = todayCalendarDate()
-    const moments = documents
-      .map(normalizeMoment)
-      .filter((moment): moment is MomentRecord => moment !== null)
-      .sort((left, right) => compareMoments(left, right, today))
+    const items = documents.map(normalizeMoment).filter((moment): moment is MomentRecord => moment !== null)
+    const consumed = offset + documents.length
+    const hasMore = documents.length === MOMENT_PAGE_SIZE
 
-    return writeMomentListCache(moments)
+    return {
+      items,
+      nextCursor: hasMore ? { offset: consumed } : undefined,
+      hasMore
+    }
   } catch (error) {
     return wrapMomentCloudError("小日子暂时没翻到，请稍后再试。", error)
   }

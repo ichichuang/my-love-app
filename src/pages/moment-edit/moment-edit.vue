@@ -328,6 +328,7 @@ import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import {
   isDefaultMomentTemplate,
   isSafeMomentTemplateText,
@@ -971,6 +972,7 @@ const saveMoment = async () => {
       isEditMode.value ? momentDetailRoute : momentsRoute,
       isEditMode.value ? "这个小日子已经改好了" : "这个小日子已经悄悄收好"
     )
+    setTimelineNeedsRefresh(momentsRoute)
     backToMoments()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))

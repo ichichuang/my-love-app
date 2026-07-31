@@ -163,6 +163,7 @@ import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -434,6 +435,7 @@ const saveMemo = async () => {
     saved.value = true
     draftDirty.value = false
     setRouteSuccessFeedback(memosRoute, "小线索已经轻轻收好")
+    setTimelineNeedsRefresh(memosRoute)
     backToMemos()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
@@ -454,6 +456,7 @@ const deleteCurrentMemo = async () => {
   try {
     await deleteMemo(memoId.value)
     setRouteSuccessFeedback(memosRoute, "已经从小档案移走")
+    setTimelineNeedsRefresh(memosRoute)
     backToMemos()
   } catch {
     showAppError("这条小线索暂时没删掉，请稍后再试。")

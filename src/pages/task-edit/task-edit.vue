@@ -168,6 +168,7 @@ import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useKeyboardAvoidance } from "@/composables/useKeyboardAvoidance"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback } from "@/composables/useRouteFeedback"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import { getFriendlyErrorMessage } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
 import {
@@ -434,6 +435,7 @@ const saveTask = async () => {
     saving.value = false
     saved.value = true
     setRouteSuccessFeedback(tasksRoute, "这件小事已经轻轻收好")
+    setTimelineNeedsRefresh(tasksRoute)
     backToTasks()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
@@ -454,6 +456,7 @@ const deleteCurrentTask = async () => {
   try {
     await deleteTask(taskId.value)
     setRouteSuccessFeedback(tasksRoute, "已经从小清单移走")
+    setTimelineNeedsRefresh(tasksRoute)
     backToTasks()
   } catch {
     showAppError("这件小事暂时没删掉，请稍后再试。")

@@ -94,6 +94,7 @@ import { showAppError } from "@/composables/useAppToast"
 import { useCachedRecord } from "@/composables/useCachedRecord"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
 import { setRouteSuccessFeedback, consumeRouteFeedback } from "@/composables/useRouteFeedback"
+import { setTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
 import {
   isDefaultMomentTemplate,
   momentCategoryLabels,
@@ -394,6 +395,7 @@ const togglePinned = async () => {
     })
     momentRecord.value = savedMoment
     setRouteSuccessFeedback(momentsRoute, nextPinned ? "已经贴到上面啦" : "已经放回纸堆里啦")
+    setTimelineNeedsRefresh(momentsRoute)
     backToMoments()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))
@@ -412,6 +414,7 @@ const deleteCurrentMoment = async () => {
   try {
     await deleteMoment(record.id)
     setRouteSuccessFeedback(momentsRoute, "这个小日子已经删掉了")
+    setTimelineNeedsRefresh(momentsRoute)
     backToMoments()
   } catch (error) {
     showAppError(getFriendlyErrorMessage(error))

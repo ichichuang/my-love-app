@@ -18,6 +18,10 @@ declare global {
       data: T[]
     }
 
+    interface CountResult {
+      total: number
+    }
+
     interface DocumentResult<T extends object> {
       data: T
     }
@@ -39,6 +43,7 @@ declare global {
       skip(count: number): QueryRef<T>
       limit(count: number): QueryRef<T>
       get(): Promise<QueryResult<T>>
+      count(): Promise<CountResult>
     }
 
     interface DocumentRef<T extends object> {

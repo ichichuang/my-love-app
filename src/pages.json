@@ -46,7 +46,8 @@
       "path": "pages/songs/songs",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "小歌单"
+        "navigationBarTitleText": "小歌单",
+        "enablePullDownRefresh": true
       }
     },
     {
@@ -60,7 +61,8 @@
       "path": "pages/tasks/tasks",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "小约定"
+        "navigationBarTitleText": "小约定",
+        "enablePullDownRefresh": true
       }
     },
     {
@@ -81,7 +83,8 @@
       "path": "pages/memos/memos",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "她的小档案"
+        "navigationBarTitleText": "她的小档案",
+        "enablePullDownRefresh": true
       }
     },
     {

@@ -126,20 +126,49 @@
           </view>
         </app-animated-swap>
       </template>
+
+      <template v-if="tasks.length > 0">
+        <view v-if="loadingMore" class="tasks-list-footer tasks-list-footer--loading">
+          <wd-loading size="20" />
+          <text>正在翻后面的小约定…</text>
+        </view>
+
+        <view
+          v-else-if="loadMoreError"
+          class="tasks-list-footer tasks-list-footer--retry"
+          @click="retryLoadMoreTasks"
+        >
+          <text>后面的小约定暂时没拿到，请再试一次。</text>
+        </view>
+
+        <view v-else-if="!hasMore" class="tasks-list-footer">
+          <text>没有更多啦~</text>
+        </view>
+      </template>
     </view>
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from "vue"
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app"
+import { computed, shallowRef, watch } from "vue"
+import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app"
 import { showAppSuccess, showAppWarning } from "@/composables/useAppToast"
-import { useCachedList } from "@/composables/useCachedList"
 import { useNativeChromeSync } from "@/composables/useNativeChromeSync"
+import { usePaginatedList } from "@/composables/usePaginatedList"
 import { consumeRouteFeedback } from "@/composables/useRouteFeedback"
 import { useStickySectionOffset } from "@/composables/useStickySectionOffset"
+import { consumeTimelineNeedsRefresh } from "@/composables/useTimelineRefreshSignal"
+import { appConfig } from "@/config/app"
+import { countDocuments } from "@/services/cloudbase"
 import { dataCacheKeys } from "@/services/data-cache"
-import { listTasks, toggleTaskDone, type TaskRecord } from "@/services/repositories/tasks"
+import {
+  compareTasks,
+  listTasksPage,
+  TASK_PAGINATION_CACHE_VERSION,
+  toggleTaskDone,
+  type TaskListCursor,
+  type TaskRecord
+} from "@/services/repositories/tasks"
 
 const theme = useNativeChromeSync()
 const { stickySectionStyle } = useStickySectionOffset()
@@ -157,9 +186,31 @@ interface TaskListItem extends TaskRecord {
   taskDueDateLabel: string
 }
 
-const { items: tasks, loading, errorMessage, reload } = useCachedList<TaskRecord>({
-  cacheKey: dataCacheKeys.taskList,
-  loader: listTasks
+const {
+  items: tasks,
+  initialLoading: loading,
+  refreshing,
+  loadingMore,
+  hasMore,
+  loadMoreError,
+  errorMessage,
+  refresh,
+  loadMore,
+  retryLoadMore,
+  replaceItem
+} = usePaginatedList<TaskRecord, TaskListCursor>({
+  loadPage: listTasksPage,
+  getItemId: (item) => item.id,
+  compareItems: compareTasks,
+  cacheKey: dataCacheKeys.taskPagination,
+  cacheVersion: TASK_PAGINATION_CACHE_VERSION,
+  fallbackMessages: {
+    initial: "小约定暂时没翻到，请稍后再试。",
+    refresh: "小约定暂时没更新好，请稍后再试。",
+    loadMore: "后面的小约定暂时没拿到，请稍后再试。"
+  },
+  adjustCursorAfterRemove: (cursor) => ({ offset: Math.max(0, cursor.offset - 1) }),
+  debugTag: "tasks"
 })
 const activeFilter = shallowRef<FilterValue>("all")
 const togglingById = shallowRef<Partial<Record<string, boolean>>>({})
@@ -204,8 +255,28 @@ const formatTimestampText = (timestamp?: number): string => {
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
 
-const totalCount = computed(() => tasks.value.length)
-const doneCount = computed(() => tasks.value.filter((task) => task.taskDone === true).length)
+const cloudTotalCount = shallowRef<number | null>(null)
+const cloudDoneCount = shallowRef<number | null>(null)
+
+const loadTaskCounts = async (): Promise<void> => {
+  try {
+    const [total, done] = await Promise.all([
+      countDocuments(appConfig.entriesCollection, {
+        where: { coupleId: appConfig.coupleId, kind: "task" }
+      }),
+      countDocuments(appConfig.entriesCollection, {
+        where: { coupleId: appConfig.coupleId, kind: "task", taskDone: true }
+      })
+    ])
+    cloudTotalCount.value = total
+    cloudDoneCount.value = done
+  } catch {
+    // Counts are decorative; fall back to the loaded-item counts below.
+  }
+}
+
+const totalCount = computed(() => cloudTotalCount.value ?? tasks.value.length)
+const doneCount = computed(() => cloudDoneCount.value ?? tasks.value.filter((task) => task.taskDone === true).length)
 const undoneCount = computed(() => totalCount.value - doneCount.value)
 const progressPercent = computed(() => (totalCount.value > 0 ? Math.round((doneCount.value / totalCount.value) * 100) : 0))
 const progressWidth = computed(() => `${progressPercent.value}%`)
@@ -259,17 +330,13 @@ const getFilteredTasks = (filterVal: FilterValue) => {
 
 const hasError = computed(() => errorMessage.value.length > 0 && tasks.value.length === 0)
 
-const loadTasks = async (notifyCachedFailure = false) => {
-  try {
-    const result = await reload()
-    if (notifyCachedFailure && result.fromCache && !result.refreshed) {
-      showAppWarning("小纸条暂时没更新好，请稍后再试。")
-    }
-  } catch {
-    return
-  } finally {
-    uni.stopPullDownRefresh()
+const loadTasks = async (notifyFailure = false) => {
+  await refresh()
+  void loadTaskCounts()
+  if (notifyFailure && errorMessage.value.length > 0) {
+    showAppWarning("小约定暂时没更新好，请稍后再试。")
   }
+  uni.stopPullDownRefresh()
 }
 
 const setActiveFilter = (filter: FilterValue) => {
@@ -290,10 +357,6 @@ const setTaskToggling = (id: string, toggling: boolean) => {
   togglingById.value = nextState
 }
 
-const replaceTask = (nextTask: TaskRecord) => {
-  tasks.value = tasks.value.map((task) => (task.id === nextTask.id ? nextTask : task))
-}
-
 const toggleTask = async (task: TaskRecord) => {
   if (isTaskToggling(task.id)) {
     return
@@ -304,7 +367,10 @@ const toggleTask = async (task: TaskRecord) => {
 
   try {
     const nextTask = await toggleTaskDone(task.id, nextDone)
-    replaceTask(nextTask)
+    replaceItem(nextTask)
+    if (cloudDoneCount.value !== null) {
+      cloudDoneCount.value = Math.max(0, cloudDoneCount.value + (nextDone ? 1 : -1))
+    }
     showAppSuccess(nextDone ? "已经轻轻勾上。" : "已经放回清单。")
   } catch {
     showAppWarning("小约定暂时没改好，请稍后再试。")
@@ -325,13 +391,49 @@ const openTask = (id: string) => {
   })
 }
 
+const loadMoreTasks = () => {
+  if (loading.value || refreshing.value || loadingMore.value || !hasMore.value) {
+    return
+  }
+
+  void loadMore()
+}
+
+const retryLoadMoreTasks = () => {
+  void retryLoadMore()
+}
+
+// Auto-backfill pages while the active filter has no matching items yet.
+watch(
+  [filteredTasks, hasMore, loadingMore, loading, refreshing, loadMoreError],
+  () => {
+    if (filteredTasks.value.length > 0) {
+      return
+    }
+
+    if (!hasMore.value || loadingMore.value || loading.value || refreshing.value || loadMoreError.value) {
+      return
+    }
+
+    loadMoreTasks()
+  }
+)
+
+void loadTaskCounts()
+
 onShow(() => {
   consumeRouteFeedback(tasksRoute)
-  void loadTasks()
+  if (consumeTimelineNeedsRefresh(tasksRoute)) {
+    void loadTasks()
+  }
 })
 
 onPullDownRefresh(() => {
   void loadTasks(true)
+})
+
+onReachBottom(() => {
+  loadMoreTasks()
 })
 </script>
 
@@ -438,6 +540,26 @@ onPullDownRefresh(() => {
 
 .task-list {
   gap: var(--app-list-gap);
+}
+
+.tasks-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-space-4);
+  margin-top: var(--app-list-gap);
+  padding: var(--app-space-6) var(--app-space-0);
+  color: var(--app-text-soft);
+  font: var(--app-font-caption);
+}
+
+.tasks-list-footer--loading {
+  color: var(--app-text-muted);
+}
+
+.tasks-list-footer--retry {
+  @include pressable;
+  color: var(--app-accent);
 }
 
 .task-card {
